@@ -171,12 +171,17 @@ export async function archiveActivity(formData: FormData) {
 
 export async function deleteActivity(formData: FormData) {
   const id = getRequiredId(formData);
+  const activity = await prisma.activity.findUniqueOrThrow({
+    where: { id },
+    select: { slug: true }
+  });
 
   await prisma.activity.delete({
     where: { id }
   });
 
   await revalidateAdmin();
+  revalidatePath(`/activity/${activity.slug}`);
 }
 
 export async function updateActivity(formData: FormData) {
