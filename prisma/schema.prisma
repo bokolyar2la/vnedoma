@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ActivityStatus {
+  draft
+  published
+  archived
+}
+
+model City {
+  id         Int         @id @default(autoincrement())
+  name       String
+  slug       String      @unique
+  activities Activity[]
+  organizers Organizer[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Category {
+  id          Int        @id @default(autoincrement())
+  name        String
+  slug        String     @unique
+  description String
+  activities  Activity[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Organizer {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String
+  phone       String?
+  websiteUrl  String?
+  vkUrl       String?
+  telegramUrl String?
+  address     String
+  cityId      Int
+  city        City       @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  activities  Activity[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([name, cityId])
+  @@index([cityId])
+}
+
+model Activity {
+  id               Int            @id @default(autoincrement())
+  title            String
+  slug             String         @unique
+  description      String
+  cityId           Int
+  categoryId       Int
+  organizerId      Int
+  address          String
+  priceFrom        Int?
+  priceTo          Int?
+  isFree           Boolean        @default(false)
+  isForAdults      Boolean        @default(true)
+  beginnerFriendly Boolean        @default(false)
+  canComeAlone     Boolean        @default(false)
+  contactPhone     String?
+  contactUrl       String?
+  sourceUrl        String?
+  isVerified       Boolean        @default(false)
+  imageUrl         String?
+  status           ActivityStatus @default(draft)
+  isPromoted       Boolean        @default(false)
+  promotedUntil    DateTime?
+  priority         Int            @default(0)
+  city             City           @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  category         Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  organizer        Organizer      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  events           Event[]
+  tags             ActivityTag[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([cityId])
+  @@index([categoryId])
+  @@index([organizerId])
+  @@index([status, priority])
+}
+
+model Event {
+  id             Int      @id @default(autoincrement())
+  activityId     Int
+  title          String
+  startsAt       DateTime
+  endsAt         DateTime?
+  price          Int?
+  seatsAvailable Int?
+  activity       Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([activityId])
+  @@index([startsAt])
+}
+
+model Tag {
+  id         Int           @id @default(autoincrement())
+  name       String
+  slug       String        @unique
+  activities ActivityTag[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+model ActivityTag {
+  activityId Int
+  tagId      Int
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([activityId, tagId])
+  @@index([tagId])
+}

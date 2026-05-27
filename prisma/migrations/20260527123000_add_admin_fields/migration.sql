@@ -1,0 +1,3 @@
+ALTER TABLE "Activity" ADD COLUMN "sourceUrl" TEXT;
+ALTER TABLE "Activity" ADD COLUMN "isVerified" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Activity" ADD COLUMN "imageUrl" TEXT;
