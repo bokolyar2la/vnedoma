@@ -35,7 +35,10 @@ function getRequiredId(formData: FormData) {
   return id;
 }
 
-function getStatus(formData: FormData, fallback = ActivityStatus.published) {
+function getStatus(
+  formData: FormData,
+  fallback: ActivityStatus = ActivityStatus.published
+): ActivityStatus {
   const status = getString(formData, "status");
   if (
     status === ActivityStatus.draft ||
