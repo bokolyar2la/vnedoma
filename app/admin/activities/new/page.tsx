@@ -1,70 +1,37 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ActivityStatus } from "@prisma/client";
-import { notFound } from "next/navigation";
-import { updateActivity } from "@/app/admin/activities/actions";
-import { ActivityImage } from "@/components/ActivityImage";
+import { createAdminActivity } from "@/app/admin/activities/actions";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
-  title: "Редактировать активность"
+  title: "Добавить активность"
 };
 
 export const dynamic = "force-dynamic";
 
-type EditActivityPageProps = {
-  params: Promise<{
-    id: string;
-  }>;
-};
-
-export default async function EditActivityPage({ params }: EditActivityPageProps) {
-  const { id } = await params;
-  const activityId = Number(id);
-
-  if (!Number.isInteger(activityId) || activityId <= 0) {
-    notFound();
-  }
-
-  const [activity, categories] = await Promise.all([
-    prisma.activity.findUnique({
-      where: { id: activityId },
-      include: {
-        category: true,
-        organizer: true,
-        city: true
-      }
-    }),
-    prisma.category.findMany({ orderBy: { name: "asc" } })
-  ]);
-
-  if (!activity) {
-    notFound();
-  }
+export default async function NewActivityPage() {
+  const categories = await prisma.category.findMany({
+    orderBy: { name: "asc" }
+  });
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
-            Админка · {activity.city.name}
+            Админка · ручное наполнение
           </p>
           <h1 className="mt-3 text-3xl font-bold text-city-ink">
-            Редактировать активность
+            Добавить активность
           </h1>
-          <p className="mt-2 text-sm text-city-muted">
-            URL не меняется автоматически: текущий slug сохранится после правки.
-          </p>
         </div>
         <Link href="/admin/activities" className="text-sm font-semibold text-city-green">
           К списку
         </Link>
       </div>
 
-      <form action={updateActivity} className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px]">
-        <input type="hidden" name="id" value={activity.id} />
-        <input type="hidden" name="slug" value={activity.slug} />
-
+      <form action={createAdminActivity} className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
         <section className="space-y-5 rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
           <div>
             <label htmlFor="title" className="text-sm font-semibold text-city-ink">
@@ -74,8 +41,8 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
               id="title"
               name="title"
               required
-              defaultValue={activity.title}
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+              placeholder="Мастер-класс по керамике"
             />
           </div>
 
@@ -87,9 +54,9 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
               id="description"
               name="description"
               required
-              rows={8}
-              defaultValue={activity.description}
+              rows={7}
               className="mt-2 w-full rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+              placeholder="Коротко и понятно: что за активность, кому подойдет, как проходит."
             />
           </div>
 
@@ -101,9 +68,10 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
               <select
                 id="categoryId"
                 name="categoryId"
-                defaultValue={activity.categoryId}
+                required
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
               >
+                <option value="">Выберите категорию</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -118,8 +86,8 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
               <input
                 id="organizerName"
                 name="organizerName"
-                defaultValue={activity.organizer.name}
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                placeholder="Название организатора"
               />
             </div>
           </div>
@@ -131,8 +99,8 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
             <input
               id="address"
               name="address"
-              defaultValue={activity.address}
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+              placeholder="Тула, улица и дом"
             />
           </div>
 
@@ -144,8 +112,8 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
               <input
                 id="contactPhone"
                 name="contactPhone"
-                defaultValue={activity.contactPhone ?? ""}
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                placeholder="+7..."
               />
             </div>
             <div>
@@ -156,8 +124,8 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
                 id="contactUrl"
                 name="contactUrl"
                 type="url"
-                defaultValue={activity.contactUrl ?? ""}
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                placeholder="https://..."
               />
             </div>
           </div>
@@ -171,8 +139,8 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
                 id="sourceUrl"
                 name="sourceUrl"
                 type="url"
-                defaultValue={activity.sourceUrl ?? ""}
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                placeholder="Откуда взяли информацию"
               />
             </div>
             <div>
@@ -183,21 +151,14 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
                 id="imageUrl"
                 name="imageUrl"
                 type="url"
-                defaultValue={activity.imageUrl ?? ""}
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                placeholder="https://..."
               />
             </div>
           </div>
         </section>
 
         <aside className="h-fit space-y-5 rounded-3xl border border-city-line bg-white p-5 shadow-soft">
-          <ActivityImage
-            title={activity.title}
-            categoryName={activity.category.name}
-            imageUrl={activity.imageUrl}
-            className="aspect-[16/10]"
-          />
-
           <div>
             <label htmlFor="status" className="text-sm font-semibold text-city-ink">
               Статус
@@ -205,30 +166,30 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
             <select
               id="status"
               name="status"
-              defaultValue={activity.status}
+              defaultValue={ActivityStatus.published}
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
             >
-              <option value={ActivityStatus.draft}>draft</option>
               <option value={ActivityStatus.published}>published</option>
+              <option value={ActivityStatus.draft}>draft</option>
               <option value={ActivityStatus.archived}>archived</option>
             </select>
           </div>
 
           <div className="grid gap-4">
             <label className="flex items-center gap-2 text-sm text-city-muted">
-              <input name="isFree" type="checkbox" defaultChecked={activity.isFree} className="h-4 w-4 accent-city-green" />
+              <input name="isFree" type="checkbox" className="h-4 w-4 accent-city-green" />
               Бесплатно
             </label>
             <label className="flex items-center gap-2 text-sm text-city-muted">
-              <input name="beginnerFriendly" type="checkbox" defaultChecked={activity.beginnerFriendly} className="h-4 w-4 accent-city-green" />
+              <input name="beginnerFriendly" type="checkbox" className="h-4 w-4 accent-city-green" />
               Подходит новичкам
             </label>
             <label className="flex items-center gap-2 text-sm text-city-muted">
-              <input name="canComeAlone" type="checkbox" defaultChecked={activity.canComeAlone} className="h-4 w-4 accent-city-green" />
+              <input name="canComeAlone" type="checkbox" className="h-4 w-4 accent-city-green" />
               Можно прийти одному
             </label>
             <label className="flex items-center gap-2 text-sm text-city-muted">
-              <input name="isVerified" type="checkbox" defaultChecked={activity.isVerified} className="h-4 w-4 accent-city-green" />
+              <input name="isVerified" type="checkbox" className="h-4 w-4 accent-city-green" />
               Проверено вручную
             </label>
           </div>
@@ -243,7 +204,6 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
                 name="priceFrom"
                 type="number"
                 min="0"
-                defaultValue={activity.priceFrom ?? ""}
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
               />
             </div>
@@ -256,14 +216,13 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
                 name="priceTo"
                 type="number"
                 min="0"
-                defaultValue={activity.priceTo ?? ""}
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
               />
             </div>
           </div>
 
           <button className="min-h-12 w-full rounded-full bg-city-green px-6 font-semibold text-white transition hover:bg-city-blue">
-            Сохранить изменения
+            Сохранить активность
           </button>
         </aside>
       </form>

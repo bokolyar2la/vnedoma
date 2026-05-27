@@ -1,45 +1,10 @@
 "use server";
 
 import { ActivityStatus } from "@prisma/client";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-
-const translitMap: Record<string, string> = {
-  а: "a",
-  б: "b",
-  в: "v",
-  г: "g",
-  д: "d",
-  е: "e",
-  ё: "e",
-  ж: "zh",
-  з: "z",
-  и: "i",
-  й: "y",
-  к: "k",
-  л: "l",
-  м: "m",
-  н: "n",
-  о: "o",
-  п: "p",
-  р: "r",
-  с: "s",
-  т: "t",
-  у: "u",
-  ф: "f",
-  х: "h",
-  ц: "c",
-  ч: "ch",
-  ш: "sh",
-  щ: "sch",
-  ы: "y",
-  э: "e",
-  ю: "yu",
-  я: "ya",
-  ь: "",
-  ъ: ""
-};
+import { generateUniqueSlug } from "@/lib/slug";
 
 function getValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -54,31 +19,6 @@ function getNumberValue(formData: FormData, key: string) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-}
-
-function slugify(value: string) {
-  const slug = value
-    .toLowerCase()
-    .split("")
-    .map((char) => translitMap[char] ?? char)
-    .join("")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-  return slug || `activity-${Date.now()}`;
-}
-
-async function createUniqueSlug(title: string) {
-  const base = slugify(title);
-  let slug = base;
-  let counter = 2;
-
-  while (await prisma.activity.findUnique({ where: { slug } })) {
-    slug = `${base}-${counter}`;
-    counter += 1;
-  }
-
-  return slug;
 }
 
 function fail(message: string): never {
@@ -150,7 +90,7 @@ export async function createActivity(formData: FormData) {
   await prisma.activity.create({
     data: {
       title,
-      slug: await createUniqueSlug(title),
+      slug: await generateUniqueSlug(title),
       description,
       cityId: city.id,
       categoryId: category.id,
