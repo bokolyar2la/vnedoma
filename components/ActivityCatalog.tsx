@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ActivityStatus, Prisma } from "@prisma/client";
 import { ActivityCard } from "@/components/ActivityCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -11,6 +12,7 @@ type ActivityCatalogProps = {
   description: string;
   fixedFilters?: Prisma.ActivityWhereInput;
   showCategoryFilter?: boolean;
+  basePath?: string;
 };
 
 function getSingleParam(params: SearchParams, key: string) {
@@ -18,12 +20,26 @@ function getSingleParam(params: SearchParams, key: string) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function buildHref(basePath: string, params: Record<string, string | undefined>) {
+  const search = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) {
+      search.set(key, value);
+    }
+  });
+
+  const query = search.toString();
+  return query ? `${basePath}?${query}` : basePath;
+}
+
 export async function ActivityCatalog({
   searchParams = {},
   heading,
   description,
   fixedFilters = {},
-  showCategoryFilter = true
+  showCategoryFilter = true,
+  basePath = "/tula"
 }: ActivityCatalogProps) {
   const category = showCategoryFilter ? getSingleParam(searchParams, "category") : undefined;
   const q = getSingleParam(searchParams, "q")?.trim();
@@ -52,111 +68,107 @@ export async function ActivityCatalog({
       : {})
   };
 
-  const [categories, activities] = await Promise.all([
-    prisma.category.findMany({ orderBy: { name: "asc" } }),
-    prisma.activity.findMany({
-      where,
-      include: { category: true },
-      orderBy: [{ isPromoted: "desc" }, { priority: "desc" }, { createdAt: "desc" }]
-    })
-  ]);
+  const activities = await prisma.activity.findMany({
+    where,
+    include: { category: true },
+    orderBy: [{ isPromoted: "desc" }, { priority: "desc" }, { createdAt: "desc" }]
+  });
+
+  const commonParams = {
+    ...(q ? { q } : {}),
+    ...(category ? { category } : {})
+  };
+
+  const chips = [
+    {
+      label: "Все",
+      active: !isFree && !canComeAlone && !beginnerFriendly,
+      href: buildHref(basePath, commonParams)
+    },
+    {
+      label: "Бесплатно",
+      active: isFree,
+      href: buildHref(basePath, { ...commonParams, free: "1" })
+    },
+    {
+      label: "Можно одному",
+      active: canComeAlone,
+      href: buildHref(basePath, { ...commonParams, alone: "1" })
+    },
+    {
+      label: "Новичкам",
+      active: beginnerFriendly,
+      href: buildHref(basePath, { ...commonParams, beginner: "1" })
+    }
+  ];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <Breadcrumbs
         items={[
           { label: "Главная", href: "/" },
-          showCategoryFilter
-            ? { label: "Тула" }
-            : { label: "Тула", href: "/tula" },
+          showCategoryFilter ? { label: "Тула" } : { label: "Тула", href: "/tula" },
           ...(showCategoryFilter ? [] : [{ label: heading }])
         ]}
       />
-      <div className="max-w-3xl">
+
+      <section className="mt-6 rounded-[32px] border border-city-line bg-white p-5 shadow-soft sm:p-7">
         <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
           Вне дома · Тула
         </p>
-        <h1 className="mt-3 text-3xl font-bold leading-tight text-city-ink sm:text-4xl">
-          {heading}
-        </h1>
-        <p className="mt-4 text-lg leading-8 text-city-muted">{description}</p>
-      </div>
+        <div className="mt-3 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+          <div className="max-w-3xl">
+            <h1 className="text-3xl font-bold leading-tight text-city-ink sm:text-5xl">
+              {heading}
+            </h1>
+            <p className="mt-4 text-lg leading-8 text-city-muted">{description}</p>
+          </div>
+          <p className="rounded-full bg-city-soft px-4 py-2 text-sm font-semibold text-city-green">
+            Найдено: {activities.length}
+          </p>
+        </div>
 
-      <form className="mt-8 rounded-3xl border border-city-line bg-white p-4 shadow-soft">
-        <div className={showCategoryFilter ? "grid gap-3 lg:grid-cols-[1fr_220px_auto]" : "grid gap-3 sm:grid-cols-[1fr_auto]"}>
+        <form action={basePath} className="mt-7 flex flex-col gap-3 rounded-[26px] bg-city-soft p-2 sm:flex-row">
           <input
             name="q"
             defaultValue={q}
             type="search"
-            placeholder="Поиск по занятиям"
-            className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+            placeholder="Поиск: йога, керамика, лекции..."
+            className="min-h-12 flex-1 rounded-full border-0 bg-white px-5 text-city-ink outline-none placeholder:text-city-muted/70"
           />
-          {showCategoryFilter ? (
-            <select
-              name="category"
-              defaultValue={category ?? ""}
-              className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-            >
-              <option value="">Все категории</option>
-              {categories.map((item) => (
-                <option key={item.id} value={item.slug}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          ) : null}
-          <button className="min-h-12 rounded-2xl bg-city-green px-6 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-city-blue">
-            Показать
+          {category ? <input type="hidden" name="category" value={category} /> : null}
+          <button className="min-h-12 rounded-full bg-city-ink px-6 font-semibold text-white transition hover:bg-city-green">
+            Найти
           </button>
-        </div>
-        <div className="mt-4 flex flex-col gap-3 text-sm text-city-muted sm:flex-row sm:flex-wrap">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="free"
-              value="1"
-              defaultChecked={isFree}
-              className="h-4 w-4 accent-city-green"
-            />
-            Бесплатно
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="alone"
-              value="1"
-              defaultChecked={canComeAlone}
-              className="h-4 w-4 accent-city-green"
-            />
-            Можно прийти одному
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="beginner"
-              value="1"
-              defaultChecked={beginnerFriendly}
-              className="h-4 w-4 accent-city-green"
-            />
-            Подходит новичкам
-          </label>
-        </div>
-      </form>
+        </form>
 
-      <div className="mt-8 flex items-center justify-between gap-4">
-        <h2 className="text-xl font-bold text-city-ink">Найдено: {activities.length}</h2>
-      </div>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {chips.map((chip) => (
+            <Link
+              key={chip.label}
+              href={chip.href}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                chip.active
+                  ? "bg-city-green text-white shadow-sm"
+                  : "bg-city-soft text-city-muted hover:bg-white hover:text-city-green hover:shadow-sm"
+              }`}
+            >
+              {chip.label}
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {activities.length > 0 ? (
-        <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <section className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {activities.map((activity) => (
             <ActivityCard key={activity.id} activity={activity} />
           ))}
-        </div>
+        </section>
       ) : (
-        <div className="mt-5 rounded-3xl border border-city-line bg-white p-8 text-city-muted">
+        <section className="mt-7 rounded-[28px] border border-city-line bg-white p-8 text-city-muted shadow-soft">
           По этим фильтрам ничего не найдено. Попробуйте изменить запрос или убрать часть условий.
-        </div>
+        </section>
       )}
     </div>
   );

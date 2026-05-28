@@ -138,19 +138,17 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     notFound();
   }
 
-  const [similarActivities] = await Promise.all([
-    prisma.activity.findMany({
-      where: {
-        id: { not: activity.id },
-        status: ActivityStatus.published,
-        cityId: activity.cityId,
-        categoryId: activity.categoryId
-      },
-      include: { category: true },
-      orderBy: [{ isPromoted: "desc" }, { priority: "desc" }, { createdAt: "desc" }],
-      take: 3
-    })
-  ]);
+  const similarActivities = await prisma.activity.findMany({
+    where: {
+      id: { not: activity.id },
+      status: ActivityStatus.published,
+      cityId: activity.cityId,
+      categoryId: activity.categoryId
+    },
+    include: { category: true },
+    orderBy: [{ isPromoted: "desc" }, { priority: "desc" }, { createdAt: "desc" }],
+    take: 3
+  });
 
   const price = formatPrice(activity);
   const contactHref = activity.contactUrl ?? `tel:${activity.contactPhone ?? ""}`;
@@ -162,8 +160,17 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     activity.isFree ? "Бесплатно" : null
   ].filter((condition): condition is string => Boolean(condition));
 
+  const infoCards = [
+    { label: "Адрес", value: activity.address },
+    { label: "Цена", value: price },
+    { label: "Организатор", value: activity.organizer.name },
+    { label: "Контакты", value: activity.contactPhone ?? activity.contactUrl ?? "Уточняются" },
+    { label: "Новичкам", value: activity.beginnerFriendly ? "Да" : "Уточнить" },
+    { label: "Можно одному", value: activity.canComeAlone ? "Да" : "Уточнить" }
+  ];
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -177,149 +184,106 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         ]}
       />
 
-      <section className="mt-6 grid gap-8 rounded-3xl border border-city-line bg-white p-6 shadow-soft lg:grid-cols-[1fr_340px] lg:p-8">
-        <div>
+      <section className="mt-6 overflow-hidden rounded-[34px] border border-city-line bg-white shadow-soft">
+        <div className="relative">
           <ActivityImage
             title={activity.title}
             categoryName={activity.category.name}
             imageUrl={activity.imageUrl}
-            className="mb-6 aspect-[16/9]"
+            className="aspect-[16/10] rounded-none sm:aspect-[21/9]"
           />
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full bg-city-soft px-3 py-1 text-sm font-semibold text-city-green">
+          <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3 sm:inset-x-6 sm:top-6">
+            <span className="rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-city-green shadow-sm backdrop-blur">
               {activity.category.name}
             </span>
-            {conditions.map((condition) => (
-              <span
-                key={condition}
-                className="rounded-full border border-city-line bg-white px-3 py-1 text-sm text-city-muted"
-              >
-                {condition}
-              </span>
-            ))}
-          </div>
-
-          <h1 className="mt-5 max-w-3xl text-3xl font-bold leading-tight text-city-ink sm:text-5xl">
-            {activity.title}
-          </h1>
-          <p className="mt-5 max-w-3xl text-lg leading-8 text-city-muted">
-            {activity.description}
-          </p>
-
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl bg-city-soft p-4">
-              <p className="text-sm text-city-muted">Цена</p>
-              <p className="mt-1 font-bold text-city-ink">{price}</p>
-            </div>
-            <div className="rounded-2xl bg-city-soft p-4 sm:col-span-2">
-              <p className="text-sm text-city-muted">Адрес</p>
-              <p className="mt-1 font-bold text-city-ink">{activity.address}</p>
-            </div>
+            <span className="rounded-full bg-city-ink/90 px-4 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur">
+              {price}
+            </span>
           </div>
         </div>
 
-        <aside className="h-fit rounded-3xl border border-city-line bg-city-soft p-5">
-          <p className="text-sm text-city-muted">Организатор</p>
-          <p className="mt-1 text-xl font-bold text-city-ink">{activity.organizer.name}</p>
-          <p className="mt-4 text-sm leading-6 text-city-muted">
-            {activity.organizer.description}
-          </p>
-          <div className="mt-5 space-y-2 text-sm text-city-muted">
-            <p>{activity.organizer.address}</p>
-            <p>{activity.contactPhone ?? activity.contactUrl ?? "Контакты уточняются"}</p>
+        <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[1fr_340px]">
+          <div>
+            <div className="flex flex-wrap gap-2">
+              {conditions.map((condition) => (
+                <span
+                  key={condition}
+                  className="rounded-full bg-city-soft px-3 py-1 text-sm font-medium text-city-green"
+                >
+                  {condition}
+                </span>
+              ))}
+            </div>
+            <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-tight text-city-ink sm:text-5xl">
+              {activity.title}
+            </h1>
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-city-muted">
+              {activity.description}
+            </p>
           </div>
-          {hasContact ? (
-            <a
-              href={contactHref}
-              className="mt-6 flex min-h-12 items-center justify-center rounded-full bg-city-green px-5 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-city-blue"
-            >
-              Записаться
-            </a>
-          ) : (
-            <button
-              disabled
-              className="mt-6 flex min-h-12 w-full items-center justify-center rounded-full bg-city-line px-5 font-semibold text-city-muted"
-            >
-              Контакты уточняются
-            </button>
-          )}
-        </aside>
+
+          <aside className="h-fit rounded-[28px] bg-city-soft p-5">
+            <p className="text-sm text-city-muted">Стоимость</p>
+            <p className="mt-1 text-2xl font-bold text-city-ink">{price}</p>
+            <p className="mt-4 text-sm leading-6 text-city-muted">
+              {activity.organizer.description}
+            </p>
+            {hasContact ? (
+              <a
+                href={contactHref}
+                className="mt-6 flex min-h-12 items-center justify-center rounded-full bg-city-green px-5 font-semibold text-white transition hover:bg-city-blue"
+              >
+                Записаться
+              </a>
+            ) : (
+              <button
+                disabled
+                className="mt-6 flex min-h-12 w-full items-center justify-center rounded-full bg-city-line px-5 font-semibold text-city-muted"
+              >
+                Контакты уточняются
+              </button>
+            )}
+          </aside>
+        </div>
       </section>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
-        <article className="space-y-8">
-          <section className="rounded-3xl border border-city-line bg-white p-6 shadow-soft">
-            <h2 className="text-xl font-bold text-city-ink">Условия</h2>
-            {conditions.length > 0 ? (
-              <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                {conditions.map((condition) => (
-                  <div key={condition} className="rounded-2xl border border-city-line p-4">
-                    <p className="font-semibold text-city-ink">{condition}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-4 text-city-muted">
-                Условия участия лучше уточнить у организатора.
-              </p>
-            )}
-          </section>
+      <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {infoCards.map((item) => (
+          <div key={item.label} className="rounded-[26px] border border-city-line bg-white p-5 shadow-soft">
+            <p className="text-sm text-city-muted">{item.label}</p>
+            <p className="mt-2 font-bold leading-6 text-city-ink">{item.value}</p>
+          </div>
+        ))}
+      </section>
 
-          <section className="rounded-3xl border border-city-line bg-white p-6 shadow-soft">
-            <h2 className="text-xl font-bold text-city-ink">Ближайшие события</h2>
-            {activity.events.length > 0 ? (
-              <div className="mt-5 grid gap-3">
-                {activity.events.map((event) => (
-                  <div key={event.id} className="rounded-2xl border border-city-line p-4">
-                    <h3 className="font-semibold text-city-ink">{event.title}</h3>
-                    <p className="mt-2 text-sm text-city-muted">
-                      {formatDateTime(event.startsAt)}
-                      {event.price ? ` · ${event.price.toLocaleString("ru-RU")} ₽` : ""}
-                      {event.seatsAvailable ? ` · мест: ${event.seatsAvailable}` : ""}
-                    </p>
-                  </div>
-                ))}
+      <section className="mt-8 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
+        <h2 className="text-2xl font-bold text-city-ink">Ближайшие события</h2>
+        {activity.events.length > 0 ? (
+          <div className="mt-5 grid gap-3">
+            {activity.events.map((event) => (
+              <div key={event.id} className="rounded-2xl bg-city-soft p-4">
+                <h3 className="font-semibold text-city-ink">{event.title}</h3>
+                <p className="mt-2 text-sm text-city-muted">
+                  {formatDateTime(event.startsAt)}
+                  {event.price ? ` · ${event.price.toLocaleString("ru-RU")} ₽` : ""}
+                  {event.seatsAvailable ? ` · мест: ${event.seatsAvailable}` : ""}
+                </p>
               </div>
-            ) : (
-              <p className="mt-4 text-city-muted">
-                Даты пока не добавлены. Свяжитесь с организатором, чтобы уточнить
-                ближайшее занятие.
-              </p>
-            )}
-          </section>
-        </article>
-
-        <aside className="rounded-3xl border border-city-line bg-white p-6 shadow-soft">
-          <h2 className="text-xl font-bold text-city-ink">Контакты</h2>
-          <dl className="mt-5 space-y-4">
-            <div>
-              <dt className="text-sm text-city-muted">Адрес</dt>
-              <dd className="mt-1 font-semibold text-city-ink">{activity.address}</dd>
-            </div>
-            <div>
-              <dt className="text-sm text-city-muted">Цена</dt>
-              <dd className="mt-1 font-semibold text-city-ink">{price}</dd>
-            </div>
-            <div>
-              <dt className="text-sm text-city-muted">Связь</dt>
-              <dd className="mt-1 font-semibold text-city-ink">
-                {activity.contactPhone ?? activity.contactUrl ?? "Уточняется"}
-              </dd>
-            </div>
-          </dl>
-          <Link
-            href="/tula"
-            className="mt-6 inline-flex text-sm font-semibold text-city-green transition hover:text-city-blue"
-          >
-            Вернуться в каталог
-          </Link>
-        </aside>
-      </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4 text-city-muted">
+            Даты пока не добавлены. Свяжитесь с организатором, чтобы уточнить ближайшее занятие.
+          </p>
+        )}
+      </section>
 
       {similarActivities.length > 0 ? (
         <section className="mt-12">
           <div>
-            <h2 className="text-2xl font-bold text-city-ink">Похожие активности</h2>
+            <h2 className="text-2xl font-bold text-city-ink sm:text-3xl">
+              Похожие активности
+            </h2>
             <p className="mt-2 text-city-muted">
               Еще несколько вариантов в категории “{activity.category.name}”.
             </p>
@@ -331,6 +295,13 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           </div>
         </section>
       ) : null}
+
+      <Link
+        href="/tula"
+        className="mt-10 inline-flex text-sm font-semibold text-city-green transition hover:text-city-blue"
+      >
+        Вернуться в каталог
+      </Link>
     </div>
   );
 }

@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { ActivityCatalog } from "@/components/ActivityCatalog";
 
 export const metadata: Metadata = {
-  title: "Кружки и занятия в Туле",
-  description: "Найдите секции, мастер-классы, лекции, клубы и хобби в Туле.",
+  title: "Занятия и события в Туле",
+  description: "Найдите мастер-классы, секции, лекции и клубы по интересам.",
   openGraph: {
-    title: "Кружки и занятия в Туле",
-    description: "Найдите секции, мастер-классы, лекции, клубы и хобби в Туле.",
+    title: "Занятия и события в Туле",
+    description: "Найдите мастер-классы, секции, лекции и клубы по интересам.",
     url: "https://vnedoma.com/tula",
     siteName: "Вне дома",
     locale: "ru_RU",
@@ -22,8 +22,8 @@ export default async function TulaPage({ searchParams }: TulaPageProps) {
   return (
     <ActivityCatalog
       searchParams={searchParams ? await searchParams : {}}
-      heading="Кружки и занятия в Туле"
-      description="Секции, мастер-классы, лекции, клубы и хобби, куда можно прийти после работы, в выходные или просто в свободный вечер."
+      heading="Занятия и события в Туле"
+      description="Найдите мастер-классы, секции, лекции и клубы по интересам."
     />
   );
 }

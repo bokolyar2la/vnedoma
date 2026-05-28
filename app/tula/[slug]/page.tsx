@@ -57,6 +57,7 @@ export default async function TulaSeoPage({ params, searchParams }: TulaSeoPageP
       description={page.description}
       fixedFilters={page.filters}
       showCategoryFilter={false}
+      basePath={`/tula/${page.slug}`}
     />
   );
 }
