@@ -1,37 +1,57 @@
-import { PrismaClient, ActivityStatus } from "@prisma/client";
+import { ActivityStatus, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 const categories = [
   {
-    name: "Спорт",
-    slug: "sport",
-    description: "Секции, тренировки и мягкий старт в активный образ жизни."
-  },
-  {
-    name: "Творчество",
-    slug: "creativity",
-    description: "Мастер-классы, рисование, керамика и ручные практики."
+    name: "Игры и клубы",
+    slug: "igry-i-kluby",
+    description: "Настольные игры, квизы, клубы по интересам и дружеские встречи."
   },
   {
     name: "Танцы",
-    slug: "dance",
-    description: "Парные и сольные танцы с любым уровнем подготовки."
+    slug: "tancy",
+    description: "Социальные танцы, открытые уроки и вечеринки, куда можно прийти без пары."
   },
   {
-    name: "Обучение",
-    slug: "education",
-    description: "Языки, навыки, курсы и практические занятия."
+    name: "Спорт и прогулки",
+    slug: "sport-i-progulki",
+    description: "Тренировки, городские прогулки и активные форматы в компании."
   },
   {
-    name: "Встречи и клубы",
-    slug: "clubs",
-    description: "Клубы по интересам, игры, прогулки и живое общение."
+    name: "Творчество",
+    slug: "tvorchestvo",
+    description: "Керамика, рисование, ремесла и мастер-классы в небольших группах."
   },
   {
-    name: "Лекции",
-    slug: "lectures",
-    description: "Городские лекции, культурные встречи и просветительские события."
+    name: "Кулинария",
+    slug: "kulinariya",
+    description: "Кулинарные мастер-классы, дегустации и встречи за общим столом."
+  },
+  {
+    name: "Практики и здоровье",
+    slug: "praktiki-i-zdorove",
+    description: "Йога, мягкие практики, забота о себе и спокойные групповые занятия."
+  },
+  {
+    name: "Книги и общение",
+    slug: "knigi-i-obshchenie",
+    description: "Книжные клубы, разговорные встречи и форматы для живого общения."
+  },
+  {
+    name: "Волонтёрство",
+    slug: "volonterstvo",
+    description: "Добрые дела, городские инициативы и волонтёрские команды."
+  },
+  {
+    name: "Театр и сцена",
+    slug: "teatr-i-scena",
+    description: "Импровизация, сценическая речь, открытые репетиции и театральные клубы."
+  },
+  {
+    name: "Выезды и приключения",
+    slug: "vyezdy-i-priklyucheniya",
+    description: "Походы, поездки выходного дня и приключения в Тульской области."
   }
 ];
 
@@ -40,10 +60,10 @@ const tags = [
   ["Можно одному", "solo-friendly"],
   ["Вечером", "evening"],
   ["Выходные", "weekend"],
+  ["Много общения", "social"],
   ["Спокойный темп", "slow-pace"],
-  ["Общение", "communication"],
-  ["Практика", "practice"],
-  ["Творчество", "creative"]
+  ["Выезд", "trip"],
+  ["Бесплатно", "free"]
 ] as const;
 
 type SeedActivity = {
@@ -63,186 +83,58 @@ type SeedActivity = {
   contactUrl?: string;
   priority?: number;
   isPromoted?: boolean;
+  activityType: string;
+  socialLevel: string;
+  needsCheck?: boolean;
+  editorComment?: string;
   tagSlugs: string[];
-  events?: Array<{
-    title: string;
-    startsAt: Date;
-    endsAt?: Date;
-    price?: number;
-    seatsAvailable?: number;
-  }>;
 };
-
-const now = new Date();
-const day = 24 * 60 * 60 * 1000;
 
 const activities: SeedActivity[] = [
   {
-    title: "Мастер-класс по керамике",
-    slug: "keramika-dlya-vzroslyh",
+    title: "Вечер настольных игр",
+    slug: "vecher-nastolnyh-igr",
     description:
-      "Спокойное занятие в небольшой группе: лепка чашки или тарелки, базовые техники и поддержка мастера на каждом этапе.",
-    categorySlug: "creativity",
-    organizerName: "Творческая мастерская «Глина и Свет»",
-    organizerDescription: "Вымышленная камерная мастерская для творческих занятий взрослых.",
-    address: "Тула, ул. Советская, 18",
-    priceFrom: 1800,
-    priceTo: 2600,
+      "Ведущий помогает выбрать игру, объясняет правила и собирает компании за столами. Хороший формат, если хочется прийти одному и быстро включиться в общение.",
+    categorySlug: "igry-i-kluby",
+    organizerName: "Клуб настольных встреч «Ход»",
+    organizerDescription: "Вымышленный клуб дружеских игровых встреч в Туле.",
+    address: "Тула, ул. Пирогова, 14",
+    priceFrom: 400,
     beginnerFriendly: true,
     canComeAlone: true,
-    contactPhone: "+7 4872 00-11-24",
-    contactUrl: "https://vnedoma.com/demo/keramika",
-    priority: 30,
+    contactPhone: "+7 4872 00-50-77",
+    priority: 40,
     isPromoted: true,
-    tagSlugs: ["beginner", "solo-friendly", "creative", "weekend"],
-    events: [
-      {
-        title: "Керамика: первая чашка",
-        startsAt: new Date(now.getTime() + 3 * day),
-        endsAt: new Date(now.getTime() + 3 * day + 2 * 60 * 60 * 1000),
-        price: 2200,
-        seatsAvailable: 6
-      }
-    ]
+    activityType: "регулярная встреча",
+    socialLevel: "высокая",
+    tagSlugs: ["beginner", "solo-friendly", "evening", "social"]
   },
   {
-    title: "Разговорный английский клуб",
-    slug: "razgovornyy-angliyskiy-klub",
+    title: "Бачата с нуля без пары",
+    slug: "bachata-s-nulya-bez-pary",
     description:
-      "Еженедельные встречи для практики разговорного английского без школьного напряжения: темы, мини-игры и общение.",
-    categorySlug: "education",
-    organizerName: "Клуб языковой практики «Открытая речь»",
-    organizerDescription: "Вымышленный клуб для тех, кому нужна живая языковая практика.",
-    address: "Тула, пр-т Ленина, 54",
-    priceFrom: 600,
-    beginnerFriendly: true,
-    canComeAlone: true,
-    contactPhone: "+7 4872 00-21-45",
-    priority: 25,
-    tagSlugs: ["beginner", "solo-friendly", "evening", "communication"]
-  },
-  {
-    title: "Йога для начинающих",
-    slug: "yoga-dlya-nachinayushchih",
-    description:
-      "Мягкая практика без сложных асан: дыхание, растяжка, базовая техника и комфортный темп для первого знакомства с йогой.",
-    categorySlug: "sport",
-    organizerName: "Студия движения «Ровное дыхание»",
-    organizerDescription: "Вымышленная студия спокойных тренировок и групповых практик.",
-    address: "Тула, ул. Демонстрации, 9",
-    priceFrom: 500,
-    priceTo: 900,
-    beginnerFriendly: true,
-    canComeAlone: true,
-    contactPhone: "+7 4872 00-32-10",
-    priority: 24,
-    tagSlugs: ["beginner", "solo-friendly", "slow-pace"]
-  },
-  {
-    title: "Бачата с нуля",
-    slug: "bachata-s-nulya",
-    description:
-      "Парные танцы без опыта. Партнер не обязателен: на занятиях работает смена пар и простая структура урока.",
-    categorySlug: "dance",
+      "Открытая группа по бачате: партнер не нужен, пары меняются по кругу, а преподаватель держит дружелюбный темп для новичков.",
+    categorySlug: "tancy",
     organizerName: "Танцевальное пространство «Шаг ближе»",
-    organizerDescription: "Вымышленная танцевальная школа с открытыми группами.",
+    organizerDescription: "Вымышленная студия социальных танцев.",
     address: "Тула, ул. Фрунзе, 7",
     priceFrom: 700,
     priceTo: 1200,
     beginnerFriendly: true,
     canComeAlone: true,
     contactUrl: "https://vnedoma.com/demo/bachata",
-    priority: 23,
-    tagSlugs: ["beginner", "solo-friendly", "evening", "communication"]
-  },
-  {
-    title: "Книжный клуб современной прозы",
-    slug: "knizhnyy-klub-sovremennoy-prozy",
-    description:
-      "Встречи раз в две недели: читаем современную прозу, обсуждаем без снобизма и выбираем следующую книгу вместе.",
-    categorySlug: "clubs",
-    organizerName: "Городской клуб «После главы»",
-    organizerDescription: "Вымышленное сообщество для спокойных книжных встреч.",
-    address: "Тула, ул. Тургеневская, 12",
-    priceFrom: 300,
-    beginnerFriendly: true,
-    canComeAlone: true,
-    contactPhone: "+7 4872 00-43-90",
-    priority: 20,
-    tagSlugs: ["solo-friendly", "communication", "slow-pace"]
-  },
-  {
-    title: "Лекция по истории Тулы",
-    slug: "lekciya-po-istorii-tuly",
-    description:
-      "Открытая лекция о городских легендах, старых улицах и том, как менялась Тула в XX веке.",
-    categorySlug: "lectures",
-    organizerName: "Лекторий «Городские сюжеты»",
-    organizerDescription: "Вымышленный лекторий о культуре, истории и городской среде.",
-    address: "Тула, ул. Менделеевская, 6",
-    isFree: true,
-    beginnerFriendly: true,
-    canComeAlone: true,
-    contactUrl: "https://vnedoma.com/demo/tula-history",
-    priority: 22,
-    tagSlugs: ["solo-friendly", "weekend"]
-  },
-  {
-    title: "Настольные игры",
-    slug: "nastolnye-igry-dlya-vzroslyh",
-    description:
-      "Вечер современных настольных игр: ведущий объясняет правила, помогает подобрать игру и собрать компанию.",
-    categorySlug: "clubs",
-    organizerName: "Клуб настольных встреч «Ход»",
-    organizerDescription: "Вымышленный клуб настольных игр и дружеских встреч.",
-    address: "Тула, ул. Пирогова, 14",
-    priceFrom: 400,
-    beginnerFriendly: true,
-    canComeAlone: true,
-    contactPhone: "+7 4872 00-50-77",
-    priority: 19,
-    tagSlugs: ["beginner", "solo-friendly", "evening", "communication"]
-  },
-  {
-    title: "Рисование акрилом",
-    slug: "risovanie-akrilom",
-    description:
-      "Практический мастер-класс по акриловой живописи: композиция, цвет, фактуры и готовая работа к концу занятия.",
-    categorySlug: "creativity",
-    organizerName: "Арт-студия «Палитра рядом»",
-    organizerDescription: "Вымышленная студия рисования и творческих практик.",
-    address: "Тула, Красноармейский пр-т, 23",
-    priceFrom: 1500,
-    priceTo: 2300,
-    beginnerFriendly: true,
-    canComeAlone: true,
-    contactUrl: "https://vnedoma.com/demo/acrylic",
-    priority: 18,
-    tagSlugs: ["beginner", "solo-friendly", "creative"]
-  },
-  {
-    title: "Бокс для начинающих",
-    slug: "boks-dlya-nachinayushchih",
-    description:
-      "Тренировки с нуля: стойка, базовые удары, координация и общая физическая подготовка без давления.",
-    categorySlug: "sport",
-    organizerName: "Спортивный зал «Первый раунд»",
-    organizerDescription: "Вымышленный зал групповых тренировок.",
-    address: "Тула, ул. Кауля, 11",
-    priceFrom: 800,
-    priceTo: 1400,
-    beginnerFriendly: true,
-    canComeAlone: true,
-    contactPhone: "+7 4872 00-64-18",
-    priority: 17,
-    tagSlugs: ["beginner", "solo-friendly", "practice"]
+    priority: 36,
+    activityType: "постоянная активность",
+    socialLevel: "высокая",
+    tagSlugs: ["beginner", "solo-friendly", "evening", "social"]
   },
   {
     title: "Клуб прогулок по городу",
     slug: "klub-progulok-po-gorodu",
     description:
       "Неспешные прогулки по районам Тулы с разговорами об архитектуре, привычках города и любимых маршрутах участников.",
-    categorySlug: "clubs",
+    categorySlug: "sport-i-progulki",
     organizerName: "Сообщество «Тула пешком»",
     organizerDescription: "Вымышленное городское сообщество для прогулок и новых знакомств.",
     address: "Тула, сбор у площади Ленина",
@@ -250,60 +142,156 @@ const activities: SeedActivity[] = [
     beginnerFriendly: true,
     canComeAlone: true,
     contactUrl: "https://vnedoma.com/demo/walks",
-    priority: 21,
-    tagSlugs: ["solo-friendly", "weekend", "slow-pace", "communication"]
+    priority: 35,
+    activityType: "регулярная встреча",
+    socialLevel: "высокая",
+    tagSlugs: ["solo-friendly", "weekend", "slow-pace", "social", "free"]
   },
   {
-    title: "Фотопрогулка для новичков",
-    slug: "fotoprogulka-dlya-novichkov",
+    title: "Мастер-класс по керамике",
+    slug: "master-klass-po-keramike",
     description:
-      "Двухчасовая прогулка с практикой кадра, света и городских деталей. Подойдет для телефона или простой камеры.",
-    categorySlug: "education",
-    organizerName: "Фотошкола «Кадр в городе»",
-    organizerDescription: "Вымышленная фотошкола коротких практических занятий.",
-    address: "Тула, Казанская набережная",
+      "Небольшая группа, лепка чашки или тарелки, общая рабочая атмосфера и поддержка мастера на каждом этапе.",
+    categorySlug: "tvorchestvo",
+    organizerName: "Творческая мастерская «Глина и Свет»",
+    organizerDescription: "Вымышленная камерная мастерская для творческих занятий.",
+    address: "Тула, ул. Советская, 18",
+    priceFrom: 1800,
+    priceTo: 2600,
+    beginnerFriendly: true,
+    canComeAlone: true,
+    contactPhone: "+7 4872 00-11-24",
+    priority: 32,
+    isPromoted: true,
+    activityType: "разовое событие",
+    socialLevel: "средняя",
+    tagSlugs: ["beginner", "solo-friendly"]
+  },
+  {
+    title: "Кулинарный вечер пасты",
+    slug: "kulinarnyy-vecher-pasty",
+    description:
+      "Готовим пасту в мини-группе, делимся задачами и ужинаем за общим столом. Подходит для первого знакомства с кулинарными встречами.",
+    categorySlug: "kulinariya",
+    organizerName: "Кухня встреч «Тёплый стол»",
+    organizerDescription: "Вымышленная площадка камерных кулинарных мастер-классов.",
+    address: "Тула, ул. Тургеневская, 20",
+    priceFrom: 2200,
+    priceTo: 3200,
+    beginnerFriendly: true,
+    canComeAlone: true,
+    contactUrl: "https://vnedoma.com/demo/pasta",
+    priority: 30,
+    activityType: "разовое событие",
+    socialLevel: "высокая",
+    tagSlugs: ["beginner", "solo-friendly", "social", "weekend"]
+  },
+  {
+    title: "Йога и чай после практики",
+    slug: "yoga-i-chay-posle-praktiki",
+    description:
+      "Мягкая практика для новичков, а после занятия короткое чаепитие и спокойное общение в группе.",
+    categorySlug: "praktiki-i-zdorove",
+    organizerName: "Студия движения «Ровное дыхание»",
+    organizerDescription: "Вымышленная студия спокойных групповых практик.",
+    address: "Тула, ул. Демонстрации, 9",
+    priceFrom: 600,
+    priceTo: 1000,
+    beginnerFriendly: true,
+    canComeAlone: true,
+    contactPhone: "+7 4872 00-32-10",
+    priority: 28,
+    activityType: "постоянная активность",
+    socialLevel: "средняя",
+    tagSlugs: ["beginner", "solo-friendly", "slow-pace"]
+  },
+  {
+    title: "Книжный клуб современной прозы",
+    slug: "knizhnyy-klub-sovremennoy-prozy",
+    description:
+      "Читаем современную прозу, обсуждаем без снобизма и вместе выбираем следующую книгу. Можно прийти, даже если пока никого не знаете.",
+    categorySlug: "knigi-i-obshchenie",
+    organizerName: "Городской клуб «После главы»",
+    organizerDescription: "Вымышленное сообщество для спокойных книжных встреч.",
+    address: "Тула, ул. Тургеневская, 12",
+    priceFrom: 300,
+    beginnerFriendly: true,
+    canComeAlone: true,
+    contactPhone: "+7 4872 00-43-90",
+    priority: 26,
+    activityType: "регулярная встреча",
+    socialLevel: "высокая",
+    tagSlugs: ["solo-friendly", "social", "slow-pace"]
+  },
+  {
+    title: "Волонтёрская уборка берега",
+    slug: "volonterskaya-uborka-berega",
+    description:
+      "Командная городская акция на выходных: выдаются мешки и перчатки, после уборки участники пьют чай и знакомятся.",
+    categorySlug: "volonterstvo",
+    organizerName: "Инициатива «Чистый берег»",
+    organizerDescription: "Вымышленная городская волонтёрская инициатива.",
+    address: "Тула, точка сбора уточняется",
+    isFree: true,
+    beginnerFriendly: true,
+    canComeAlone: true,
+    contactUrl: "https://vnedoma.com/demo/clean-bank",
+    priority: 24,
+    activityType: "разовое событие",
+    socialLevel: "высокая",
+    needsCheck: true,
+    editorComment: "Перед публикацией реальной карточки проверить дату и точку сбора.",
+    tagSlugs: ["solo-friendly", "weekend", "social", "free"]
+  },
+  {
+    title: "Импровизация для начинающих",
+    slug: "improvizaciya-dlya-nachinayushchih",
+    description:
+      "Игровые упражнения, сценические миниатюры и безопасная атмосфера для тех, кто хочет попробовать сцену без давления.",
+    categorySlug: "teatr-i-scena",
+    organizerName: "Театральная лаборатория «Реплика»",
+    organizerDescription: "Вымышленная лаборатория сценических практик.",
+    address: "Тула, ул. Болдина, 98",
     priceFrom: 900,
     beginnerFriendly: true,
     canComeAlone: true,
-    contactPhone: "+7 4872 00-75-30",
-    priority: 15,
-    tagSlugs: ["beginner", "solo-friendly", "practice", "weekend"]
-  },
-  {
-    title: "Сальса open level",
-    slug: "salsa-open-level",
-    description:
-      "Динамичное танцевальное занятие: базовые шаги, музыкальность и простые связки в дружелюбной группе.",
-    categorySlug: "dance",
-    organizerName: "Танцевальная студия «Ритм улиц»",
-    organizerDescription: "Вымышленная студия социальных танцев.",
-    address: "Тула, ул. Октябрьская, 31",
-    priceFrom: 700,
-    beginnerFriendly: true,
-    canComeAlone: true,
-    contactUrl: "https://vnedoma.com/demo/salsa",
-    priority: 14,
-    tagSlugs: ["beginner", "solo-friendly", "evening"]
-  },
-  {
-    title: "Лекторий о личных финансах",
-    slug: "lektoriy-o-lichnyh-finansah",
-    description:
-      "Понятная встреча о бюджете, финансовых целях и привычках без сложных терминов и инвестиционных обещаний.",
-    categorySlug: "lectures",
-    organizerName: "Лекторий «Практичный вечер»",
-    organizerDescription: "Вымышленная площадка прикладных лекций.",
-    address: "Тула, ул. Болдина, 98",
-    priceFrom: 500,
-    beginnerFriendly: true,
-    canComeAlone: true,
     contactPhone: "+7 4872 00-86-02",
-    priority: 13,
-    tagSlugs: ["beginner", "solo-friendly", "evening"]
+    priority: 22,
+    activityType: "регулярная встреча",
+    socialLevel: "высокая",
+    tagSlugs: ["beginner", "solo-friendly", "social"]
+  },
+  {
+    title: "Поездка выходного дня к усадьбам",
+    slug: "poezdka-vyhodnogo-dnya-k-usadbam",
+    description:
+      "Небольшой групповой выезд по Тульской области: прогулка, экскурсионные остановки и время для общения в дороге.",
+    categorySlug: "vyezdy-i-priklyucheniya",
+    organizerName: "Клуб поездок «За город»",
+    organizerDescription: "Вымышленный клуб коротких поездок и маршрутов выходного дня.",
+    address: "Тула, сбор у Московского вокзала",
+    priceFrom: 1800,
+    priceTo: 2800,
+    beginnerFriendly: true,
+    canComeAlone: true,
+    contactUrl: "https://vnedoma.com/demo/usadby",
+    priority: 34,
+    activityType: "выездная активность",
+    socialLevel: "средняя",
+    needsCheck: true,
+    editorComment: "Для реальной карточки проверить расписание и транспорт.",
+    tagSlugs: ["solo-friendly", "weekend", "trip"]
   }
 ];
 
 async function main() {
+  await prisma.activityTag.deleteMany();
+  await prisma.event.deleteMany();
+  await prisma.activity.deleteMany();
+  await prisma.organizer.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.tag.deleteMany();
+
   const city = await prisma.city.upsert({
     where: { slug: "tula" },
     update: { name: "Тула" },
@@ -311,19 +299,11 @@ async function main() {
   });
 
   for (const category of categories) {
-    await prisma.category.upsert({
-      where: { slug: category.slug },
-      update: category,
-      create: category
-    });
+    await prisma.category.create({ data: category });
   }
 
   for (const [name, slug] of tags) {
-    await prisma.tag.upsert({
-      where: { slug },
-      update: { name },
-      create: { name, slug }
-    });
+    await prisma.tag.create({ data: { name, slug } });
   }
 
   for (const activity of activities) {
@@ -331,20 +311,8 @@ async function main() {
       where: { slug: activity.categorySlug }
     });
 
-    const organizer = await prisma.organizer.upsert({
-      where: {
-        name_cityId: {
-          name: activity.organizerName,
-          cityId: city.id
-        }
-      },
-      update: {
-        description: activity.organizerDescription,
-        address: activity.address,
-        phone: activity.contactPhone,
-        websiteUrl: activity.contactUrl
-      },
-      create: {
+    const organizer = await prisma.organizer.create({
+      data: {
         name: activity.organizerName,
         description: activity.organizerDescription,
         address: activity.address,
@@ -354,39 +322,8 @@ async function main() {
       }
     });
 
-    await prisma.activity.upsert({
-      where: { slug: activity.slug },
-      update: {
-        title: activity.title,
-        description: activity.description,
-        cityId: city.id,
-        categoryId: category.id,
-        organizerId: organizer.id,
-        address: activity.address,
-        priceFrom: activity.priceFrom,
-        priceTo: activity.priceTo,
-        isFree: activity.isFree ?? false,
-        isForAdults: true,
-        beginnerFriendly: activity.beginnerFriendly ?? false,
-        canComeAlone: activity.canComeAlone ?? false,
-        contactPhone: activity.contactPhone,
-        contactUrl: activity.contactUrl,
-        status: ActivityStatus.published,
-        isPromoted: activity.isPromoted ?? false,
-        promotedUntil: activity.isPromoted ? new Date(now.getTime() + 30 * day) : null,
-        priority: activity.priority ?? 0,
-        tags: {
-          deleteMany: {},
-          create: activity.tagSlugs.map((slug) => ({
-            tag: { connect: { slug } }
-          }))
-        },
-        events: {
-          deleteMany: {},
-          create: activity.events ?? []
-        }
-      },
-      create: {
+    await prisma.activity.create({
+      data: {
         title: activity.title,
         slug: activity.slug,
         description: activity.description,
@@ -402,17 +339,17 @@ async function main() {
         canComeAlone: activity.canComeAlone ?? false,
         contactPhone: activity.contactPhone,
         contactUrl: activity.contactUrl,
+        activityType: activity.activityType,
+        socialLevel: activity.socialLevel,
+        needsCheck: activity.needsCheck ?? false,
+        editorComment: activity.editorComment,
         status: ActivityStatus.published,
         isPromoted: activity.isPromoted ?? false,
-        promotedUntil: activity.isPromoted ? new Date(now.getTime() + 30 * day) : null,
         priority: activity.priority ?? 0,
         tags: {
           create: activity.tagSlugs.map((slug) => ({
             tag: { connect: { slug } }
           }))
-        },
-        events: {
-          create: activity.events ?? []
         }
       }
     });

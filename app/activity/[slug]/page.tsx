@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ActivityCard } from "@/components/ActivityCard";
 import { ActivityImage } from "@/components/ActivityImage";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { getSocialLevelLabel, isTripActivity } from "@/lib/activity-social";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
@@ -154,10 +155,15 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const contactHref = activity.contactUrl ?? `tel:${activity.contactPhone ?? ""}`;
   const hasContact = Boolean(activity.contactUrl || activity.contactPhone);
   const structuredData = buildStructuredData(activity);
+  const socialLabel = getSocialLevelLabel(activity.socialLevel);
+  const trip = isTripActivity(activity.activityType);
+
   const conditions = [
-    activity.beginnerFriendly ? "Подходит новичкам" : null,
     activity.canComeAlone ? "Можно прийти одному" : null,
-    activity.isFree ? "Бесплатно" : null
+    activity.beginnerFriendly ? "Подходит новичкам" : null,
+    activity.isFree ? "Бесплатно" : null,
+    activity.socialLevel === "высокая" ? "Много общения" : null,
+    trip ? "Выезд" : null
   ].filter((condition): condition is string => Boolean(condition));
 
   const infoCards = [
@@ -165,9 +171,16 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     { label: "Цена", value: price },
     { label: "Организатор", value: activity.organizer.name },
     { label: "Контакты", value: activity.contactPhone ?? activity.contactUrl ?? "Уточняются" },
-    { label: "Новичкам", value: activity.beginnerFriendly ? "Да" : "Уточнить" },
-    { label: "Можно одному", value: activity.canComeAlone ? "Да" : "Уточнить" }
+    { label: "Тип", value: activity.activityType ?? "Уточняется" },
+    { label: "Социальность", value: socialLabel ?? "Уточняется" }
   ];
+
+  const reasons = [
+    activity.canComeAlone ? "Можно прийти одному" : null,
+    activity.beginnerFriendly ? "Подходит новичкам" : null,
+    activity.socialLevel === "высокая" ? "Формат с общением" : null,
+    trip ? "Выездная активность на выходные" : null
+  ].filter((reason): reason is string => Boolean(reason));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -245,6 +258,33 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             )}
           </aside>
         </div>
+      </section>
+
+      <section className="mt-8 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
+        <h2 className="text-2xl font-bold text-city-ink">Почему стоит пойти</h2>
+        {reasons.length > 0 ? (
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {reasons.map((reason) => (
+              <div key={reason} className="rounded-2xl bg-city-soft p-4 font-semibold text-city-ink">
+                {reason}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4 text-city-muted">
+            Условия участия лучше уточнить у организатора.
+          </p>
+        )}
+        {activity.socialLevel === "высокая" ? (
+          <p className="mt-5 rounded-2xl bg-city-green/10 p-4 leading-7 text-city-ink">
+            Формат хорошо подходит для знакомства с людьми: участники взаимодействуют, играют, обсуждают или делают что-то вместе.
+          </p>
+        ) : null}
+        {trip ? (
+          <p className="mt-4 rounded-2xl bg-city-soft p-4 leading-7 text-city-ink">
+            Это выездной формат: уточните даты и место проведения у организатора.
+          </p>
+        ) : null}
       </section>
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Добавить активность",
-  description: "Добавьте кружок, секцию, мастер-класс, лекцию или клуб в каталог Вне дома."
+  description:
+    "Знаете классную активность в Туле? Добавьте её, мы проверим и опубликуем в каталоге Вне дома."
 };
 
 type AddPageProps = {
@@ -36,8 +37,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
         Добавить активность
       </h1>
       <p className="mt-4 text-lg leading-8 text-city-muted">
-        Расскажите о занятии, встрече, лекции или клубе. После проверки мы добавим
-        активность в каталог.
+        Знаете классную активность в Туле? Добавьте её, мы проверим информацию и опубликуем карточку в каталоге.
       </p>
 
       {success ? (
@@ -62,7 +62,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
             name="title"
             required
             className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-            placeholder="Например, йога для начинающих"
+            placeholder="Например, вечер настольных игр"
           />
         </div>
 
@@ -109,7 +109,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
             required
             rows={5}
             className="mt-2 w-full rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-            placeholder="Что будет на занятии, кому подойдет, как проходит встреча"
+            placeholder="Что это за активность, как проходит встреча, можно ли прийти одному"
           />
         </div>
 

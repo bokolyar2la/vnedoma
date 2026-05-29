@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ActivityStatus } from "@prisma/client";
 import { createAdminActivity } from "@/app/admin/activities/actions";
+import { activityTypeOptions, socialLevelOptions } from "@/lib/activity-social";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -42,7 +43,7 @@ export default async function NewActivityPage() {
               name="title"
               required
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-              placeholder="Мастер-класс по керамике"
+              placeholder="Вечер настольных игр"
             />
           </div>
 
@@ -56,7 +57,7 @@ export default async function NewActivityPage() {
               required
               rows={7}
               className="mt-2 w-full rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-              placeholder="Коротко и понятно: что за активность, кому подойдет, как проходит."
+              placeholder="Что это за активность, как проходит встреча, можно ли прийти одному, кому подойдет."
             />
           </div>
 
@@ -87,8 +88,45 @@ export default async function NewActivityPage() {
                 id="organizerName"
                 name="organizerName"
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-                placeholder="Название организатора"
+                placeholder="Название организатора или площадки"
               />
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label htmlFor="activityType" className="text-sm font-semibold text-city-ink">
+                Тип активности
+              </label>
+              <select
+                id="activityType"
+                name="activityType"
+                className="mt-2 min-h-12 w-full rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+              >
+                <option value="">Не указан</option>
+                {activityTypeOptions.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="socialLevel" className="text-sm font-semibold text-city-ink">
+                Социальность
+              </label>
+              <select
+                id="socialLevel"
+                name="socialLevel"
+                className="mt-2 min-h-12 w-full rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+              >
+                <option value="">Не указана</option>
+                {socialLevelOptions.map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -156,6 +194,19 @@ export default async function NewActivityPage() {
               />
             </div>
           </div>
+
+          <div>
+            <label htmlFor="editorComment" className="text-sm font-semibold text-city-ink">
+              Комментарий для проверки
+            </label>
+            <textarea
+              id="editorComment"
+              name="editorComment"
+              rows={4}
+              className="mt-2 w-full rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+              placeholder="Что нужно проверить: дата, цена, источник, условия участия."
+            />
+          </div>
         </section>
 
         <aside className="h-fit space-y-5 rounded-3xl border border-city-line bg-white p-5 shadow-soft">
@@ -191,6 +242,10 @@ export default async function NewActivityPage() {
             <label className="flex items-center gap-2 text-sm text-city-muted">
               <input name="isVerified" type="checkbox" className="h-4 w-4 accent-city-green" />
               Проверено вручную
+            </label>
+            <label className="flex items-center gap-2 text-sm text-city-muted">
+              <input name="needsCheck" type="checkbox" className="h-4 w-4 accent-city-green" />
+              Требует проверки
             </label>
           </div>
 

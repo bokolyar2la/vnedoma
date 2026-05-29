@@ -6,16 +6,36 @@ import { prisma } from "@/lib/prisma";
 
 const quickLinks = [
   {
-    label: "Мастер-классы",
-    href: "/tula/master-klassy",
-    text: "Керамика, рисование, ремесла",
-    mark: "✦"
+    label: "Игры и клубы",
+    href: "/tula/igry-i-kluby",
+    text: "Настолки, квизы, клубные встречи",
+    mark: "play"
   },
-  { label: "Спорт", href: "/tula/sport", text: "Тренировки и мягкий старт", mark: "↗" },
-  { label: "Танцы", href: "/tula/tancy", text: "Бачата, сальса и новые движения", mark: "♪" },
-  { label: "Лекции", href: "/tula/lekcii", text: "История, культура, навыки", mark: "§" },
-  { label: "Бесплатно", href: "/tula/besplatno", text: "Открытые встречи и события", mark: "0" },
-  { label: "Можно одному", href: "/tula/mozhno-odnomu", text: "Без компании тоже комфортно", mark: "•" }
+  { label: "Танцы", href: "/tula/tancy", text: "Можно без пары и опыта", mark: "dance" },
+  {
+    label: "Спорт и прогулки",
+    href: "/tula/sport-i-progulki",
+    text: "Движение, маршруты, город",
+    mark: "move"
+  },
+  {
+    label: "Можно одному",
+    href: "/tula/mozhno-odnomu",
+    text: "Форматы, где не нужна компания",
+    mark: "solo"
+  },
+  {
+    label: "На выходные",
+    href: "/tula/chem-zanyatsya-v-vyhodnye",
+    text: "Выезды и планы на пару дней",
+    mark: "weekend"
+  },
+  {
+    label: "Где познакомиться",
+    href: "/tula/gde-poznakomitsya",
+    text: "Больше общения и совместных дел",
+    mark: "meet"
+  }
 ];
 
 type ActivityPreview = Parameters<typeof ActivityCard>[0]["activity"] & {
@@ -27,11 +47,11 @@ export const metadata: Metadata = {
     absolute: "Вне дома — занятия, кружки и события в Туле"
   },
   description:
-    "Кружки, секции, мастер-классы, лекции и клубы в Туле — в одном месте.",
+    "Найдите, куда сходить в Туле, чтобы не сидеть дома: игры, танцы, прогулки, мастер-классы, клубы и встречи.",
   openGraph: {
     title: "Вне дома — занятия, кружки и события в Туле",
     description:
-      "Кружки, секции, мастер-классы, лекции и клубы в Туле — в одном месте.",
+      "Игры, танцы, прогулки, мастер-классы, клубы и встречи в Туле, куда можно прийти одному и оказаться среди людей.",
     url: "https://vnedoma.com",
     siteName: "Вне дома",
     locale: "ru_RU",
@@ -75,11 +95,18 @@ function ActivitySection({
 }
 
 export default async function HomePage() {
-  const [popularActivities, soloActivities, freeActivities] = await Promise.all([
+  const [
+    soloActivities,
+    socialActivities,
+    weekendActivities,
+    gameActivities,
+    beginnerActivities
+  ] = await Promise.all([
     prisma.activity.findMany({
       where: {
         status: ActivityStatus.published,
-        city: { slug: "tula" }
+        city: { slug: "tula" },
+        canComeAlone: true
       },
       include: { category: true },
       orderBy: [{ isPromoted: "desc" }, { priority: "desc" }, { createdAt: "desc" }],
@@ -89,7 +116,7 @@ export default async function HomePage() {
       where: {
         status: ActivityStatus.published,
         city: { slug: "tula" },
-        canComeAlone: true
+        socialLevel: "высокая"
       },
       include: { category: true },
       orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
@@ -99,7 +126,30 @@ export default async function HomePage() {
       where: {
         status: ActivityStatus.published,
         city: { slug: "tula" },
-        isFree: true
+        OR: [
+          { activityType: "выездная активность" },
+          { category: { slug: "vyezdy-i-priklyucheniya" } }
+        ]
+      },
+      include: { category: true },
+      orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+      take: 6
+    }),
+    prisma.activity.findMany({
+      where: {
+        status: ActivityStatus.published,
+        city: { slug: "tula" },
+        category: { slug: "igry-i-kluby" }
+      },
+      include: { category: true },
+      orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+      take: 6
+    }),
+    prisma.activity.findMany({
+      where: {
+        status: ActivityStatus.published,
+        city: { slug: "tula" },
+        beginnerFriendly: true
       },
       include: { category: true },
       orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
@@ -112,22 +162,22 @@ export default async function HomePage() {
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
         <div className="flex flex-col justify-center">
           <p className="mb-4 w-fit rounded-full bg-city-soft px-4 py-2 text-sm font-semibold text-city-green">
-            Офлайн-активности для города
+            Социальные активности в Туле
           </p>
           <h1 className="max-w-3xl text-4xl font-bold leading-tight text-city-ink sm:text-6xl">
-            Найдите занятие по душе в Туле
+            Найдите, чем заняться в Туле
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-city-muted">
-            Кружки, секции, мастер-классы, лекции и клубы — в одном месте.
+            Игры, танцы, прогулки, мастер-классы, клубы и встречи — места, куда можно прийти одному и оказаться среди людей.
           </p>
           <p className="mt-3 max-w-2xl text-base leading-7 text-city-ink">
-            Выберите, чем заняться сегодня, на выходных или после работы.
+            Выберите активность на вечер, выходные или новый круг общения.
           </p>
           <form action="/tula" className="mt-8 flex flex-col gap-3 rounded-[28px] bg-white p-2 shadow-soft ring-1 ring-city-line sm:flex-row">
             <input
               name="q"
               type="search"
-              placeholder="Йога, керамика, английский..."
+              placeholder="Игры, прогулка, танцы, кулинария..."
               className="min-h-12 flex-1 rounded-full border-0 bg-transparent px-4 text-city-ink outline-none placeholder:text-city-muted/70"
             />
             <button className="min-h-12 rounded-full bg-city-green px-6 font-semibold text-white transition hover:bg-city-blue">
@@ -158,7 +208,7 @@ export default async function HomePage() {
                       </h2>
                       <p className="mt-1 text-sm leading-5 text-city-muted">{item.text}</p>
                     </div>
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-city-soft text-lg font-bold text-city-green">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-city-soft text-xs font-bold uppercase text-city-green">
                       {item.mark}
                     </span>
                   </div>
@@ -170,32 +220,46 @@ export default async function HomePage() {
       </section>
 
       <ActivitySection
-        title="Популярное в Туле"
-        description="Подборка занятий, с которых удобно начать."
-        activities={popularActivities}
-        href="/tula"
-      />
-
-      <ActivitySection
         title="Можно прийти одному"
-        description="Варианты, где комфортно появиться без компании."
+        description="Форматы, где нормально появиться без компании и быстро включиться в процесс."
         activities={soloActivities}
         href="/tula/mozhno-odnomu"
       />
 
       <ActivitySection
-        title="Бесплатные занятия"
-        description="Открытые встречи, лекции и прогулки без оплаты."
-        activities={freeActivities}
-        href="/tula/besplatno"
+        title="Много общения"
+        description="Игры, танцы, клубы и встречи, где участники взаимодействуют друг с другом."
+        activities={socialActivities}
+        href="/tula/gde-poznakomitsya"
+      />
+
+      <ActivitySection
+        title="На выходные"
+        description="Выезды, прогулки и активности, которые удобно запланировать на свободный день."
+        activities={weekendActivities}
+        href="/tula/chem-zanyatsya-v-vyhodnye"
+      />
+
+      <ActivitySection
+        title="Игры и клубы"
+        description="Настольные игры, квизы и клубные встречи для знакомства через общее дело."
+        activities={gameActivities}
+        href="/tula/igry-i-kluby"
+      />
+
+      <ActivitySection
+        title="Новичкам"
+        description="Активности, где не нужен опыт и можно спокойно прийти впервые."
+        activities={beginnerActivities}
+        href="/tula/dlya-novichkov"
       />
 
       <section className="mx-auto max-w-7xl px-4 pb-14 pt-6 sm:px-6">
         <div className="flex flex-col items-start justify-between gap-5 rounded-[32px] bg-city-ink p-6 text-white shadow-soft sm:flex-row sm:items-center">
           <div>
-            <h2 className="text-2xl font-bold">Знаете хорошее место или клуб?</h2>
+            <h2 className="text-2xl font-bold">Знаете классную активность в Туле?</h2>
             <p className="mt-2 max-w-2xl text-white/75">
-              Добавьте активность, а мы проверим ее и покажем людям в каталоге.
+              Добавьте её, мы проверим информацию и опубликуем карточку в каталоге.
             </p>
           </div>
           <Link

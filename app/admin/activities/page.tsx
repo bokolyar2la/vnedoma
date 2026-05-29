@@ -4,6 +4,11 @@ import { ActivityStatus, Prisma } from "@prisma/client";
 import { archiveActivity, publishActivity } from "@/app/admin/activities/actions";
 import { ActivityImage } from "@/components/ActivityImage";
 import { DeleteActivityButton } from "@/components/DeleteActivityButton";
+import {
+  getSocialLevelLabel,
+  isTripActivity,
+  socialLevelOptions
+} from "@/lib/activity-social";
 import { formatPrice } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
@@ -61,12 +66,17 @@ export default async function AdminActivitiesPage({
   const params = searchParams ? await searchParams : {};
   const status = getSingleParam(params, "status") ?? "all";
   const category = getSingleParam(params, "category") ?? "";
+  const socialLevel = getSingleParam(params, "socialLevel") ?? "";
+  const needsCheck = getSingleParam(params, "needsCheck") ?? "all";
   const q = getSingleParam(params, "q")?.trim() ?? "";
   const selectedStatus = parseStatus(status);
 
   const where: Prisma.ActivityWhereInput = {
     ...(selectedStatus ? { status: selectedStatus } : {}),
     ...(category ? { category: { slug: category } } : {}),
+    ...(socialLevel ? { socialLevel } : {}),
+    ...(needsCheck === "yes" ? { needsCheck: true } : {}),
+    ...(needsCheck === "no" ? { needsCheck: false } : {}),
     ...(q
       ? {
           OR: [
@@ -126,7 +136,7 @@ export default async function AdminActivitiesPage({
       </div>
 
       <section className="mt-8 rounded-3xl border border-city-line bg-white p-4 shadow-soft">
-        <form className="grid gap-3 lg:grid-cols-[1fr_180px_220px_auto]">
+        <form className="grid gap-3 lg:grid-cols-[1fr_150px_210px_170px_170px_auto]">
           <input
             name="q"
             defaultValue={q}
@@ -156,6 +166,27 @@ export default async function AdminActivitiesPage({
               </option>
             ))}
           </select>
+          <select
+            name="socialLevel"
+            defaultValue={socialLevel}
+            className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+          >
+            <option value="">Социальность</option>
+            {socialLevelOptions.map((level) => (
+              <option key={level} value={level}>
+                {level}
+              </option>
+            ))}
+          </select>
+          <select
+            name="needsCheck"
+            defaultValue={needsCheck}
+            className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+          >
+            <option value="all">Проверка: все</option>
+            <option value="yes">Требует проверки</option>
+            <option value="no">Проверено</option>
+          </select>
           <button className="min-h-12 rounded-2xl bg-city-ink px-5 font-semibold text-white transition hover:bg-city-green">
             Применить
           </button>
@@ -164,11 +195,13 @@ export default async function AdminActivitiesPage({
 
       <section className="mt-6 grid gap-5">
         {activities.map((activity) => {
+          const socialLabel = getSocialLevelLabel(activity.socialLevel);
           const indicators = [
             activity.imageUrl ? "есть изображение" : "нет изображения",
             activity.canComeAlone ? "можно одному" : null,
             activity.isFree ? "бесплатно" : null,
-            activity.beginnerFriendly ? "новичкам" : null
+            activity.beginnerFriendly ? "новичкам" : null,
+            isTripActivity(activity.activityType) ? "выезд" : null
           ].filter((item): item is string => Boolean(item));
 
           return (
@@ -189,9 +222,24 @@ export default async function AdminActivitiesPage({
                     <span className="rounded-full bg-city-soft px-3 py-1 text-xs font-semibold text-city-green">
                       {statusLabel(activity.status)}
                     </span>
+                    {activity.needsCheck ? (
+                      <span className="rounded-full bg-city-coral/10 px-3 py-1 text-xs font-semibold text-city-coral">
+                        Проверить
+                      </span>
+                    ) : null}
                     <span className="rounded-full border border-city-line px-3 py-1 text-xs text-city-muted">
                       {activity.category.name}
                     </span>
+                    {activity.activityType ? (
+                      <span className="rounded-full border border-city-line px-3 py-1 text-xs text-city-muted">
+                        {activity.activityType}
+                      </span>
+                    ) : null}
+                    {socialLabel ? (
+                      <span className="rounded-full border border-city-line px-3 py-1 text-xs text-city-muted">
+                        {socialLabel}
+                      </span>
+                    ) : null}
                     <span className="rounded-full border border-city-line px-3 py-1 text-xs font-semibold text-city-ink">
                       {formatPrice(activity)}
                     </span>

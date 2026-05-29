@@ -107,6 +107,7 @@ export async function createActivity(formData: FormData) {
       sourceUrl: null,
       imageUrl: null,
       isVerified: false,
+      needsCheck: true,
       status: ActivityStatus.draft
     }
   });

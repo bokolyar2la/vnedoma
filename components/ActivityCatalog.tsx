@@ -68,11 +68,16 @@ export async function ActivityCatalog({
       : {})
   };
 
-  const activities = await prisma.activity.findMany({
-    where,
-    include: { category: true },
-    orderBy: [{ isPromoted: "desc" }, { priority: "desc" }, { createdAt: "desc" }]
-  });
+  const [activities, categories] = await Promise.all([
+    prisma.activity.findMany({
+      where,
+      include: { category: true },
+      orderBy: [{ isPromoted: "desc" }, { priority: "desc" }, { createdAt: "desc" }]
+    }),
+    showCategoryFilter
+      ? prisma.category.findMany({ orderBy: { name: "asc" } })
+      : Promise.resolve([])
+  ]);
 
   const commonParams = {
     ...(q ? { q } : {}),
@@ -133,7 +138,7 @@ export async function ActivityCatalog({
             name="q"
             defaultValue={q}
             type="search"
-            placeholder="Поиск: йога, керамика, лекции..."
+            placeholder="Поиск: игры, прогулка, танцы..."
             className="min-h-12 flex-1 rounded-full border-0 bg-white px-5 text-city-ink outline-none placeholder:text-city-muted/70"
           />
           {category ? <input type="hidden" name="category" value={category} /> : null}
@@ -157,6 +162,30 @@ export async function ActivityCatalog({
             </Link>
           ))}
         </div>
+
+        {showCategoryFilter ? (
+          <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+            {categories.map((item) => (
+              <Link
+                key={item.slug}
+                href={buildHref(basePath, {
+                  ...(q ? { q } : {}),
+                  category: item.slug,
+                  ...(isFree ? { free: "1" } : {}),
+                  ...(canComeAlone ? { alone: "1" } : {}),
+                  ...(beginnerFriendly ? { beginner: "1" } : {})
+                })}
+                className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  category === item.slug
+                    ? "bg-city-ink text-white"
+                    : "bg-white text-city-muted hover:text-city-green"
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       {activities.length > 0 ? (

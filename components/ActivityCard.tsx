@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ActivityImage } from "@/components/ActivityImage";
+import { isTripActivity } from "@/lib/activity-social";
 import { formatPrice } from "@/lib/format";
 
 type ActivityCardProps = {
@@ -15,6 +16,8 @@ type ActivityCardProps = {
     beginnerFriendly: boolean;
     canComeAlone: boolean;
     imageUrl?: string | null;
+    activityType?: string | null;
+    socialLevel?: string | null;
     category: {
       name: string;
     };
@@ -23,9 +26,11 @@ type ActivityCardProps = {
 
 export function ActivityCard({ activity }: ActivityCardProps) {
   const badges = [
-    activity.beginnerFriendly ? "Новичкам" : null,
     activity.canComeAlone ? "Можно одному" : null,
-    activity.isFree ? "Бесплатно" : null
+    activity.beginnerFriendly ? "Новичкам" : null,
+    activity.isFree ? "Бесплатно" : null,
+    activity.socialLevel === "высокая" ? "Много общения" : null,
+    isTripActivity(activity.activityType) ? "Выезд" : null
   ].filter((badge): badge is string => Boolean(badge));
 
   return (

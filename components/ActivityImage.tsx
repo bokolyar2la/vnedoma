@@ -1,7 +1,7 @@
 type ActivityImageProps = {
   title: string;
   categoryName: string;
-  imageUrl: string | null;
+  imageUrl?: string | null;
   className?: string;
 };
 
@@ -14,57 +14,89 @@ type CategoryVisual = {
 function getCategoryVisual(categoryName: string): CategoryVisual {
   const name = categoryName.toLowerCase();
 
-  if (name.includes("твор")) {
+  if (name.includes("игр") || name.includes("клуб")) {
     return {
-      gradient: "from-[#fff1d8] via-[#ffd6b8] to-[#f7a98f]",
-      symbol: "✦",
-      accent: "text-[#9a4b2f]"
-    };
-  }
-
-  if (name.includes("спорт")) {
-    return {
-      gradient: "from-[#dff8ec] via-[#bfe8e8] to-[#8ec7df]",
-      symbol: "↗",
-      accent: "text-[#166b63]"
+      gradient: "from-[#eef6dc] via-[#dbecc7] to-[#b9d7b1]",
+      symbol: "play",
+      accent: "text-[#4f7448]"
     };
   }
 
   if (name.includes("танц")) {
     return {
       gradient: "from-[#ffe2ef] via-[#ffc0b0] to-[#f49a63]",
-      symbol: "♪",
+      symbol: "dance",
       accent: "text-[#9a3f52]"
     };
   }
 
-  if (name.includes("лекц")) {
+  if (name.includes("спорт") || name.includes("прогул")) {
     return {
-      gradient: "from-[#e8eef5] via-[#cfdbe8] to-[#9fb5c8]",
-      symbol: "§",
-      accent: "text-[#41566b]"
+      gradient: "from-[#dff8ec] via-[#bfe8e8] to-[#8ec7df]",
+      symbol: "move",
+      accent: "text-[#166b63]"
     };
   }
 
-  if (name.includes("обуч")) {
+  if (name.includes("твор")) {
+    return {
+      gradient: "from-[#fff1d8] via-[#ffd6b8] to-[#f7a98f]",
+      symbol: "art",
+      accent: "text-[#9a4b2f]"
+    };
+  }
+
+  if (name.includes("кулинар")) {
+    return {
+      gradient: "from-[#fff4d8] via-[#f8d7a8] to-[#e9a66f]",
+      symbol: "taste",
+      accent: "text-[#8a5629]"
+    };
+  }
+
+  if (name.includes("практик") || name.includes("здоров")) {
+    return {
+      gradient: "from-[#e7f7f1] via-[#d5eee7] to-[#b8dcd3]",
+      symbol: "calm",
+      accent: "text-[#367064]"
+    };
+  }
+
+  if (name.includes("книг") || name.includes("общен")) {
     return {
       gradient: "from-[#eef0ff] via-[#d7e2ff] to-[#b8c9f2]",
-      symbol: "A",
+      symbol: "talk",
       accent: "text-[#4658a8]"
     };
   }
 
-  if (name.includes("встреч") || name.includes("клуб")) {
+  if (name.includes("волонт")) {
     return {
-      gradient: "from-[#eef6dc] via-[#dbecc7] to-[#b9d7b1]",
-      symbol: "•",
-      accent: "text-[#4f7448]"
+      gradient: "from-[#eaf7e8] via-[#cfeccf] to-[#a8d8ad]",
+      symbol: "help",
+      accent: "text-[#36743f]"
+    };
+  }
+
+  if (name.includes("театр") || name.includes("сцен")) {
+    return {
+      gradient: "from-[#f3e8ff] via-[#e2d3f5] to-[#c4addf]",
+      symbol: "stage",
+      accent: "text-[#65448c]"
+    };
+  }
+
+  if (name.includes("выезд") || name.includes("приключ")) {
+    return {
+      gradient: "from-[#e8eef5] via-[#cfdbe8] to-[#9fb5c8]",
+      symbol: "trip",
+      accent: "text-[#41566b]"
     };
   }
 
   return {
     gradient: "from-[#edf7f4] via-[#d9ece6] to-[#c4dfd6]",
-    symbol: "•",
+    symbol: "meet",
     accent: "text-city-green"
   };
 }
@@ -102,7 +134,7 @@ export function ActivityImage({
             Вне дома
           </p>
         </div>
-        <span className={`text-5xl font-bold leading-none ${visual.accent} opacity-75`}>
+        <span className={`text-2xl font-bold uppercase leading-none ${visual.accent} opacity-75`}>
           {visual.symbol}
         </span>
       </div>

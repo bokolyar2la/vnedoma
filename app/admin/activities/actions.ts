@@ -139,6 +139,10 @@ export async function createAdminActivity(formData: FormData) {
       sourceUrl: getOptionalString(formData, "sourceUrl"),
       imageUrl: getOptionalString(formData, "imageUrl"),
       isVerified: formData.get("isVerified") === "on",
+      activityType: getOptionalString(formData, "activityType"),
+      socialLevel: getOptionalString(formData, "socialLevel"),
+      needsCheck: formData.get("needsCheck") === "on",
+      editorComment: getOptionalString(formData, "editorComment"),
       status: getStatus(formData, ActivityStatus.published)
     }
   });
@@ -220,6 +224,10 @@ export async function updateActivity(formData: FormData) {
       sourceUrl: getOptionalString(formData, "sourceUrl"),
       isVerified: formData.get("isVerified") === "on",
       imageUrl: getOptionalString(formData, "imageUrl"),
+      activityType: getOptionalString(formData, "activityType"),
+      socialLevel: getOptionalString(formData, "socialLevel"),
+      needsCheck: formData.get("needsCheck") === "on",
+      editorComment: getOptionalString(formData, "editorComment"),
       status: getStatus(formData, ActivityStatus.draft)
     }
   });

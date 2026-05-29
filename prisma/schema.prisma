@@ -72,6 +72,10 @@ model Activity {
   sourceUrl        String?
   isVerified       Boolean        @default(false)
   imageUrl         String?
+  activityType     String?
+  socialLevel      String?
+  needsCheck       Boolean        @default(false)
+  editorComment    String?
   status           ActivityStatus @default(draft)
   isPromoted       Boolean        @default(false)
   promotedUntil    DateTime?

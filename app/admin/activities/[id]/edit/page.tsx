@@ -4,6 +4,7 @@ import { ActivityStatus } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { updateActivity } from "@/app/admin/activities/actions";
 import { ActivityImage } from "@/components/ActivityImage";
+import { activityTypeOptions, socialLevelOptions } from "@/lib/activity-social";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -124,6 +125,45 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
             </div>
           </div>
 
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label htmlFor="activityType" className="text-sm font-semibold text-city-ink">
+                Тип активности
+              </label>
+              <select
+                id="activityType"
+                name="activityType"
+                defaultValue={activity.activityType ?? ""}
+                className="mt-2 min-h-12 w-full rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+              >
+                <option value="">Не указан</option>
+                {activityTypeOptions.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="socialLevel" className="text-sm font-semibold text-city-ink">
+                Социальность
+              </label>
+              <select
+                id="socialLevel"
+                name="socialLevel"
+                defaultValue={activity.socialLevel ?? ""}
+                className="mt-2 min-h-12 w-full rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+              >
+                <option value="">Не указана</option>
+                {socialLevelOptions.map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div>
             <label htmlFor="address" className="text-sm font-semibold text-city-ink">
               Адрес
@@ -188,6 +228,19 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
               />
             </div>
           </div>
+
+          <div>
+            <label htmlFor="editorComment" className="text-sm font-semibold text-city-ink">
+              Комментарий для проверки
+            </label>
+            <textarea
+              id="editorComment"
+              name="editorComment"
+              rows={4}
+              defaultValue={activity.editorComment ?? ""}
+              className="mt-2 w-full rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+            />
+          </div>
         </section>
 
         <aside className="h-fit space-y-5 rounded-3xl border border-city-line bg-white p-5 shadow-soft">
@@ -230,6 +283,10 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
             <label className="flex items-center gap-2 text-sm text-city-muted">
               <input name="isVerified" type="checkbox" defaultChecked={activity.isVerified} className="h-4 w-4 accent-city-green" />
               Проверено вручную
+            </label>
+            <label className="flex items-center gap-2 text-sm text-city-muted">
+              <input name="needsCheck" type="checkbox" defaultChecked={activity.needsCheck} className="h-4 w-4 accent-city-green" />
+              Требует проверки
             </label>
           </div>
 
