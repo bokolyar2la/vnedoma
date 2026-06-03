@@ -154,6 +154,11 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const price = formatPrice(activity);
   const contactHref = activity.contactUrl ?? `tel:${activity.contactPhone ?? ""}`;
   const hasContact = Boolean(activity.contactUrl || activity.contactPhone);
+  const organizerName = activity.organizer.name.trim();
+  const hasOrganizer =
+    organizerName.length > 0 &&
+    organizerName !== "Не указан" &&
+    organizerName !== "Не указано";
   const structuredData = buildStructuredData(activity);
   const socialLabel = getSocialLevelLabel(activity.socialLevel);
   const trip = isTripActivity(activity.activityType);
@@ -238,9 +243,12 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           <aside className="h-fit rounded-[28px] bg-city-soft p-5">
             <p className="text-sm text-city-muted">Стоимость</p>
             <p className="mt-1 text-2xl font-bold text-city-ink">{price}</p>
-            <p className="mt-4 text-sm leading-6 text-city-muted">
-              {activity.organizer.description}
-            </p>
+            {hasOrganizer ? (
+              <div className="mt-4">
+                <p className="text-sm text-city-muted">Организатор</p>
+                <p className="mt-1 font-semibold text-city-ink">{organizerName}</p>
+              </div>
+            ) : null}
             {hasContact ? (
               <a
                 href={contactHref}
