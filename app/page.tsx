@@ -96,12 +96,25 @@ function ActivitySection({
 
 export default async function HomePage() {
   const [
+    meetPeopleActivities,
     soloActivities,
-    socialActivities,
-    weekendActivities,
-    gameActivities,
-    beginnerActivities
+    activeRestActivities,
+    creativeActivities,
+    weekendActivities
   ] = await Promise.all([
+    prisma.activity.findMany({
+      where: {
+        status: ActivityStatus.published,
+        city: { slug: "tula" },
+        OR: [
+          { socialLevel: "высокая" },
+          { category: { slug: { in: ["igry-i-kluby", "tancy", "volonterstvo"] } } }
+        ]
+      },
+      include: { category: true },
+      orderBy: [{ isPromoted: "desc" }, { priority: "desc" }, { createdAt: "desc" }],
+      take: 6
+    }),
     prisma.activity.findMany({
       where: {
         status: ActivityStatus.published,
@@ -116,7 +129,17 @@ export default async function HomePage() {
       where: {
         status: ActivityStatus.published,
         city: { slug: "tula" },
-        socialLevel: "высокая"
+        category: { slug: { in: ["sport-i-progulki", "vyezdy-i-priklyucheniya"] } }
+      },
+      include: { category: true },
+      orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+      take: 6
+    }),
+    prisma.activity.findMany({
+      where: {
+        status: ActivityStatus.published,
+        city: { slug: "tula" },
+        category: { slug: { in: ["tvorchestvo", "kulinariya"] } }
       },
       include: { category: true },
       orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
@@ -130,26 +153,6 @@ export default async function HomePage() {
           { activityType: "выездная активность" },
           { category: { slug: "vyezdy-i-priklyucheniya" } }
         ]
-      },
-      include: { category: true },
-      orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-      take: 6
-    }),
-    prisma.activity.findMany({
-      where: {
-        status: ActivityStatus.published,
-        city: { slug: "tula" },
-        category: { slug: "igry-i-kluby" }
-      },
-      include: { category: true },
-      orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-      take: 6
-    }),
-    prisma.activity.findMany({
-      where: {
-        status: ActivityStatus.published,
-        city: { slug: "tula" },
-        beginnerFriendly: true
       },
       include: { category: true },
       orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
@@ -220,38 +223,38 @@ export default async function HomePage() {
       </section>
 
       <ActivitySection
-        title="Можно прийти одному"
-        description="Форматы, где нормально появиться без компании и быстро включиться в процесс."
+        title="Где познакомиться с новыми людьми"
+        description="Игры, танцы, волонтёрство и другие форматы, где люди взаимодействуют друг с другом."
+        activities={meetPeopleActivities}
+        href="/tula/gde-poznakomitsya"
+      />
+
+      <ActivitySection
+        title="Можно прийти без компании"
+        description="Форматы, где нормально появиться одному и быстро включиться в общий процесс."
         activities={soloActivities}
         href="/tula/mozhno-odnomu"
       />
 
       <ActivitySection
-        title="Много общения"
-        description="Игры, танцы, клубы и встречи, где участники взаимодействуют друг с другом."
-        activities={socialActivities}
-        href="/tula/gde-poznakomitsya"
+        title="Движение и активный отдых"
+        description="Прогулки, спорт, выезды и маршруты для тех, кто хочет выбраться из дома."
+        activities={activeRestActivities}
+        href="/tula/sport-i-progulki"
       />
 
       <ActivitySection
-        title="На выходные"
-        description="Выезды, прогулки и активности, которые удобно запланировать на свободный день."
+        title="Творческие занятия"
+        description="Мастер-классы, кулинарные вечера и практики, где проще общаться через общее дело."
+        activities={creativeActivities}
+        href="/tula/tvorchestvo"
+      />
+
+      <ActivitySection
+        title="Идеи на выходные"
+        description="Выездные форматы и активности, которые удобно запланировать на свободный день."
         activities={weekendActivities}
         href="/tula/chem-zanyatsya-v-vyhodnye"
-      />
-
-      <ActivitySection
-        title="Игры и клубы"
-        description="Настольные игры, квизы и клубные встречи для знакомства через общее дело."
-        activities={gameActivities}
-        href="/tula/igry-i-kluby"
-      />
-
-      <ActivitySection
-        title="Новичкам"
-        description="Активности, где не нужен опыт и можно спокойно прийти впервые."
-        activities={beginnerActivities}
-        href="/tula/dlya-novichkov"
       />
 
       <section className="mx-auto max-w-7xl px-4 pb-14 pt-6 sm:px-6">
