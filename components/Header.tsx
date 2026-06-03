@@ -21,12 +21,6 @@ export function Header() {
             Каталог
           </Link>
           <Link
-            href="/admin"
-            className="hidden rounded-full px-3 py-2 transition hover:bg-white hover:text-city-green hover:shadow-sm sm:inline-flex"
-          >
-            Админка
-          </Link>
-          <Link
             href="/add"
             className="rounded-full bg-city-green px-4 py-2 text-white shadow-sm transition hover:bg-city-blue"
           >
