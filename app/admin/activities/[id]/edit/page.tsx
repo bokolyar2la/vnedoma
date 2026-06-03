@@ -190,7 +190,7 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
             </div>
             <div>
               <label htmlFor="contactUrl" className="text-sm font-semibold text-city-ink">
-                Ссылка для записи
+                Ссылка для связи / записи
               </label>
               <input
                 id="contactUrl"
@@ -198,6 +198,7 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
                 type="url"
                 defaultValue={activity.contactUrl ?? ""}
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                placeholder="VK, Telegram, сайт, Timepad или страница записи"
               />
             </div>
           </div>

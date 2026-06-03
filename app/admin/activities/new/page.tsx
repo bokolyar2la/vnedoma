@@ -156,14 +156,14 @@ export default async function NewActivityPage() {
             </div>
             <div>
               <label htmlFor="contactUrl" className="text-sm font-semibold text-city-ink">
-                Ссылка для записи
+                Ссылка для связи / записи
               </label>
               <input
                 id="contactUrl"
                 name="contactUrl"
                 type="url"
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-                placeholder="https://..."
+                placeholder="VK, Telegram, сайт, Timepad или страница записи"
               />
             </div>
           </div>

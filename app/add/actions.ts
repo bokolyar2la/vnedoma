@@ -48,7 +48,7 @@ export async function createActivity(formData: FormData) {
   }
 
   if (!contactPhone && !contactUrl) {
-    fail("Укажите телефон или ссылку для связи.");
+    fail("Укажите телефон или ссылку, чтобы люди могли связаться с организатором.");
   }
 
   const category = await prisma.category.findUnique({

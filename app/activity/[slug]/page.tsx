@@ -170,7 +170,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     { label: "Адрес", value: activity.address },
     { label: "Цена", value: price },
     { label: "Организатор", value: activity.organizer.name },
-    { label: "Контакты", value: activity.contactPhone ?? activity.contactUrl ?? "Уточняются" },
+    { label: "Телефон", value: activity.contactPhone ?? "Телефон не указан" },
     { label: "Тип", value: activity.activityType ?? "Уточняется" },
     { label: "Социальность", value: socialLabel ?? "Уточняется" }
   ];
@@ -244,6 +244,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             {hasContact ? (
               <a
                 href={contactHref}
+                target={activity.contactUrl ? "_blank" : undefined}
+                rel={activity.contactUrl ? "noopener noreferrer" : undefined}
                 className="mt-6 flex min-h-12 items-center justify-center rounded-full bg-city-green px-5 font-semibold text-white transition hover:bg-city-blue"
               >
                 Записаться
@@ -258,6 +260,28 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             )}
           </aside>
         </div>
+      </section>
+
+      <section className="mt-8 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
+        <h2 className="text-2xl font-bold text-city-ink">Куда написать / записаться</h2>
+        {activity.contactPhone ? (
+          <p className="mt-4 text-city-muted">
+            Телефон: <span className="font-semibold text-city-ink">{activity.contactPhone}</span>
+          </p>
+        ) : null}
+        {activity.contactUrl ? (
+          <a
+            href={activity.contactUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex min-h-12 items-center justify-center rounded-full bg-city-green px-6 font-semibold text-white transition hover:bg-city-blue"
+          >
+            Перейти к организатору
+          </a>
+        ) : null}
+        {!activity.contactPhone && !activity.contactUrl ? (
+          <p className="mt-4 text-city-muted">Контакты уточняются</p>
+        ) : null}
       </section>
 
       <section className="mt-8 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
