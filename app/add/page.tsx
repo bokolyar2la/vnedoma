@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createActivity } from "@/app/add/actions";
+import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -25,8 +26,11 @@ export default async function AddPage({ searchParams }: AddPageProps) {
   const success = getSingleParam(params, "success") === "1";
   const error = getSingleParam(params, "error");
   const categories = await prisma.category.findMany({
-    orderBy: { name: "asc" }
+    where: { slug: { in: [...currentCategorySlugs] } }
   });
+  categories.sort(
+    (a, b) => currentCategorySlugs.indexOf(a.slug) - currentCategorySlugs.indexOf(b.slug)
+  );
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">

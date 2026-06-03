@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { updateActivity } from "@/app/admin/activities/actions";
 import { ActivityImage } from "@/components/ActivityImage";
 import { activityTypeOptions, socialLevelOptions } from "@/lib/activity-social";
+import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -36,12 +37,16 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
         city: true
       }
     }),
-    prisma.category.findMany({ orderBy: { name: "asc" } })
+    prisma.category.findMany({ where: { slug: { in: [...currentCategorySlugs] } } })
   ]);
 
   if (!activity) {
     notFound();
   }
+
+  categories.sort(
+    (a, b) => currentCategorySlugs.indexOf(a.slug) - currentCategorySlugs.indexOf(b.slug)
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">

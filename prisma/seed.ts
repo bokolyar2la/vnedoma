@@ -1,4 +1,5 @@
 import { ActivityStatus, PrismaClient } from "@prisma/client";
+import { currentCategories } from "../lib/categories";
 
 const prisma = new PrismaClient();
 
@@ -298,7 +299,7 @@ async function main() {
     create: { name: "Тула", slug: "tula" }
   });
 
-  for (const category of categories) {
+  for (const category of currentCategories) {
     await prisma.category.create({ data: category });
   }
 

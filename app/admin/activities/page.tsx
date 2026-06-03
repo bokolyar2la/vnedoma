@@ -9,6 +9,7 @@ import {
   isTripActivity,
   socialLevelOptions
 } from "@/lib/activity-social";
+import { currentCategorySlugs } from "@/lib/categories";
 import { formatPrice } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
@@ -97,8 +98,11 @@ export default async function AdminActivitiesPage({
       },
       orderBy: { createdAt: "desc" }
     }),
-    prisma.category.findMany({ orderBy: { name: "asc" } })
+    prisma.category.findMany({ where: { slug: { in: [...currentCategorySlugs] } } })
   ]);
+  categories.sort(
+    (a, b) => currentCategorySlugs.indexOf(a.slug) - currentCategorySlugs.indexOf(b.slug)
+  );
 
   const statusFilters = [
     { label: "Все", value: "all" },

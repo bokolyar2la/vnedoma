@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ActivityStatus, Prisma } from "@prisma/client";
 import { ActivityCard } from "@/components/ActivityCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -75,9 +76,12 @@ export async function ActivityCatalog({
       orderBy: [{ isPromoted: "desc" }, { priority: "desc" }, { createdAt: "desc" }]
     }),
     showCategoryFilter
-      ? prisma.category.findMany({ orderBy: { name: "asc" } })
+      ? prisma.category.findMany({ where: { slug: { in: [...currentCategorySlugs] } } })
       : Promise.resolve([])
   ]);
+  categories.sort(
+    (a, b) => currentCategorySlugs.indexOf(a.slug) - currentCategorySlugs.indexOf(b.slug)
+  );
 
   const commonParams = {
     ...(q ? { q } : {}),

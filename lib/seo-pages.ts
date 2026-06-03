@@ -130,8 +130,7 @@ export const tulaSeoPages: TulaSeoPage[] = [
     filters: {
       OR: [
         { activityType: "выездная активность" },
-        { category: { slug: "vyezdy-i-priklyucheniya" } },
-        { tags: { some: { tag: { slug: "weekend" } } } }
+        { category: { slug: "vyezdy-i-priklyucheniya" } }
       ]
     }
   },
@@ -141,7 +140,7 @@ export const tulaSeoPages: TulaSeoPage[] = [
     heading: "Где познакомиться с людьми в Туле",
     description:
       "Социальные активности в Туле с живым общением: игры, танцы, клубы, прогулки и совместные дела.",
-    filters: { socialLevel: "высокая" }
+    filters: { OR: [{ socialLevel: "высокая" }, { canComeAlone: true }] }
   }
 ];
 

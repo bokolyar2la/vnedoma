@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ActivityStatus } from "@prisma/client";
 import { createAdminActivity } from "@/app/admin/activities/actions";
 import { activityTypeOptions, socialLevelOptions } from "@/lib/activity-social";
+import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -13,8 +14,11 @@ export const dynamic = "force-dynamic";
 
 export default async function NewActivityPage() {
   const categories = await prisma.category.findMany({
-    orderBy: { name: "asc" }
+    where: { slug: { in: [...currentCategorySlugs] } }
   });
+  categories.sort(
+    (a, b) => currentCategorySlugs.indexOf(a.slug) - currentCategorySlugs.indexOf(b.slug)
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">

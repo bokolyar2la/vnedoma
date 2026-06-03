@@ -8,6 +8,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
+    "categories:sync": "tsx prisma/sync-categories.ts",
     "seed": "prisma db seed"
   },
   "dependencies": {
