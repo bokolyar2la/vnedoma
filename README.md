@@ -1,6 +1,6 @@
 # Вне дома
 
-SEO-first MVP агрегатора офлайн-активностей в Туле: кружки, секции, мастер-классы, лекции и клубы по интересам.
+SEO-first MVP агрегатора социальных офлайн-активностей в Туле: игры, танцы, прогулки, мастер-классы, клубы и встречи, куда можно прийти одному и оказаться среди людей.
 
 Планируемый домен: `vnedoma.com`.
 
@@ -20,10 +20,12 @@ SEO-first MVP агрегатора офлайн-активностей в Тул
 npm install
 ```
 
-2. Создайте `.env` на основе `.env.example` и укажите строку подключения:
+2. Создайте `.env` на основе `.env.example`:
 
 ```bash
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/tula_activities?schema=public"
+ADMIN_USER="admin"
+ADMIN_PASSWORD="change-me"
 ```
 
 3. Примените миграции:
@@ -32,13 +34,19 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/tula_activities?sche
 npx prisma migrate dev
 ```
 
-4. Заполните базу тестовыми данными:
+4. Синхронизируйте актуальные категории:
+
+```bash
+npm run categories:sync
+```
+
+5. Заполните базу тестовыми данными:
 
 ```bash
 npx prisma db seed
 ```
 
-5. Запустите проект:
+6. Запустите проект:
 
 ```bash
 npm run dev
@@ -46,19 +54,36 @@ npm run dev
 
 После запуска откройте `http://localhost:3000`.
 
+## Админка
+
+Все маршруты `/admin` закрыты Basic Auth через `middleware.ts`.
+
+Логин и пароль задаются в `.env`:
+
+```bash
+ADMIN_USER="admin"
+ADMIN_PASSWORD="change-me"
+```
+
+В development, если переменные не заданы, используется временный доступ `admin/admin`. В production дефолтный пароль не используется: задайте `ADMIN_USER` и `ADMIN_PASSWORD` явно.
+
 ## Основные страницы
 
-- `/` — главная страница с поиском, категориями, популярными активностями и CTA.
-- `/tula` — каталог опубликованных активностей с фильтрами.
-- `/tula/[slug]` — SEO-страницы направлений: мастер-классы, спорт, танцы, творчество, лекции, бесплатно, можно одному, для новичков.
+- `/` — главная страница с поиском, быстрым выбором и подборками социальных активностей.
+- `/tula` — каталог опубликованных активностей с поиском и фильтрами.
+- `/tula/[slug]` — SEO-страницы категорий и подборок.
 - `/activity/[slug]` — детальная страница активности.
 - `/add` — публичная форма добавления активности в статусе `draft`.
+- `/admin` — временная MVP-админка, закрытая Basic Auth.
 
-## Что уже есть
+## Команды
 
-- Prisma schema с моделями `City`, `Category`, `Organizer`, `Activity`, `Event`, `Tag`, `ActivityTag`.
-- Enum статусов активности: `draft`, `published`, `archived`.
-- Seed для города Тула, 6 категорий и 13 вымышленных активностей.
-- SEO metadata для главной, страницы города и страниц активностей.
-- `sitemap.ts` и `robots.ts` для индексации.
-- Адаптивный светлый интерфейс на Tailwind CSS.
+```bash
+npm run dev
+npm run typecheck
+npm run build
+npm run categories:sync
+npx prisma generate
+npx prisma migrate dev
+npx prisma db seed
+```
