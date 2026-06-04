@@ -4,6 +4,8 @@ import { SubmitterContactFields } from "@/components/SubmitterContactFields";
 import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Добавить активность",
   description:

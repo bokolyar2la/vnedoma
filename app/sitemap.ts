@@ -5,6 +5,8 @@ import { tulaSeoPages } from "@/lib/seo-pages";
 
 const baseUrl = "https://vlyudi.ru";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const activities = await prisma.activity.findMany({
     where: {
