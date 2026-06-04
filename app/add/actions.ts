@@ -33,6 +33,8 @@ export async function createActivity(formData: FormData) {
   const organizerName = getValue(formData, "organizerName") || "Не указан";
   const contactPhone = getValue(formData, "contactPhone");
   const contactUrl = getValue(formData, "contactUrl");
+  const submittedByOrganizer = formData.get("submittedByOrganizer") === "on";
+  const submitterContact = getValue(formData, "submitterContact");
   const isFree = formData.get("isFree") === "on";
 
   if (!title) {
@@ -49,6 +51,10 @@ export async function createActivity(formData: FormData) {
 
   if (!contactPhone && !contactUrl) {
     fail("Укажите телефон или ссылку, чтобы люди могли связаться с организатором.");
+  }
+
+  if (submittedByOrganizer && !submitterContact) {
+    fail("Укажите, как с вами связаться: Telegram, VK, телефон или email.");
   }
 
   const category = await prisma.category.findUnique({
@@ -108,6 +114,8 @@ export async function createActivity(formData: FormData) {
       imageUrl: null,
       isVerified: false,
       needsCheck: true,
+      submittedByOrganizer,
+      submitterContact: submitterContact || null,
       status: ActivityStatus.draft
     }
   });

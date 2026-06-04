@@ -76,6 +76,8 @@ model Activity {
   socialLevel      String?
   needsCheck       Boolean        @default(false)
   editorComment    String?
+  submittedByOrganizer Boolean    @default(false)
+  submitterContact String?
   status           ActivityStatus @default(draft)
   isPromoted       Boolean        @default(false)
   promotedUntil    DateTime?

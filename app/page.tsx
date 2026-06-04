@@ -214,6 +214,14 @@ export default async function HomePage() {
               Найти
             </button>
           </form>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Link
+              href="/tula"
+              className="inline-flex min-h-11 items-center rounded-full border border-city-line bg-white px-5 text-sm font-semibold text-city-ink shadow-sm transition hover:border-city-green hover:text-city-green"
+            >
+              Смотреть все активности
+            </Link>
+          </div>
         </div>
 
         <div className="rounded-[32px] border border-city-line bg-white p-4 shadow-soft">

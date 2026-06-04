@@ -143,6 +143,8 @@ export async function createAdminActivity(formData: FormData) {
       socialLevel: getOptionalString(formData, "socialLevel"),
       needsCheck: formData.get("needsCheck") === "on",
       editorComment: getOptionalString(formData, "editorComment"),
+      submittedByOrganizer: formData.get("submittedByOrganizer") === "on",
+      submitterContact: getOptionalString(formData, "submitterContact"),
       status: getStatus(formData, ActivityStatus.published)
     }
   });
@@ -228,6 +230,8 @@ export async function updateActivity(formData: FormData) {
       socialLevel: getOptionalString(formData, "socialLevel"),
       needsCheck: formData.get("needsCheck") === "on",
       editorComment: getOptionalString(formData, "editorComment"),
+      submittedByOrganizer: formData.get("submittedByOrganizer") === "on",
+      submitterContact: getOptionalString(formData, "submitterContact"),
       status: getStatus(formData, ActivityStatus.draft)
     }
   });

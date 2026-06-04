@@ -211,6 +211,29 @@ export default async function NewActivityPage() {
               placeholder="Что нужно проверить: дата, цена, источник, условия участия."
             />
           </div>
+
+          <div className="rounded-3xl bg-city-soft p-4">
+            <label className="flex items-start gap-3 text-sm font-semibold text-city-ink">
+              <input name="submittedByOrganizer" type="checkbox" className="mt-1 h-4 w-4 accent-city-green" />
+              <span>
+                Заявка от организатора
+                <span className="mt-1 block font-normal leading-6 text-city-muted">
+                  Внутреннее поле: публично не показывается.
+                </span>
+              </span>
+            </label>
+            <div className="mt-4">
+              <label htmlFor="submitterContact" className="text-sm font-semibold text-city-ink">
+                Контакт отправителя
+              </label>
+              <input
+                id="submitterContact"
+                name="submitterContact"
+                className="mt-2 min-h-12 w-full rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                placeholder="Telegram, VK, телефон или email"
+              />
+            </div>
+          </div>
         </section>
 
         <aside className="h-fit space-y-5 rounded-3xl border border-city-line bg-white p-5 shadow-soft">

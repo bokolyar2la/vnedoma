@@ -231,6 +231,11 @@ export default async function AdminActivitiesPage({
                         Проверить
                       </span>
                     ) : null}
+                    {activity.submittedByOrganizer ? (
+                      <span className="rounded-full bg-city-green/10 px-3 py-1 text-xs font-semibold text-city-green">
+                        От организатора
+                      </span>
+                    ) : null}
                     <span className="rounded-full border border-city-line px-3 py-1 text-xs text-city-muted">
                       {activity.category.name}
                     </span>
@@ -295,6 +300,14 @@ export default async function AdminActivitiesPage({
                         )}
                       </dd>
                     </div>
+                    {activity.submitterContact ? (
+                      <div>
+                        <dt className="text-city-muted">Контакт отправителя</dt>
+                        <dd className="mt-1 font-semibold text-city-ink">
+                          {activity.submitterContact}
+                        </dd>
+                      </div>
+                    ) : null}
                   </dl>
 
                   <div className="mt-4 flex flex-wrap gap-2">

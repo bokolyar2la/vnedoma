@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { createActivity } from "@/app/add/actions";
+import { SubmitterContactFields } from "@/components/SubmitterContactFields";
 import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 
@@ -202,6 +203,8 @@ export default async function AddPage({ searchParams }: AddPageProps) {
             />
           </div>
         </div>
+
+        <SubmitterContactFields />
 
         <button className="min-h-12 w-full rounded-full bg-city-green px-6 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-city-blue sm:w-auto">
           Отправить на проверку
