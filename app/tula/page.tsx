@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Социальные активности в Туле",
   description:
     "Собрали места и встречи, где можно поиграть, потанцевать, погулять, попробовать новое и познакомиться с людьми.",
+  alternates: {
+    canonical: "/tula"
+  },
   openGraph: {
     title: "Социальные активности в Туле",
     description:
@@ -12,7 +15,15 @@ export const metadata: Metadata = {
     url: "https://vnedoma.com/tula",
     siteName: "Вне дома",
     locale: "ru_RU",
-    type: "website"
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Вне дома — социальные активности в Туле"
+      }
+    ]
   }
 };
 

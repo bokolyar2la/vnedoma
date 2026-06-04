@@ -48,6 +48,9 @@ export const metadata: Metadata = {
   },
   description:
     "Найдите, куда сходить в Туле, чтобы не сидеть дома: игры, танцы, прогулки, мастер-классы, клубы и встречи.",
+  alternates: {
+    canonical: "/"
+  },
   openGraph: {
     title: "Вне дома — занятия, кружки и события в Туле",
     description:
@@ -55,7 +58,15 @@ export const metadata: Metadata = {
     url: "https://vnedoma.com",
     siteName: "Вне дома",
     locale: "ru_RU",
-    type: "website"
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Вне дома — социальные активности в Туле"
+      }
+    ]
   }
 };
 
@@ -159,9 +170,25 @@ export default async function HomePage() {
       take: 6
     })
   ]);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Вне дома",
+    url: "https://vnedoma.com",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://vnedoma.com/tula?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
 
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
         <div className="flex flex-col justify-center">
           <p className="mb-4 w-fit rounded-full bg-city-soft px-4 py-2 text-sm font-semibold text-city-green">

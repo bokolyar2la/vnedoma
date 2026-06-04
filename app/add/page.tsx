@@ -6,7 +6,11 @@ import { prisma } from "@/lib/prisma";
 export const metadata: Metadata = {
   title: "Добавить активность",
   description:
-    "Знаете классную активность в Туле? Добавьте её, мы проверим и опубликуем в каталоге Вне дома."
+    "Знаете классную активность в Туле? Добавьте её, мы проверим и опубликуем в каталоге Вне дома.",
+  robots: {
+    index: false,
+    follow: false
+  }
 };
 
 type AddPageProps = {

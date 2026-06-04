@@ -5,6 +5,8 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 
+const baseUrl = "https://vnedoma.com";
+
 type SearchParams = Record<string, string | string[] | undefined>;
 
 type ActivityCatalogProps = {
@@ -110,9 +112,59 @@ export async function ActivityCatalog({
       href: buildHref(basePath, { ...commonParams, beginner: "1" })
     }
   ];
+  const pageUrl = `${baseUrl}${basePath}`;
+  const breadcrumbItems = showCategoryFilter
+    ? [
+        { name: "Главная", item: baseUrl },
+        { name: "Тула", item: `${baseUrl}/tula` }
+      ]
+    : [
+        { name: "Главная", item: baseUrl },
+        { name: "Тула", item: `${baseUrl}/tula` },
+        { name: heading, item: pageUrl }
+      ];
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: heading,
+      description,
+      url: pageUrl,
+      isPartOf: {
+        "@type": "WebSite",
+        name: "Вне дома",
+        url: baseUrl
+      },
+      about: "Социальные активности, клубы, встречи и занятия в Туле",
+      mainEntity: {
+        "@type": "ItemList",
+        itemListElement: activities.map((activity, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          url: `${baseUrl}/activity/${activity.slug}`,
+          name: activity.title
+        }))
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: breadcrumbItems.map((item, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: item.name,
+        item: item.item
+      }))
+    }
+  ];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+
       <Breadcrumbs
         items={[
           { label: "Главная", href: "/" },

@@ -17,6 +17,24 @@ type ActivityPageProps = {
 
 const baseUrl = "https://vnedoma.com";
 
+function getPublicOrganizerName(name: string) {
+  const trimmed = name.trim();
+
+  if (!trimmed || trimmed === "Не указан" || trimmed === "Не указано") {
+    return null;
+  }
+
+  return trimmed;
+}
+
+function getAbsoluteImageUrl(imageUrl: string | null) {
+  if (!imageUrl) {
+    return null;
+  }
+
+  return imageUrl.startsWith("http") ? imageUrl : `${baseUrl}${imageUrl}`;
+}
+
 async function getActivity(slug: string) {
   return prisma.activity.findFirst({
     where: {
@@ -50,6 +68,21 @@ async function getActivity(slug: string) {
 function buildStructuredData(activity: NonNullable<Awaited<ReturnType<typeof getActivity>>>) {
   const pageUrl = `${baseUrl}/activity/${activity.slug}`;
   const nextEvent = activity.events[0];
+  const organizerName = getPublicOrganizerName(activity.organizer.name) ?? "Вне дома";
+  const image = getAbsoluteImageUrl(activity.imageUrl);
+  const address = {
+    "@type": "PostalAddress",
+    streetAddress: activity.address,
+    addressLocality: "Тула",
+    addressRegion: "Тульская область",
+    addressCountry: "RU"
+  };
+  const sameAs = [
+    activity.organizer.websiteUrl,
+    activity.organizer.vkUrl,
+    activity.organizer.telegramUrl,
+    activity.contactUrl
+  ].filter((url): url is string => Boolean(url));
 
   if (nextEvent) {
     return {
@@ -57,6 +90,7 @@ function buildStructuredData(activity: NonNullable<Awaited<ReturnType<typeof get
       "@type": "Event",
       name: nextEvent.title || activity.title,
       description: activity.description,
+      image: image ? [image] : undefined,
       startDate: nextEvent.startsAt.toISOString(),
       endDate: nextEvent.endsAt?.toISOString(),
       eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
@@ -64,12 +98,12 @@ function buildStructuredData(activity: NonNullable<Awaited<ReturnType<typeof get
       url: pageUrl,
       location: {
         "@type": "Place",
-        name: activity.organizer.name,
-        address: activity.address
+        name: organizerName,
+        address
       },
       organizer: {
         "@type": "Organization",
-        name: activity.organizer.name,
+        name: organizerName,
         url: activity.organizer.websiteUrl ?? pageUrl
       },
       offers: {
@@ -87,13 +121,42 @@ function buildStructuredData(activity: NonNullable<Awaited<ReturnType<typeof get
     "@type": "LocalBusiness",
     name: activity.title,
     description: activity.description,
+    image: image ? [image] : undefined,
     url: pageUrl,
-    address: activity.address,
+    address,
     telephone: activity.contactPhone ?? activity.organizer.phone,
+    sameAs: sameAs.length > 0 ? sameAs : undefined,
     organizer: {
       "@type": "Organization",
-      name: activity.organizer.name
+      name: organizerName
     }
+  };
+}
+
+function buildBreadcrumbStructuredData(activity: NonNullable<Awaited<ReturnType<typeof getActivity>>>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Главная",
+        item: baseUrl
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Тула",
+        item: `${baseUrl}/tula`
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: activity.title,
+        item: `${baseUrl}/activity/${activity.slug}`
+      }
+    ]
   };
 }
 
@@ -111,6 +174,7 @@ export async function generateMetadata({
 
   const title = `${activity.title} в Туле`;
   const url = `${baseUrl}/activity/${activity.slug}`;
+  const image = getAbsoluteImageUrl(activity.imageUrl);
 
   return {
     title: {
@@ -126,7 +190,15 @@ export async function generateMetadata({
       url,
       siteName: "Вне дома",
       locale: "ru_RU",
-      type: "article"
+      type: "article",
+      images: [
+        {
+          url: image ?? "/opengraph-image",
+          width: 1200,
+          height: 630,
+          alt: activity.title
+        }
+      ]
     }
   };
 }
@@ -154,12 +226,12 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const price = formatPrice(activity);
   const contactHref = activity.contactUrl ?? `tel:${activity.contactPhone ?? ""}`;
   const hasContact = Boolean(activity.contactUrl || activity.contactPhone);
-  const organizerName = activity.organizer.name.trim();
-  const hasOrganizer =
-    organizerName.length > 0 &&
-    organizerName !== "Не указан" &&
-    organizerName !== "Не указано";
-  const structuredData = buildStructuredData(activity);
+  const organizerName = getPublicOrganizerName(activity.organizer.name);
+  const hasOrganizer = Boolean(organizerName);
+  const structuredData = [
+    buildStructuredData(activity),
+    buildBreadcrumbStructuredData(activity)
+  ];
   const socialLabel = getSocialLevelLabel(activity.socialLevel);
   const trip = isTripActivity(activity.activityType);
 
@@ -174,11 +246,11 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const infoCards = [
     { label: "Адрес", value: activity.address },
     { label: "Цена", value: price },
-    { label: "Организатор", value: activity.organizer.name },
+    hasOrganizer ? { label: "Организатор", value: organizerName } : null,
     { label: "Телефон", value: activity.contactPhone ?? "Телефон не указан" },
     { label: "Тип", value: activity.activityType ?? "Уточняется" },
     { label: "Социальность", value: socialLabel ?? "Уточняется" }
-  ];
+  ].filter((item): item is { label: string; value: string } => Boolean(item));
 
   const reasons = [
     activity.canComeAlone ? "Можно прийти одному" : null,

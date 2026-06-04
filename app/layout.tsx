@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   },
   description:
     "Игры, танцы, прогулки, мастер-классы, клубы и встречи в Туле, куда можно прийти одному и оказаться среди людей.",
+  alternates: {
+    canonical: "/"
+  },
   openGraph: {
     title: "Вне дома — занятия, кружки и события в Туле",
     description:
@@ -17,7 +20,22 @@ export const metadata: Metadata = {
     url: "https://vnedoma.com",
     siteName: "Вне дома",
     locale: "ru_RU",
-    type: "website"
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Вне дома — социальные активности в Туле"
+      }
+    ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Вне дома — занятия, кружки и события в Туле",
+    description:
+      "Игры, танцы, прогулки, мастер-классы, клубы и встречи в Туле, куда можно прийти одному и оказаться среди людей.",
+    images: ["/opengraph-image"]
   }
 };
 
