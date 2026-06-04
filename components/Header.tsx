@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 export function Header() {
   return (
@@ -9,7 +9,7 @@ export function Header() {
             В
           </span>
           <span className="min-w-0">
-            <span className="block text-lg font-bold leading-5 text-city-ink">Вне дома</span>
+            <span className="block text-lg font-bold leading-5 text-city-ink">Влюди</span>
             <span className="block text-xs font-medium text-city-muted">Тула</span>
           </span>
         </Link>

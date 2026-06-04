@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ActivityCatalog } from "@/components/ActivityCatalog";
 import { getTulaSeoPage, tulaSeoPages } from "@/lib/seo-pages";
@@ -37,8 +37,8 @@ export async function generateMetadata({
     openGraph: {
       title: page.title,
       description: page.description,
-      url: `https://vnedoma.com/tula/${page.slug}`,
-      siteName: "Вне дома",
+      url: `https://vlyudi.ru/tula/${page.slug}`,
+      siteName: "Влюди",
       locale: "ru_RU",
       type: "website",
       images: [
@@ -46,7 +46,7 @@ export async function generateMetadata({
           url: "/opengraph-image",
           width: 1200,
           height: 630,
-          alt: "Вне дома — социальные активности в Туле"
+          alt: "Влюди — социальные активности в Туле"
         }
       ]
     }

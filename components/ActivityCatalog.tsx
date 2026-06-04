@@ -1,11 +1,11 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ActivityStatus, Prisma } from "@prisma/client";
 import { ActivityCard } from "@/components/ActivityCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 
-const baseUrl = "https://vnedoma.com";
+const baseUrl = "https://vlyudi.ru";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -132,7 +132,7 @@ export async function ActivityCatalog({
       url: pageUrl,
       isPartOf: {
         "@type": "WebSite",
-        name: "Вне дома",
+        name: "Влюди",
         url: baseUrl
       },
       about: "Социальные активности, клубы, встречи и занятия в Туле",
@@ -175,7 +175,7 @@ export async function ActivityCatalog({
 
       <section className="mt-6 rounded-[32px] border border-city-line bg-white p-5 shadow-soft sm:p-7">
         <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
-          Вне дома · Тула
+          Влюди · Тула
         </p>
         <div className="mt-3 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div className="max-w-3xl">

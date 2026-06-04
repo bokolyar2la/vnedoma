@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { ActivityStatus } from "@prisma/client";
 import { ActivityCard } from "@/components/ActivityCard";
@@ -44,7 +44,7 @@ type ActivityPreview = Parameters<typeof ActivityCard>[0]["activity"] & {
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Вне дома — занятия, кружки и события в Туле"
+    absolute: "Влюди — куда сходить и чем заняться в Туле"
   },
   description:
     "Найдите, куда сходить в Туле, чтобы не сидеть дома: игры, танцы, прогулки, мастер-классы, клубы и встречи.",
@@ -52,11 +52,11 @@ export const metadata: Metadata = {
     canonical: "/"
   },
   openGraph: {
-    title: "Вне дома — занятия, кружки и события в Туле",
+    title: "Влюди — куда сходить и чем заняться в Туле",
     description:
       "Игры, танцы, прогулки, мастер-классы, клубы и встречи в Туле, куда можно прийти одному и оказаться среди людей.",
-    url: "https://vnedoma.com",
-    siteName: "Вне дома",
+    url: "https://vlyudi.ru",
+    siteName: "Влюди",
     locale: "ru_RU",
     type: "website",
     images: [
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Вне дома — социальные активности в Туле"
+        alt: "Влюди — социальные активности в Туле"
       }
     ]
   }
@@ -173,11 +173,11 @@ export default async function HomePage() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Вне дома",
-    url: "https://vnedoma.com",
+    name: "Влюди",
+    url: "https://vlyudi.ru",
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://vnedoma.com/tula?q={search_term_string}",
+      target: "https://vlyudi.ru/tula?q={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   };

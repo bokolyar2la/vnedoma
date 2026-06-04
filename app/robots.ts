@@ -1,4 +1,4 @@
-import type { MetadataRoute } from "next";
+﻿import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin", "/admin/", "/admin/*"]
       }
     ],
-    sitemap: "https://vnedoma.com/sitemap.xml",
-    host: "https://vnedoma.com"
+    sitemap: "https://vlyudi.ru/sitemap.xml",
+    host: "https://vlyudi.ru"
   };
 }

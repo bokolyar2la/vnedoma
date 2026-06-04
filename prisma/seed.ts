@@ -1,4 +1,4 @@
-import { ActivityStatus, PrismaClient } from "@prisma/client";
+﻿import { ActivityStatus, PrismaClient } from "@prisma/client";
 import { currentCategories } from "../lib/categories";
 
 const prisma = new PrismaClient();
@@ -124,7 +124,7 @@ const activities: SeedActivity[] = [
     priceTo: 1200,
     beginnerFriendly: true,
     canComeAlone: true,
-    contactUrl: "https://vnedoma.com/demo/bachata",
+    contactUrl: "https://vlyudi.ru/demo/bachata",
     priority: 36,
     activityType: "постоянная активность",
     socialLevel: "высокая",
@@ -142,7 +142,7 @@ const activities: SeedActivity[] = [
     isFree: true,
     beginnerFriendly: true,
     canComeAlone: true,
-    contactUrl: "https://vnedoma.com/demo/walks",
+    contactUrl: "https://vlyudi.ru/demo/walks",
     priority: 35,
     activityType: "регулярная встреча",
     socialLevel: "высокая",
@@ -181,7 +181,7 @@ const activities: SeedActivity[] = [
     priceTo: 3200,
     beginnerFriendly: true,
     canComeAlone: true,
-    contactUrl: "https://vnedoma.com/demo/pasta",
+    contactUrl: "https://vlyudi.ru/demo/pasta",
     priority: 30,
     activityType: "разовое событие",
     socialLevel: "высокая",
@@ -236,7 +236,7 @@ const activities: SeedActivity[] = [
     isFree: true,
     beginnerFriendly: true,
     canComeAlone: true,
-    contactUrl: "https://vnedoma.com/demo/clean-bank",
+    contactUrl: "https://vlyudi.ru/demo/clean-bank",
     priority: 24,
     activityType: "разовое событие",
     socialLevel: "высокая",
@@ -275,7 +275,7 @@ const activities: SeedActivity[] = [
     priceTo: 2800,
     beginnerFriendly: true,
     canComeAlone: true,
-    contactUrl: "https://vnedoma.com/demo/usadby",
+    contactUrl: "https://vlyudi.ru/demo/usadby",
     priority: 34,
     activityType: "выездная активность",
     socialLevel: "средняя",

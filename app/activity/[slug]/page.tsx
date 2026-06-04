@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { ActivityStatus } from "@prisma/client";
 import { notFound } from "next/navigation";
@@ -15,7 +15,7 @@ type ActivityPageProps = {
   }>;
 };
 
-const baseUrl = "https://vnedoma.com";
+const baseUrl = "https://vlyudi.ru";
 
 function getPublicOrganizerName(name: string) {
   const trimmed = name.trim();
@@ -68,7 +68,7 @@ async function getActivity(slug: string) {
 function buildStructuredData(activity: NonNullable<Awaited<ReturnType<typeof getActivity>>>) {
   const pageUrl = `${baseUrl}/activity/${activity.slug}`;
   const nextEvent = activity.events[0];
-  const organizerName = getPublicOrganizerName(activity.organizer.name) ?? "Вне дома";
+  const organizerName = getPublicOrganizerName(activity.organizer.name) ?? "Влюди";
   const image = getAbsoluteImageUrl(activity.imageUrl);
   const address = {
     "@type": "PostalAddress",
@@ -188,7 +188,7 @@ export async function generateMetadata({
       title,
       description: activity.description,
       url,
-      siteName: "Вне дома",
+      siteName: "Влюди",
       locale: "ru_RU",
       type: "article",
       images: [

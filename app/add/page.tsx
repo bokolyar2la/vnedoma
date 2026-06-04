@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { createActivity } from "@/app/add/actions";
 import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 export const metadata: Metadata = {
   title: "Добавить активность",
   description:
-    "Знаете классную активность в Туле? Добавьте её, мы проверим и опубликуем в каталоге Вне дома.",
+    "Знаете классную активность в Туле? Добавьте её, мы проверим и опубликуем в каталоге Влюди.",
   robots: {
     index: false,
     follow: false
@@ -39,7 +39,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
-        Вне дома · Тула
+        Влюди · Тула
       </p>
       <h1 className="mt-3 text-3xl font-bold text-city-ink sm:text-4xl">
         Добавить активность

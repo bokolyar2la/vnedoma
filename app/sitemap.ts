@@ -1,9 +1,9 @@
-import type { MetadataRoute } from "next";
+﻿import type { MetadataRoute } from "next";
 import { ActivityStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { tulaSeoPages } from "@/lib/seo-pages";
 
-const baseUrl = "https://vnedoma.com";
+const baseUrl = "https://vlyudi.ru";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const activities = await prisma.activity.findMany({

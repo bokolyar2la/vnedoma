@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { ActivityCatalog } from "@/components/ActivityCatalog";
 
 export const metadata: Metadata = {
@@ -12,8 +12,8 @@ export const metadata: Metadata = {
     title: "Социальные активности в Туле",
     description:
       "Собрали места и встречи, где можно поиграть, потанцевать, погулять, попробовать новое и познакомиться с людьми.",
-    url: "https://vnedoma.com/tula",
-    siteName: "Вне дома",
+    url: "https://vlyudi.ru/tula",
+    siteName: "Влюди",
     locale: "ru_RU",
     type: "website",
     images: [
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Вне дома — социальные активности в Туле"
+        alt: "Влюди — социальные активности в Туле"
       }
     ]
   }

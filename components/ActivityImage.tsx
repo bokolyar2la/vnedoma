@@ -1,4 +1,4 @@
-type ActivityImageProps = {
+﻿type ActivityImageProps = {
   title: string;
   categoryName: string;
   imageUrl?: string | null;
@@ -131,7 +131,7 @@ export function ActivityImage({
             {categoryName}
           </p>
           <p className="mt-1 max-w-[11rem] text-sm font-semibold leading-snug text-city-ink/75">
-            Вне дома
+            Влюди
           </p>
         </div>
         <span className={`text-2xl font-bold uppercase leading-none ${visual.accent} opacity-75`}>

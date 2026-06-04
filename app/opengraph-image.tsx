@@ -1,6 +1,6 @@
-import { ImageResponse } from "next/og";
+﻿import { ImageResponse } from "next/og";
 
-export const alt = "Вне дома — социальные активности в Туле";
+export const alt = "Влюди — социальные активности в Туле";
 export const size = {
   width: 1200,
   height: 630
@@ -42,7 +42,7 @@ export default function Image() {
             В
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 34, fontWeight: 800 }}>Вне дома</div>
+            <div style={{ fontSize: 34, fontWeight: 800 }}>Влюди</div>
             <div style={{ fontSize: 22, color: "#5f6f7a" }}>Тула</div>
           </div>
         </div>
