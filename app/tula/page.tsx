@@ -1,6 +1,8 @@
 ﻿import type { Metadata } from "next";
 import { ActivityCatalog } from "@/components/ActivityCatalog";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Социальные активности в Туле",
   description:

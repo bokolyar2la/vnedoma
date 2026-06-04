@@ -17,6 +17,8 @@ type ActivityPageProps = {
 
 const baseUrl = "https://vlyudi.ru";
 
+export const dynamic = "force-dynamic";
+
 function getPublicOrganizerName(name: string) {
   const trimmed = name.trim();
 

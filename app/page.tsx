@@ -42,6 +42,8 @@ type ActivityPreview = Parameters<typeof ActivityCard>[0]["activity"] & {
   id: number;
 };
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: {
     absolute: "Влюди — куда сходить и чем заняться в Туле"

@@ -3,18 +3,14 @@ import { notFound } from "next/navigation";
 import { ActivityCatalog } from "@/components/ActivityCatalog";
 import { getTulaSeoPage, tulaSeoPages } from "@/lib/seo-pages";
 
+export const dynamic = "force-dynamic";
+
 type TulaSeoPageProps = {
   params: Promise<{
     slug: string;
   }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
-
-export function generateStaticParams() {
-  return tulaSeoPages.map((page) => ({
-    slug: page.slug
-  }));
-}
 
 export async function generateMetadata({
   params
