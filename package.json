@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "categories:sync": "tsx prisma/sync-categories.ts",
+    "activities:import": "tsx prisma/import-ready-cards.ts",
     "seed": "prisma db seed"
   },
   "dependencies": {
