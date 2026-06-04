@@ -228,6 +228,11 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const hasContact = Boolean(activity.contactUrl || activity.contactPhone);
   const organizerName = getPublicOrganizerName(activity.organizer.name);
   const hasOrganizer = Boolean(organizerName);
+  const yandexMapsUrl = `https://yandex.ru/maps/?text=${encodeURIComponent(
+    activity.address.toLowerCase().includes("тула")
+      ? activity.address
+      : `Тула, ${activity.address}`
+  )}`;
   const structuredData = [
     buildStructuredData(activity),
     buildBreadcrumbStructuredData(activity)
@@ -396,6 +401,16 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           <div key={item.label} className="rounded-[26px] border border-city-line bg-white p-5 shadow-soft">
             <p className="text-sm text-city-muted">{item.label}</p>
             <p className="mt-2 font-bold leading-6 text-city-ink">{item.value}</p>
+            {item.label === "Адрес" ? (
+              <a
+                href={yandexMapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex rounded-full border border-city-line px-4 py-2 text-sm font-semibold text-city-green transition hover:border-city-green hover:bg-city-soft"
+              >
+                Показать в Яндекс Картах
+              </a>
+            ) : null}
           </div>
         ))}
       </section>
