@@ -282,71 +282,73 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
       />
 
       <section className="mt-6 overflow-hidden rounded-[34px] border border-city-line bg-white shadow-soft">
-        <div className="relative">
-          <ActivityImage
-            title={activity.title}
-            categoryName={activity.category.name}
-            imageUrl={activity.imageUrl}
-            className="aspect-[16/10] rounded-none sm:aspect-[21/9] lg:aspect-auto lg:h-[420px]"
-            imageClassName="lg:object-contain lg:p-8 lg:group-hover:scale-100"
-          />
-          <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3 sm:inset-x-6 sm:top-6">
-            <span className="rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-city-green shadow-sm backdrop-blur">
-              {activity.category.name}
-            </span>
-            <span className="rounded-full bg-city-ink/90 px-4 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur">
-              {price}
-            </span>
-          </div>
-        </div>
-
-        <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[1fr_340px]">
-          <div>
-            <div className="flex flex-wrap gap-2">
-              {conditions.map((condition) => (
-                <span
-                  key={condition}
-                  className="rounded-full bg-city-soft px-3 py-1 text-sm font-medium text-city-green"
-                >
-                  {condition}
-                </span>
-              ))}
+        <div className="lg:grid lg:min-h-[560px] lg:grid-cols-[minmax(0,0.95fr)_minmax(390px,0.8fr)]">
+          <div className="relative bg-city-soft">
+            <ActivityImage
+              title={activity.title}
+              categoryName={activity.category.name}
+              imageUrl={activity.imageUrl}
+              className="aspect-[16/10] rounded-none sm:aspect-[21/9] lg:h-full lg:min-h-[560px] lg:aspect-auto"
+              imageClassName="lg:object-contain lg:p-10 lg:group-hover:scale-100"
+            />
+            <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3 sm:inset-x-6 sm:top-6">
+              <span className="rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-city-green shadow-sm backdrop-blur">
+                {activity.category.name}
+              </span>
+              <span className="rounded-full bg-city-ink/90 px-4 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur">
+                {price}
+              </span>
             </div>
-            <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-tight text-city-ink sm:text-5xl">
-              {activity.title}
-            </h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-city-muted">
-              {activity.description}
-            </p>
           </div>
 
-          <aside className="h-fit rounded-[28px] bg-city-soft p-5">
-            <p className="text-sm text-city-muted">Стоимость</p>
-            <p className="mt-1 text-2xl font-bold text-city-ink">{price}</p>
-            {hasOrganizer ? (
-              <div className="mt-4">
-                <p className="text-sm text-city-muted">Организатор</p>
-                <p className="mt-1 font-semibold text-city-ink">{organizerName}</p>
+          <div className="grid gap-7 p-5 sm:p-8 lg:content-center lg:p-10">
+            <div>
+              <div className="flex flex-wrap gap-2">
+                {conditions.map((condition) => (
+                  <span
+                    key={condition}
+                    className="rounded-full bg-city-soft px-3 py-1 text-sm font-medium text-city-green"
+                  >
+                    {condition}
+                  </span>
+                ))}
               </div>
-            ) : null}
-            {hasContact ? (
-              <a
-                href={contactHref}
-                target={activity.contactUrl ? "_blank" : undefined}
-                rel={activity.contactUrl ? "noopener noreferrer" : undefined}
-                className="mt-6 flex min-h-12 items-center justify-center rounded-full bg-city-green px-5 font-semibold text-white transition hover:bg-city-blue"
-              >
-                Записаться
-              </a>
-            ) : (
-              <button
-                disabled
-                className="mt-6 flex min-h-12 w-full items-center justify-center rounded-full bg-city-line px-5 font-semibold text-city-muted"
-              >
-                Контакты уточняются
-              </button>
-            )}
-          </aside>
+              <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-tight text-city-ink sm:text-5xl lg:text-4xl xl:text-5xl">
+                {activity.title}
+              </h1>
+              <p className="mt-5 max-w-3xl text-lg leading-8 text-city-muted lg:text-base xl:text-lg">
+                {activity.description}
+              </p>
+            </div>
+
+            <aside className="rounded-[28px] bg-city-soft p-5">
+              <p className="text-sm text-city-muted">Стоимость</p>
+              <p className="mt-1 text-2xl font-bold text-city-ink">{price}</p>
+              {hasOrganizer ? (
+                <div className="mt-4">
+                  <p className="text-sm text-city-muted">Организатор</p>
+                  <p className="mt-1 font-semibold text-city-ink">{organizerName}</p>
+                </div>
+              ) : null}
+              {hasContact ? (
+                <a
+                  href={contactHref}
+                  target={activity.contactUrl ? "_blank" : undefined}
+                  rel={activity.contactUrl ? "noopener noreferrer" : undefined}
+                  className="mt-6 flex min-h-12 items-center justify-center rounded-full bg-city-green px-5 font-semibold text-white transition hover:bg-city-blue"
+                >
+                  Записаться
+                </a>
+              ) : (
+                <button
+                  disabled
+                  className="mt-6 flex min-h-12 w-full items-center justify-center rounded-full bg-city-line px-5 font-semibold text-city-muted"
+                >
+                  Контакты уточняются
+                </button>
+              )}
+            </aside>
+          </div>
         </div>
       </section>
 
@@ -401,15 +403,22 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {infoCards.map((item) => (
-          <div key={item.label} className="rounded-[26px] border border-city-line bg-white p-5 shadow-soft">
-            <p className="text-sm text-city-muted">{item.label}</p>
-            <p className="mt-2 font-bold leading-6 text-city-ink">{item.value}</p>
+          <div
+            key={item.label}
+            className="rounded-[24px] border border-city-line bg-white p-5 shadow-soft lg:p-6"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-city-muted">
+              {item.label}
+            </p>
+            <p className="mt-3 text-lg font-extrabold leading-7 text-city-ink">
+              {item.value}
+            </p>
             {item.label === "Адрес" ? (
               <a
                 href={yandexMapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 inline-flex rounded-full border border-city-line px-4 py-2 text-sm font-semibold text-city-green transition hover:border-city-green hover:bg-city-soft"
+                className="mt-5 inline-flex min-h-10 items-center rounded-full border border-city-line px-4 py-2 text-sm font-semibold text-city-green transition hover:border-city-green hover:bg-city-soft"
               >
                 Показать в Яндекс Картах
               </a>
