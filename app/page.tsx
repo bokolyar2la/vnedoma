@@ -6,17 +6,10 @@ import { prisma } from "@/lib/prisma";
 
 const quickLinks = [
   {
-    label: "Игры и клубы",
-    href: "/tula/igry-i-kluby",
-    text: "Настолки, квизы, клубные встречи",
-    mark: "play"
-  },
-  { label: "Танцы", href: "/tula/tancy", text: "Можно без пары и опыта", mark: "dance" },
-  {
-    label: "Спорт и прогулки",
-    href: "/tula/sport-i-progulki",
-    text: "Движение, маршруты, город",
-    mark: "move"
+    label: "Бесплатно",
+    href: "/tula/besplatno",
+    text: "Встречи и занятия без оплаты",
+    mark: "0 ₽"
   },
   {
     label: "Можно одному",
@@ -25,16 +18,28 @@ const quickLinks = [
     mark: "solo"
   },
   {
+    label: "Новичкам",
+    href: "/tula/dlya-novichkov",
+    text: "Без опыта и подготовки",
+    mark: "start"
+  },
+  {
     label: "На выходные",
     href: "/tula/chem-zanyatsya-v-vyhodnye",
-    text: "Выезды и планы на пару дней",
-    mark: "weekend"
+    text: "Идеи на свободный день",
+    mark: "сб/вс"
   },
   {
     label: "Где познакомиться",
     href: "/tula/gde-poznakomitsya",
     text: "Больше общения и совместных дел",
-    mark: "meet"
+    mark: "люди"
+  },
+  {
+    label: "Все активности",
+    href: "/tula",
+    text: "Полный каталог по Туле",
+    mark: "все"
   }
 ];
 
