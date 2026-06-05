@@ -46,6 +46,7 @@ export async function ActivityCatalog({
 }: ActivityCatalogProps) {
   const category = showCategoryFilter ? getSingleParam(searchParams, "category") : undefined;
   const q = getSingleParam(searchParams, "q")?.trim();
+  const searchTerms = q ? q.split(/\s+/).filter(Boolean).slice(0, 6) : [];
   const isFree = getSingleParam(searchParams, "free") === "1";
   const canComeAlone = getSingleParam(searchParams, "alone") === "1";
   const beginnerFriendly = getSingleParam(searchParams, "beginner") === "1";
@@ -58,15 +59,17 @@ export async function ActivityCatalog({
     ...(isFree ? { isFree: true } : {}),
     ...(canComeAlone ? { canComeAlone: true } : {}),
     ...(beginnerFriendly ? { beginnerFriendly: true } : {}),
-    ...(q
+    ...(searchTerms.length > 0
       ? {
-          OR: [
-            { title: { contains: q, mode: "insensitive" } },
-            { description: { contains: q, mode: "insensitive" } },
-            { category: { name: { contains: q, mode: "insensitive" } } },
-            { organizer: { name: { contains: q, mode: "insensitive" } } },
-            { tags: { some: { tag: { name: { contains: q, mode: "insensitive" } } } } }
-          ]
+          AND: searchTerms.map((term) => ({
+            OR: [
+              { title: { contains: term, mode: "insensitive" } },
+              { description: { contains: term, mode: "insensitive" } },
+              { category: { name: { contains: term, mode: "insensitive" } } },
+              { organizer: { name: { contains: term, mode: "insensitive" } } },
+              { tags: { some: { tag: { name: { contains: term, mode: "insensitive" } } } } }
+            ]
+          }))
         }
       : {})
   };
@@ -194,7 +197,7 @@ export async function ActivityCatalog({
             name="q"
             defaultValue={q}
             type="search"
-            placeholder="Поиск: игры, прогулка, танцы..."
+            placeholder="Название, организатор, категория..."
             className="min-h-12 flex-1 rounded-full border-0 bg-white px-5 text-city-ink outline-none placeholder:text-city-muted/70"
           />
           {category ? <input type="hidden" name="category" value={category} /> : null}

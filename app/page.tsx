@@ -38,6 +38,19 @@ const quickLinks = [
   }
 ];
 
+const directionLinks = [
+  { label: "Игры и клубы", href: "/tula/igry-i-kluby" },
+  { label: "Танцы", href: "/tula/tancy" },
+  { label: "Спорт и прогулки", href: "/tula/sport-i-progulki" },
+  { label: "Творчество", href: "/tula/tvorchestvo" },
+  { label: "Кулинария", href: "/tula/kulinariya" },
+  { label: "Практики и здоровье", href: "/tula/praktiki-i-zdorove" },
+  { label: "Книги и общение", href: "/tula/knigi-i-obshchenie" },
+  { label: "Волонтёрство", href: "/tula/volonterstvo" },
+  { label: "Театр и сцена", href: "/tula/teatr-i-scena" },
+  { label: "Выезды и приключения", href: "/tula/vyezdy-i-priklyucheniya" }
+];
+
 type ActivityPreview = Parameters<typeof ActivityCard>[0]["activity"] & {
   id: number;
 };
@@ -209,7 +222,7 @@ export default async function HomePage() {
             <input
               name="q"
               type="search"
-              placeholder="Игры, прогулка, танцы, кулинария..."
+              placeholder="Название, организатор, игры, танцы..."
               className="min-h-12 flex-1 rounded-full border-0 bg-transparent px-4 text-city-ink outline-none placeholder:text-city-muted/70"
             />
             <button className="min-h-12 rounded-full bg-city-green px-6 font-semibold text-white transition hover:bg-city-blue">
@@ -254,6 +267,20 @@ export default async function HomePage() {
                   </div>
                 </Link>
               ))}
+            </div>
+            <div className="mt-5 border-t border-city-line/80 pt-5">
+              <p className="text-sm font-semibold text-city-muted">Все направления</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {directionLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="rounded-full bg-white px-3 py-2 text-sm font-semibold text-city-muted ring-1 ring-city-line/70 transition hover:text-city-green hover:shadow-sm hover:ring-city-green/40"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </div>

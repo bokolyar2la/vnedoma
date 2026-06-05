@@ -10,6 +10,12 @@ const mobileMenuLinks = [
 	{ label: 'Танцы', href: '/tula/tancy' },
 	{ label: 'Спорт и прогулки', href: '/tula/sport-i-progulki' },
 	{ label: 'Творчество', href: '/tula/tvorchestvo' },
+	{ label: 'Кулинария', href: '/tula/kulinariya' },
+	{ label: 'Практики и здоровье', href: '/tula/praktiki-i-zdorove' },
+	{ label: 'Книги и общение', href: '/tula/knigi-i-obshchenie' },
+	{ label: 'Волонтёрство', href: '/tula/volonterstvo' },
+	{ label: 'Театр и сцена', href: '/tula/teatr-i-scena' },
+	{ label: 'Выезды и приключения', href: '/tula/vyezdy-i-priklyucheniya' },
 	{ label: 'Можно одному', href: '/tula/mozhno-odnomu' },
 	{ label: 'Где познакомиться', href: '/tula/gde-poznakomitsya' },
 	{ label: 'На выходные', href: '/tula/chem-zanyatsya-v-vyhodnye' }
@@ -68,7 +74,7 @@ export function Header() {
 							<span className='h-0.5 rounded-full bg-current transition group-open:-translate-y-2 group-open:-rotate-45' />
 						</span>
 					</summary>
-					<div className='absolute inset-x-4 top-[calc(100%+0.5rem)] rounded-[28px] border border-city-line bg-white p-3 shadow-soft'>
+					<div className='absolute inset-x-4 top-[calc(100%+0.5rem)] max-h-[calc(100vh-6rem)] overflow-y-auto rounded-[28px] border border-city-line bg-white p-3 shadow-soft'>
 						<nav className='grid gap-1'>
 							{mobileMenuLinks.map(link => (
 								<Link
