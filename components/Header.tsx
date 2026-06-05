@@ -37,8 +37,8 @@ export function Header() {
 						В
 					</span>
 					<span className='min-w-0'>
-						<span className='block text-xl font-extrabold leading-5 tracking-tight text-city-ink'>
-							Влюди
+						<span className='block text-2xl font-black leading-5 tracking-[-0.03em] text-city-ink'>
+							влюди
 						</span>
 						<span className='block text-xs font-medium text-city-muted'>
 							Тула
