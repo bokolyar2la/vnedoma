@@ -36,6 +36,7 @@ export async function createActivity(formData: FormData) {
   const submittedByOrganizer = formData.get("submittedByOrganizer") === "on";
   const submitterContact = getValue(formData, "submitterContact");
   const isFree = formData.get("isFree") === "on";
+  const privacyConsent = formData.get("privacyConsent") === "on";
 
   if (!title) {
     fail("Укажите название активности.");
@@ -47,6 +48,10 @@ export async function createActivity(formData: FormData) {
 
   if (!Number.isInteger(categoryId) || categoryId <= 0) {
     fail("Выберите категорию.");
+  }
+
+  if (!privacyConsent) {
+    fail("Подтвердите согласие с политикой обработки персональных данных.");
   }
 
   if (!contactPhone && !contactUrl) {

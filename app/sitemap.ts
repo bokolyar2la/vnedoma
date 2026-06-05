@@ -35,6 +35,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 0.9
     },
+    {
+      url: `${baseUrl}/contacts`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.4
+    },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.2
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.2
+    },
     ...tulaSeoPages.map((page) => ({
       url: `${baseUrl}/tula/${page.slug}`,
       lastModified: new Date(),

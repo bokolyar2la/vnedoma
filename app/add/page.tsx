@@ -1,4 +1,5 @@
 ﻿import type { Metadata } from "next";
+import Link from "next/link";
 import { createActivity } from "@/app/add/actions";
 import { SubmitterContactFields } from "@/components/SubmitterContactFields";
 import { currentCategorySlugs } from "@/lib/categories";
@@ -207,6 +208,22 @@ export default async function AddPage({ searchParams }: AddPageProps) {
         </div>
 
         <SubmitterContactFields />
+
+        <label className="flex items-start gap-3 rounded-2xl bg-city-soft p-4 text-sm leading-6 text-city-muted">
+          <input
+            name="privacyConsent"
+            type="checkbox"
+            required
+            className="mt-1 h-4 w-4 shrink-0 accent-city-green"
+          />
+          <span>
+            Я согласен с{" "}
+            <Link href="/privacy" className="font-semibold text-city-green hover:text-city-blue">
+              политикой обработки персональных данных
+            </Link>{" "}
+            и понимаю, что информация об активности будет проверена перед публикацией.
+          </span>
+        </label>
 
         <button className="min-h-12 w-full rounded-full bg-city-green px-6 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-city-blue sm:w-auto">
           Отправить на проверку
