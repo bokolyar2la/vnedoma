@@ -1,4 +1,8 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 const mobileMenuLinks = [
 	{ label: 'Все активности', href: '/tula' },
@@ -12,6 +16,13 @@ const mobileMenuLinks = [
 ]
 
 export function Header() {
+	const pathname = usePathname()
+	const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+	useEffect(() => {
+		setIsMenuOpen(false)
+	}, [pathname])
+
 	return (
 		<header className='sticky top-0 z-20 border-b border-city-line/80 bg-white/90 backdrop-blur-xl'>
 			<div className='relative mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6'>
@@ -44,7 +55,11 @@ export function Header() {
 					</Link>
 				</nav>
 
-				<details className='group md:hidden'>
+				<details
+					className='group md:hidden'
+					open={isMenuOpen}
+					onToggle={event => setIsMenuOpen(event.currentTarget.open)}
+				>
 					<summary className='flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-2xl bg-city-soft text-city-ink ring-1 ring-city-line transition hover:bg-white hover:text-city-green hover:shadow-sm [&::-webkit-details-marker]:hidden'>
 						<span className='sr-only'>Открыть меню</span>
 						<span className='flex w-5 flex-col gap-1.5'>
@@ -59,6 +74,7 @@ export function Header() {
 								<Link
 									key={link.href}
 									href={link.href}
+									onClick={() => setIsMenuOpen(false)}
 									className='rounded-2xl px-4 py-3 text-base font-semibold text-city-ink transition hover:bg-city-soft hover:text-city-green'
 								>
 									{link.label}
@@ -67,6 +83,7 @@ export function Header() {
 						</nav>
 						<Link
 							href='/add'
+							onClick={() => setIsMenuOpen(false)}
 							className='mt-2 block rounded-2xl bg-city-green px-4 py-3 text-center text-base font-semibold text-white shadow-sm transition hover:bg-city-blue'
 						>
 							Добавить активность
