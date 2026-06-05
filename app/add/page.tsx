@@ -216,10 +216,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
             required
             className="mt-1 h-4 w-4 shrink-0 accent-city-green"
           />
-          <span>
-            Я подтверждаю, что имею право передать эту информацию, а контакты,
-            ссылки, описание и изображения не нарушают права третьих лиц.
-          </span>
+          <span>Я понимаю, что информация пройдет проверку перед публикацией.</span>
         </label>
 
         <label className="flex items-start gap-3 rounded-2xl bg-city-soft p-4 text-sm leading-6 text-city-muted">
