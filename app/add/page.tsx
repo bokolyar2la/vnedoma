@@ -211,6 +211,19 @@ export default async function AddPage({ searchParams }: AddPageProps) {
 
         <label className="flex items-start gap-3 rounded-2xl bg-city-soft p-4 text-sm leading-6 text-city-muted">
           <input
+            name="rightsConfirmation"
+            type="checkbox"
+            required
+            className="mt-1 h-4 w-4 shrink-0 accent-city-green"
+          />
+          <span>
+            Я подтверждаю, что имею право передать эту информацию, а контакты,
+            ссылки, описание и изображения не нарушают права третьих лиц.
+          </span>
+        </label>
+
+        <label className="flex items-start gap-3 rounded-2xl bg-city-soft p-4 text-sm leading-6 text-city-muted">
+          <input
             name="privacyConsent"
             type="checkbox"
             required
@@ -221,7 +234,14 @@ export default async function AddPage({ searchParams }: AddPageProps) {
             <Link href="/privacy" className="font-semibold text-city-green hover:text-city-blue">
               политикой обработки персональных данных
             </Link>{" "}
-            и понимаю, что информация об активности будет проверена перед публикацией.
+            и{" "}
+            <Link
+              href="/personal-data-consent"
+              className="font-semibold text-city-green hover:text-city-blue"
+            >
+              согласием на обработку персональных данных
+            </Link>
+            . Я понимаю, что информация об активности будет проверена перед публикацией.
           </span>
         </label>
 

@@ -337,7 +337,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   rel={activity.contactUrl ? "noopener noreferrer" : undefined}
                   className="mt-6 flex min-h-12 items-center justify-center rounded-full bg-city-green px-5 font-semibold text-white transition hover:bg-city-blue"
                 >
-                  Записаться
+                  Записаться у организатора
                 </a>
               ) : (
                 <button
@@ -354,6 +354,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
       <section className="mt-8 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
         <h2 className="text-2xl font-bold text-city-ink">Куда написать / записаться</h2>
+        <p className="mt-3 leading-7 text-city-muted">
+          Информация носит справочный характер и не является публичной офертой.
+          Расписание, цены и условия участия уточняйте у организатора.
+        </p>
         {activity.contactPhone ? (
           <p className="mt-4 text-city-muted">
             Телефон: <span className="font-semibold text-city-ink">{activity.contactPhone}</span>

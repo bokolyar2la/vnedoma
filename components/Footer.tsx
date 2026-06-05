@@ -1,10 +1,10 @@
 import Link from "next/link";
-
-const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@vlyudi.ru";
+import { legalConfig, legalOwnerLabel } from "@/lib/legal";
 
 const footerLinks = [
   { label: "Контакты", href: "/contacts" },
   { label: "Политика обработки данных", href: "/privacy" },
+  { label: "Согласие на обработку данных", href: "/personal-data-consent" },
   { label: "Пользовательское соглашение", href: "/terms" }
 ];
 
@@ -23,13 +23,15 @@ export function Footer() {
             </span>
           </Link>
           <p className="mt-4 max-w-2xl leading-6">
-            Влюди - справочный каталог социальных активностей в Туле. Расписание, цены,
-            наличие мест и условия участия уточняйте у организаторов.
+            Влюди - справочный каталог социальных активностей в Туле. Информация
+            не является публичной офертой. Расписание, цены, наличие мест и условия
+            участия уточняйте у организаторов.
           </p>
+          <p className="mt-3 leading-6">Владелец проекта: {legalOwnerLabel}.</p>
           <p className="mt-3 leading-6">
             Для исправления информации или удаления карточки напишите на{" "}
-            <a className="font-semibold text-city-green" href={`mailto:${contactEmail}`}>
-              {contactEmail}
+            <a className="font-semibold text-city-green" href={`mailto:${legalConfig.contactEmail}`}>
+              {legalConfig.contactEmail}
             </a>
             .
           </p>

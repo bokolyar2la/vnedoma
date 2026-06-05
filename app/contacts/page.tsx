@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-
-const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@vlyudi.ru";
+import { legalConfig, legalOwnerLabel } from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "Контакты",
@@ -28,11 +27,12 @@ export default function ContactsPage() {
         <p className="mt-4 leading-7 text-city-muted">
           По вопросам исправления информации, удаления карточки, добавления активности
           или сотрудничества напишите на{" "}
-          <a className="font-semibold text-city-green" href={`mailto:${contactEmail}`}>
-            {contactEmail}
+          <a className="font-semibold text-city-green" href={`mailto:${legalConfig.contactEmail}`}>
+            {legalConfig.contactEmail}
           </a>
           .
         </p>
+        <p className="mt-3 leading-7 text-city-muted">Владелец проекта: {legalOwnerLabel}.</p>
       </section>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2">
