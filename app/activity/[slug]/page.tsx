@@ -287,7 +287,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             title={activity.title}
             categoryName={activity.category.name}
             imageUrl={activity.imageUrl}
-            className="aspect-[16/10] rounded-none sm:aspect-[21/9]"
+            className="aspect-[16/10] rounded-none sm:aspect-[21/9] lg:aspect-auto lg:h-[420px]"
+            imageClassName="lg:object-contain lg:p-8 lg:group-hover:scale-100"
           />
           <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3 sm:inset-x-6 sm:top-6">
             <span className="rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-city-green shadow-sm backdrop-blur">

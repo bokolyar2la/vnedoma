@@ -3,6 +3,7 @@
   categoryName: string;
   imageUrl?: string | null;
   className?: string;
+  imageClassName?: string;
 };
 
 type CategoryVisual = {
@@ -105,7 +106,8 @@ export function ActivityImage({
   title,
   categoryName,
   imageUrl,
-  className = ""
+  className = "",
+  imageClassName = ""
 }: ActivityImageProps) {
   const visual = getCategoryVisual(categoryName);
   const classes = `relative overflow-hidden rounded-[24px] ${className}`;
@@ -116,7 +118,7 @@ export function ActivityImage({
         <img
           src={imageUrl}
           alt={title}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          className={`h-full w-full object-cover transition duration-500 group-hover:scale-105 ${imageClassName}`}
         />
       </div>
     );
