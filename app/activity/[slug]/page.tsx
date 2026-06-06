@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ActivityCard } from "@/components/ActivityCard";
 import { ActivityImage } from "@/components/ActivityImage";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { TrackedExternalLink } from "@/components/MetrikaGoals";
 import { getSocialLevelLabel, isTripActivity } from "@/lib/activity-social";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -331,14 +332,15 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                 </div>
               ) : null}
               {hasContact ? (
-                <a
+                <TrackedExternalLink
+                  goal="organizer_contact_click"
                   href={contactHref}
                   target={activity.contactUrl ? "_blank" : undefined}
                   rel={activity.contactUrl ? "noopener noreferrer" : undefined}
                   className="mt-6 flex min-h-12 items-center justify-center rounded-full bg-city-green px-5 font-semibold text-white transition hover:bg-city-blue"
                 >
                   Записаться у организатора
-                </a>
+                </TrackedExternalLink>
               ) : (
                 <button
                   disabled
@@ -364,14 +366,15 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           </p>
         ) : null}
         {activity.contactUrl ? (
-          <a
+          <TrackedExternalLink
+            goal="organizer_contact_click"
             href={activity.contactUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-5 inline-flex min-h-12 items-center justify-center rounded-full bg-city-green px-6 font-semibold text-white transition hover:bg-city-blue"
           >
             Перейти к организатору
-          </a>
+          </TrackedExternalLink>
         ) : null}
         {!activity.contactPhone && !activity.contactUrl ? (
           <p className="mt-4 text-city-muted">Контакты уточняются</p>

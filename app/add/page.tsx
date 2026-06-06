@@ -1,6 +1,7 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { createActivity } from "@/app/add/actions";
+import { MetrikaGoalOnMount } from "@/components/MetrikaGoals";
 import { SubmitterContactFields } from "@/components/SubmitterContactFields";
 import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
@@ -54,6 +55,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
 
       {success ? (
         <div className="mt-8 rounded-3xl border border-city-green/30 bg-city-green/10 p-6 text-city-ink">
+          <MetrikaGoalOnMount goal="add_activity_submit" />
           Спасибо! Мы проверим активность и добавим её в каталог.
         </div>
       ) : null}

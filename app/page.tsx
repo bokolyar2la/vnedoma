@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { ActivityStatus } from "@prisma/client";
 import { ActivityCard } from "@/components/ActivityCard";
+import { TrackedForm, TrackedLink } from "@/components/MetrikaGoals";
 import { prisma } from "@/lib/prisma";
 
 const quickLinks = [
@@ -114,9 +115,13 @@ function ActivitySection({
           <h2 className="text-2xl font-bold text-city-ink sm:text-3xl">{title}</h2>
           <p className="mt-2 text-city-muted">{description}</p>
         </div>
-        <Link href={href} className="hidden text-sm font-semibold text-city-green sm:inline">
+        <TrackedLink
+          href={href}
+          goal="view_all_activities_click"
+          className="hidden text-sm font-semibold text-city-green sm:inline"
+        >
           Смотреть все
-        </Link>
+        </TrackedLink>
       </div>
       <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {activities.map((activity) => (
@@ -263,7 +268,11 @@ export default async function HomePage() {
           <p className="mt-3 max-w-2xl text-base leading-7 text-city-ink">
             Выберите активность на вечер, выходные или новый круг общения.
           </p>
-          <form action="/tula" className="mt-8 flex flex-col gap-3 rounded-[28px] bg-white p-2 shadow-soft ring-1 ring-city-line sm:flex-row">
+          <TrackedForm
+            action="/tula"
+            goal="search_submit"
+            className="mt-8 flex flex-col gap-3 rounded-[28px] bg-white p-2 shadow-soft ring-1 ring-city-line sm:flex-row"
+          >
             <input
               name="q"
               type="search"
@@ -273,14 +282,15 @@ export default async function HomePage() {
             <button className="min-h-12 rounded-full bg-city-green px-6 font-semibold text-white transition hover:bg-city-blue">
               Найти
             </button>
-          </form>
+          </TrackedForm>
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <Link
+            <TrackedLink
               href="/tula"
+              goal="view_all_activities_click"
               className="inline-flex min-h-11 items-center rounded-full border border-city-line bg-white px-5 text-sm font-semibold text-city-ink shadow-sm transition hover:border-city-green hover:text-city-green"
             >
               Смотреть все активности
-            </Link>
+            </TrackedLink>
           </div>
         </div>
 
@@ -294,9 +304,10 @@ export default async function HomePage() {
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {quickLinks.map((item) => (
-                <Link
+                <TrackedLink
                   key={item.href}
                   href={item.href}
+                  goal="quick_choice_click"
                   className="group rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-city-line/70 transition hover:-translate-y-0.5 hover:shadow-soft hover:ring-city-green/40"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -310,7 +321,7 @@ export default async function HomePage() {
                       {item.mark}
                     </span>
                   </div>
-                </Link>
+                </TrackedLink>
               ))}
             </div>
             <div className="mt-5 border-t border-city-line/80 pt-5">
@@ -374,12 +385,13 @@ export default async function HomePage() {
               Добавьте её, мы проверим информацию и опубликуем карточку в каталоге.
             </p>
           </div>
-          <Link
+          <TrackedLink
             href="/add"
+            goal="add_activity_click"
             className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-city-ink transition hover:bg-city-soft"
           >
             Добавить активность
-          </Link>
+          </TrackedLink>
         </div>
       </section>
     </div>

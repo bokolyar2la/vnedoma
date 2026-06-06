@@ -2,6 +2,7 @@
 import { ActivityStatus, Prisma } from "@prisma/client";
 import { ActivityCard } from "@/components/ActivityCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { TrackedForm } from "@/components/MetrikaGoals";
 import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 
@@ -201,7 +202,11 @@ export async function ActivityCatalog({
           </p>
         </div>
 
-        <form action={basePath} className="mt-7 flex flex-col gap-3 rounded-[26px] bg-city-soft p-2 sm:flex-row">
+        <TrackedForm
+          action={basePath}
+          goal="search_submit"
+          className="mt-7 flex flex-col gap-3 rounded-[26px] bg-city-soft p-2 sm:flex-row"
+        >
           <input
             name="q"
             defaultValue={q}
@@ -213,7 +218,7 @@ export async function ActivityCatalog({
           <button className="min-h-12 rounded-full bg-city-ink px-6 font-semibold text-white transition hover:bg-city-green">
             Найти
           </button>
-        </form>
+        </TrackedForm>
 
         <div className="mt-5 flex flex-wrap gap-2">
           {chips.map((chip) => (

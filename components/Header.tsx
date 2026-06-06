@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { reachMetrikaGoal } from '@/components/MetrikaGoals'
 
 const mobileMenuLinks = [
 	{ label: 'Все активности', href: '/tula' },
@@ -49,12 +50,14 @@ export function Header() {
 				<nav className='hidden items-center gap-1 rounded-full bg-city-soft/80 p-1 text-sm font-semibold text-city-muted sm:gap-2 md:flex'>
 					<Link
 						href='/tula'
+						onClick={() => reachMetrikaGoal('view_all_activities_click')}
 						className='rounded-full px-3 py-2 transition hover:bg-white hover:text-city-green hover:shadow-sm'
 					>
 						Все активности
 					</Link>
 					<Link
 						href='/add'
+						onClick={() => reachMetrikaGoal('add_activity_click')}
 						className='rounded-full bg-city-green px-4 py-2 text-white shadow-sm transition hover:bg-city-blue'
 					>
 						Добавить
@@ -80,7 +83,14 @@ export function Header() {
 								<Link
 									key={link.href}
 									href={link.href}
-									onClick={() => setIsMenuOpen(false)}
+									onClick={() => {
+										reachMetrikaGoal(
+											link.href === '/tula'
+												? 'view_all_activities_click'
+												: 'quick_choice_click'
+										)
+										setIsMenuOpen(false)
+									}}
 									className='rounded-2xl px-4 py-3 text-base font-semibold text-city-ink transition hover:bg-city-soft hover:text-city-green'
 								>
 									{link.label}
@@ -89,7 +99,10 @@ export function Header() {
 						</nav>
 						<Link
 							href='/add'
-							onClick={() => setIsMenuOpen(false)}
+							onClick={() => {
+								reachMetrikaGoal('add_activity_click')
+								setIsMenuOpen(false)
+							}}
 							className='mt-2 block rounded-2xl bg-city-green px-4 py-3 text-center text-base font-semibold text-white shadow-sm transition hover:bg-city-blue'
 						>
 							Добавить активность

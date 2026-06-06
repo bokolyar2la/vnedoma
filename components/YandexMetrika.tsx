@@ -10,7 +10,7 @@ declare global {
   interface Window {
     ym?: (
       counterId: number,
-      methodName: "hit" | "init",
+      methodName: "hit" | "init" | "reachGoal",
       urlOrOptions?: string | Record<string, unknown>,
       options?: Record<string, unknown>
     ) => void;
