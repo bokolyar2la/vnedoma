@@ -60,6 +60,8 @@ type ActivityPreview = Parameters<typeof ActivityCard>[0]["activity"] & {
   id: number;
 };
 
+const homeSectionTake = 24;
+
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -125,6 +127,44 @@ function ActivitySection({
   );
 }
 
+function getDailySeed() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function hashForRotation(value: string) {
+  let hash = 0;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+
+  return hash;
+}
+
+function rotateActivities<T extends { id: number; isPromoted?: boolean | null }>(
+  activities: T[],
+  sectionKey: string,
+  take = 6
+) {
+  const seed = getDailySeed();
+
+  return [...activities]
+    .sort((left, right) => {
+      const leftPromoted = Number(Boolean(left.isPromoted));
+      const rightPromoted = Number(Boolean(right.isPromoted));
+
+      if (leftPromoted !== rightPromoted) {
+        return rightPromoted - leftPromoted;
+      }
+
+      return (
+        hashForRotation(`${seed}:${sectionKey}:${left.id}`) -
+        hashForRotation(`${seed}:${sectionKey}:${right.id}`)
+      );
+    })
+    .slice(0, take);
+}
+
 export default async function HomePage() {
   const [
     meetPeopleActivities,
@@ -144,7 +184,7 @@ export default async function HomePage() {
       },
       include: { category: true },
       orderBy: [{ isPromoted: "desc" }, { priority: "desc" }, { createdAt: "desc" }],
-      take: 6
+      take: homeSectionTake
     }),
     prisma.activity.findMany({
       where: {
@@ -154,7 +194,7 @@ export default async function HomePage() {
       },
       include: { category: true },
       orderBy: [{ isPromoted: "desc" }, { priority: "desc" }, { createdAt: "desc" }],
-      take: 6
+      take: homeSectionTake
     }),
     prisma.activity.findMany({
       where: {
@@ -164,7 +204,7 @@ export default async function HomePage() {
       },
       include: { category: true },
       orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-      take: 6
+      take: homeSectionTake
     }),
     prisma.activity.findMany({
       where: {
@@ -174,7 +214,7 @@ export default async function HomePage() {
       },
       include: { category: true },
       orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-      take: 6
+      take: homeSectionTake
     }),
     prisma.activity.findMany({
       where: {
@@ -187,7 +227,7 @@ export default async function HomePage() {
       },
       include: { category: true },
       orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-      take: 6
+      take: homeSectionTake
     })
   ]);
   const structuredData = {
@@ -294,35 +334,35 @@ export default async function HomePage() {
       <ActivitySection
         title="Где познакомиться с новыми людьми"
         description="Игры, танцы, волонтёрство и другие форматы, где люди взаимодействуют друг с другом."
-        activities={meetPeopleActivities}
+        activities={rotateActivities(meetPeopleActivities, "meet-people")}
         href="/tula/gde-poznakomitsya"
       />
 
       <ActivitySection
         title="Можно прийти без компании"
         description="Форматы, где нормально появиться одному и быстро включиться в общий процесс."
-        activities={soloActivities}
+        activities={rotateActivities(soloActivities, "solo")}
         href="/tula/mozhno-odnomu"
       />
 
       <ActivitySection
         title="Движение и активный отдых"
         description="Прогулки, спорт, выезды и маршруты для тех, кто хочет выбраться из дома."
-        activities={activeRestActivities}
+        activities={rotateActivities(activeRestActivities, "active-rest")}
         href="/tula/sport-i-progulki"
       />
 
       <ActivitySection
         title="Творческие занятия"
         description="Мастер-классы, кулинарные вечера и практики, где проще общаться через общее дело."
-        activities={creativeActivities}
+        activities={rotateActivities(creativeActivities, "creative")}
         href="/tula/tvorchestvo"
       />
 
       <ActivitySection
         title="Идеи на выходные"
         description="Выездные форматы и активности, которые удобно запланировать на свободный день."
-        activities={weekendActivities}
+        activities={rotateActivities(weekendActivities, "weekend")}
         href="/tula/chem-zanyatsya-v-vyhodnye"
       />
 
