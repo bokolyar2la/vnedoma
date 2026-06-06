@@ -171,7 +171,7 @@ export async function ActivityCatalog({
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <div id="catalog-top" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-8 sm:px-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -229,6 +229,14 @@ export async function ActivityCatalog({
               {chip.label}
             </Link>
           ))}
+          {seoBlock ? (
+            <a
+              href="#how-to-choose"
+              className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-city-green ring-1 ring-city-line transition hover:shadow-sm hover:ring-city-green/40"
+            >
+              Как выбрать активность
+            </a>
+          ) : null}
         </div>
 
         {showCategoryFilter ? (
@@ -269,7 +277,10 @@ export async function ActivityCatalog({
       )}
 
       {seoBlock ? (
-        <section className="mt-10 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
+        <section
+          id="how-to-choose"
+          className="mt-10 scroll-mt-24 rounded-[30px] border border-city-line bg-white p-6 shadow-soft"
+        >
           <h2 className="text-2xl font-bold text-city-ink">{seoBlock.title}</h2>
           <div className="mt-4 space-y-3 text-base leading-8 text-city-muted">
             {seoBlock.paragraphs.map((paragraph) => (
@@ -289,6 +300,12 @@ export async function ActivityCatalog({
               ))}
             </div>
           ) : null}
+          <a
+            href="#catalog-top"
+            className="mt-6 inline-flex min-h-11 items-center rounded-full bg-city-green px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-city-blue"
+          >
+            Вернуться к активностям
+          </a>
         </section>
       ) : null}
     </div>
