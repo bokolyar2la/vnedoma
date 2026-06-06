@@ -22,7 +22,7 @@ type YmWindow = Window & {
   ) => void;
 };
 
-const metrikaId = Number(process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID);
+const metrikaId = Number(process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID || "109691466");
 
 export function reachMetrikaGoal(goalName: GoalName) {
   if (!metrikaId || typeof window === "undefined") {

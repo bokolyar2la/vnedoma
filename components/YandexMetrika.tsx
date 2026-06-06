@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Script from "next/script";
 
-const metrikaId = process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID;
+const metrikaId = process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID || "109691466";
 
 declare global {
   interface Window {
