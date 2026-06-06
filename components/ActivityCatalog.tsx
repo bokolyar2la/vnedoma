@@ -16,6 +16,14 @@ type ActivityCatalogProps = {
   fixedFilters?: Prisma.ActivityWhereInput;
   showCategoryFilter?: boolean;
   basePath?: string;
+  seoBlock?: {
+    title: string;
+    paragraphs: string[];
+    links?: {
+      label: string;
+      href: string;
+    }[];
+  };
 };
 
 function getSingleParam(params: SearchParams, key: string) {
@@ -42,7 +50,8 @@ export async function ActivityCatalog({
   description,
   fixedFilters = {},
   showCategoryFilter = true,
-  basePath = "/tula"
+  basePath = "/tula",
+  seoBlock
 }: ActivityCatalogProps) {
   const category = showCategoryFilter ? getSingleParam(searchParams, "category") : undefined;
   const q = getSingleParam(searchParams, "q")?.trim();
@@ -258,6 +267,30 @@ export async function ActivityCatalog({
           По этим фильтрам ничего не найдено. Попробуйте изменить запрос или убрать часть условий.
         </section>
       )}
+
+      {seoBlock ? (
+        <section className="mt-10 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
+          <h2 className="text-2xl font-bold text-city-ink">{seoBlock.title}</h2>
+          <div className="mt-4 space-y-3 text-base leading-8 text-city-muted">
+            {seoBlock.paragraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
+          {seoBlock.links && seoBlock.links.length > 0 ? (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {seoBlock.links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="rounded-full bg-city-soft px-4 py-2 text-sm font-semibold text-city-green transition hover:bg-white hover:shadow-sm"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }
