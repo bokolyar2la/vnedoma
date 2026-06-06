@@ -1,6 +1,7 @@
 ﻿import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { YandexMetrika } from "@/components/YandexMetrika";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -51,6 +52,7 @@ export default function RootLayout({
         <Header />
         <main>{children}</main>
         <Footer />
+        <YandexMetrika />
       </body>
     </html>
   );
