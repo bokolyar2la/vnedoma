@@ -1,54 +1,12 @@
-"use client";
-
-import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
-import Script from "next/script";
-
 const metrikaId = process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID || "109691466";
 
-declare global {
-  interface Window {
-    ym?: (
-      counterId: number,
-      methodName: "hit" | "init" | "reachGoal",
-      urlOrOptions?: string | Record<string, unknown>,
-      options?: Record<string, unknown>
-    ) => void;
-  }
-}
-
 export function YandexMetrika() {
-  const pathname = usePathname();
-  const isFirstRender = useRef(true);
-  const previousUrl = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!metrikaId) {
-      return;
-    }
-
-    const currentUrl = window.location.href;
-
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      previousUrl.current = currentUrl;
-      return;
-    }
-
-    window.ym?.(Number(metrikaId), "hit", currentUrl, {
-      referer: previousUrl.current ?? document.referrer
-    });
-    previousUrl.current = currentUrl;
-  }, [pathname]);
-
-  if (!metrikaId) {
-    return null;
-  }
-
   return (
     <>
-      <Script id="yandex-metrika" strategy="afterInteractive">
-        {`
+      <script
+        id="yandex-metrika"
+        dangerouslySetInnerHTML={{
+          __html: `
           (function(m,e,t,r,i,k,a){
             m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
             m[i].l=1*new Date();
@@ -69,7 +27,8 @@ export function YandexMetrika() {
             trackLinks: true
           });
         `}
-      </Script>
+        }}
+      />
       <noscript>
         <div>
           <img
