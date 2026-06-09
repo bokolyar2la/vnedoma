@@ -342,6 +342,63 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6">
+        <div className="border-y border-city-line py-8">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl font-bold text-city-ink sm:text-3xl">
+              Как выбрать, куда сходить в Туле
+            </h2>
+            <p className="mt-3 leading-7 text-city-muted">
+              Влюди помогает искать не только по названию места, но и по ситуации: когда хочется
+              выбраться одному, найти бесплатную встречу, попробовать новый формат или провести
+              выходной среди людей.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-6 md:grid-cols-3">
+            <div>
+              <h3 className="font-bold text-city-ink">По настроению</h3>
+              <p className="mt-2 leading-7 text-city-muted">
+                Для спокойного вечера подойдут книжные клубы и практики, для движения — прогулки,
+                танцы и выезды.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold text-city-ink">По ситуации</h3>
+              <p className="mt-2 leading-7 text-city-muted">
+                Можно быстро открыть подборки{" "}
+                <TrackedLink goal="quick_choice_click" href="/tula/besplatno" className="font-semibold text-city-green">
+                  бесплатно
+                </TrackedLink>
+                ,{" "}
+                <TrackedLink goal="quick_choice_click" href="/tula/mozhno-odnomu" className="font-semibold text-city-green">
+                  можно одному
+                </TrackedLink>{" "}
+                или{" "}
+                <TrackedLink goal="quick_choice_click" href="/tula/dlya-novichkov" className="font-semibold text-city-green">
+                  новичкам
+                </TrackedLink>
+                .
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold text-city-ink">По цели</h3>
+              <p className="mt-2 leading-7 text-city-muted">
+                Если хочется общения, начните со страницы{" "}
+                <TrackedLink goal="quick_choice_click" href="/tula/gde-poznakomitsya" className="font-semibold text-city-green">
+                  где познакомиться в Туле
+                </TrackedLink>
+                . Для свободного дня есть подборка{" "}
+                <TrackedLink goal="quick_choice_click" href="/tula/chem-zanyatsya-v-vyhodnye" className="font-semibold text-city-green">
+                  на выходные
+                </TrackedLink>
+                .
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <ActivitySection
         title="Где познакомиться с новыми людьми"
         description="Игры, танцы, волонтёрство и другие форматы, где люди взаимодействуют друг с другом."
