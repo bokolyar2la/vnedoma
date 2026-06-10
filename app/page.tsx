@@ -291,6 +291,13 @@ export default async function HomePage() {
             >
               Смотреть все активности
             </TrackedLink>
+            <TrackedLink
+              href="/add"
+              goal="add_activity_click"
+              className="inline-flex min-h-11 items-center rounded-full bg-city-soft px-5 text-sm font-semibold text-city-green ring-1 ring-city-green/15 transition hover:bg-white hover:shadow-sm hover:ring-city-green/40"
+            >
+              Добавить свою
+            </TrackedLink>
           </div>
         </div>
 

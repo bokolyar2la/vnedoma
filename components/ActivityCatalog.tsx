@@ -2,7 +2,7 @@
 import { ActivityStatus, Prisma } from "@prisma/client";
 import { ActivityCard } from "@/components/ActivityCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { TrackedForm } from "@/components/MetrikaGoals";
+import { TrackedForm, TrackedLink } from "@/components/MetrikaGoals";
 import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 
@@ -267,6 +267,27 @@ export async function ActivityCatalog({
             ))}
           </div>
         ) : null}
+      </section>
+
+      <section className="mt-6 overflow-hidden rounded-[28px] border border-city-green/20 bg-city-soft p-5 shadow-sm">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h2 className="text-xl font-bold text-city-ink">
+              Знаете активность, которой нет в каталоге?
+            </h2>
+            <p className="mt-2 max-w-3xl leading-7 text-city-muted">
+              Расскажите о клубе, встрече, прогулке, мастер-классе или книжном клубе в Туле.
+              Мы проверим информацию и добавим карточку.
+            </p>
+          </div>
+          <TrackedLink
+            href="/add"
+            goal="add_activity_click"
+            className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-city-green px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-city-blue"
+          >
+            Добавить активность
+          </TrackedLink>
+        </div>
       </section>
 
       {activities.length > 0 ? (
