@@ -3,6 +3,7 @@
 import { ActivityStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { normalizeContactUrlInput } from "@/lib/contact-url";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueSlug } from "@/lib/slug";
 
@@ -32,7 +33,7 @@ export async function createActivity(formData: FormData) {
   const address = getValue(formData, "address");
   const organizerName = getValue(formData, "organizerName") || "Не указан";
   const contactPhone = getValue(formData, "contactPhone");
-  const contactUrl = getValue(formData, "contactUrl");
+  const contactUrl = normalizeContactUrlInput(getValue(formData, "contactUrl"));
   const submittedByOrganizer = formData.get("submittedByOrganizer") === "on";
   const submitterContact = getValue(formData, "submitterContact");
   const isFree = formData.get("isFree") === "on";

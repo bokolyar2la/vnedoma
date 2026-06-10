@@ -202,10 +202,13 @@ export default async function AddPage({ searchParams }: AddPageProps) {
             <input
               id="contactUrl"
               name="contactUrl"
-              type="url"
+              type="text"
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-              placeholder="VK, Telegram, сайт, Timepad или страница записи"
+              placeholder="vk.com/..., t.me/..., @telegram или сайт"
             />
+            <p className="mt-2 text-xs leading-5 text-city-muted">
+              Можно вставить ссылку без https:// — мы приведем ее в порядок перед публикацией.
+            </p>
           </div>
         </div>
 
