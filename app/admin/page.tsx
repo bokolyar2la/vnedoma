@@ -66,6 +66,12 @@ export default async function AdminPage() {
           >
             Организаторы
           </Link>
+          <Link
+            href="/admin/organizer-requests"
+            className="rounded-full border border-city-line bg-white px-4 py-2 text-sm font-semibold text-city-ink transition hover:border-city-green"
+          >
+            Заявки организаторов
+          </Link>
         </div>
       </div>
 

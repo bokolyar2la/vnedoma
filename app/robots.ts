@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/admin/", "/admin/*"]
+        disallow: ["/admin", "/admin/", "/admin/*", "/organizer", "/organizer/", "/organizer/*"]
       }
     ],
     sitemap: "https://vlyudi.ru/sitemap.xml",

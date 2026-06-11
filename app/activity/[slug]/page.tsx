@@ -379,6 +379,18 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         {!activity.contactPhone && !activity.contactUrl ? (
           <p className="mt-4 text-city-muted">Контакты уточняются</p>
         ) : null}
+        <div className="mt-6 rounded-2xl bg-city-soft p-4">
+          <p className="text-sm font-semibold text-city-ink">Вы организатор этой активности?</p>
+          <p className="mt-1 text-sm leading-6 text-city-muted">
+            Можно запросить доступ к карточке и отправлять правки через кабинет.
+          </p>
+          <Link
+            href={`/organizer/register?activityId=${activity.id}`}
+            className="mt-3 inline-flex text-sm font-semibold text-city-green transition hover:text-city-blue"
+          >
+            Запросить доступ
+          </Link>
+        </div>
       </section>
 
       <section className="mt-8 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
@@ -446,6 +458,17 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   {event.price ? ` · ${event.price.toLocaleString("ru-RU")} ₽` : ""}
                   {event.seatsAvailable ? ` · мест: ${event.seatsAvailable}` : ""}
                 </p>
+                {event.signupUrl ? (
+                  <TrackedExternalLink
+                    goal="organizer_contact_click"
+                    href={event.signupUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex text-sm font-semibold text-city-green transition hover:text-city-blue"
+                  >
+                    Записаться на событие
+                  </TrackedExternalLink>
+                ) : null}
               </div>
             ))}
           </div>
