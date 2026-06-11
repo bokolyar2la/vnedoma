@@ -226,9 +226,8 @@ export async function createOrganizerEventRequest(formData: FormData) {
   redirect(`/organizer/activities/${activity.slug}?event=sent`);
 }
 
-export async function markClaimRequest(formData: FormData) {
+async function markClaimRequestWithStatus(formData: FormData, status: OrganizerRequestStatus) {
   const id = Number(getString(formData, "id"));
-  const status = getString(formData, "status") as OrganizerRequestStatus;
 
   if (!Number.isInteger(id) || id <= 0) {
     throw new Error("Некорректная заявка.");
@@ -268,9 +267,16 @@ export async function markClaimRequest(formData: FormData) {
   revalidatePath("/admin/organizer-requests");
 }
 
-export async function markEditRequest(formData: FormData) {
+export async function approveClaimRequest(formData: FormData) {
+  await markClaimRequestWithStatus(formData, OrganizerRequestStatus.approved);
+}
+
+export async function rejectClaimRequest(formData: FormData) {
+  await markClaimRequestWithStatus(formData, OrganizerRequestStatus.rejected);
+}
+
+async function markEditRequestWithStatus(formData: FormData, status: OrganizerRequestStatus) {
   const id = Number(getString(formData, "id"));
-  const status = getString(formData, "status") as OrganizerRequestStatus;
 
   if (!Number.isInteger(id) || id <= 0) {
     throw new Error("Некорректная заявка.");
@@ -321,9 +327,16 @@ export async function markEditRequest(formData: FormData) {
   revalidatePath(`/activity/${request.activity.slug}`);
 }
 
-export async function markEventRequest(formData: FormData) {
+export async function approveEditRequest(formData: FormData) {
+  await markEditRequestWithStatus(formData, OrganizerRequestStatus.done);
+}
+
+export async function rejectEditRequest(formData: FormData) {
+  await markEditRequestWithStatus(formData, OrganizerRequestStatus.rejected);
+}
+
+async function markEventRequestWithStatus(formData: FormData, status: OrganizerRequestStatus) {
   const id = Number(getString(formData, "id"));
-  const status = getString(formData, "status") as OrganizerRequestStatus;
 
   if (!Number.isInteger(id) || id <= 0) {
     throw new Error("Некорректная заявка.");
@@ -365,4 +378,12 @@ export async function markEventRequest(formData: FormData) {
 
   revalidatePath("/admin/organizer-requests");
   revalidatePath(`/activity/${request.activity.slug}`);
+}
+
+export async function approveEventRequest(formData: FormData) {
+  await markEventRequestWithStatus(formData, OrganizerRequestStatus.done);
+}
+
+export async function rejectEventRequest(formData: FormData) {
+  await markEventRequestWithStatus(formData, OrganizerRequestStatus.rejected);
 }

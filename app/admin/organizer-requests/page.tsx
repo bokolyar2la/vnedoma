@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { OrganizerRequestStatus } from "@prisma/client";
 import {
-  markClaimRequest,
-  markEditRequest,
-  markEventRequest
+  approveClaimRequest,
+  approveEditRequest,
+  approveEventRequest,
+  rejectClaimRequest,
+  rejectEditRequest,
+  rejectEventRequest
 } from "@/app/organizer/actions";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -58,29 +60,23 @@ function AdminComment({ defaultValue }: { defaultValue?: string | null }) {
 
 function RequestActions({
   id,
-  formAction,
-  approveStatus,
-  rejectStatus
+  approveAction,
+  rejectAction
 }: {
   id: number;
-  formAction: (formData: FormData) => Promise<void>;
-  approveStatus: OrganizerRequestStatus;
-  rejectStatus: OrganizerRequestStatus;
+  approveAction: (formData: FormData) => Promise<void>;
+  rejectAction: (formData: FormData) => Promise<void>;
 }) {
   return (
     <div className="mt-4 flex flex-wrap gap-2">
       <button
-        formAction={formAction}
-        name="status"
-        value={approveStatus}
+        formAction={approveAction}
         className="rounded-full bg-city-green px-4 py-2 text-sm font-semibold text-white transition hover:bg-city-blue"
       >
         Принять
       </button>
       <button
-        formAction={formAction}
-        name="status"
-        value={rejectStatus}
+        formAction={rejectAction}
         className="rounded-full border border-city-line bg-white px-4 py-2 text-sm font-semibold text-city-ink transition hover:border-red-300 hover:text-red-700"
       >
         Отклонить
@@ -199,9 +195,8 @@ export default async function OrganizerRequestsPage() {
                 {claim.status === "pending" ? (
                   <RequestActions
                     id={claim.id}
-                    formAction={markClaimRequest}
-                    approveStatus={OrganizerRequestStatus.approved}
-                    rejectStatus={OrganizerRequestStatus.rejected}
+                    approveAction={approveClaimRequest}
+                    rejectAction={rejectClaimRequest}
                   />
                 ) : null}
               </form>
@@ -250,9 +245,8 @@ export default async function OrganizerRequestsPage() {
                 {edit.status === "pending" ? (
                   <RequestActions
                     id={edit.id}
-                    formAction={markEditRequest}
-                    approveStatus={OrganizerRequestStatus.done}
-                    rejectStatus={OrganizerRequestStatus.rejected}
+                    approveAction={approveEditRequest}
+                    rejectAction={rejectEditRequest}
                   />
                 ) : null}
               </form>
@@ -296,9 +290,8 @@ export default async function OrganizerRequestsPage() {
                 {event.status === "pending" ? (
                   <RequestActions
                     id={event.id}
-                    formAction={markEventRequest}
-                    approveStatus={OrganizerRequestStatus.done}
-                    rejectStatus={OrganizerRequestStatus.rejected}
+                    approveAction={approveEventRequest}
+                    rejectAction={rejectEventRequest}
                   />
                 ) : null}
               </form>
