@@ -82,7 +82,10 @@ export async function getOrganizerAccount() {
     return null;
   }
 
-  return prisma.organizerAccount.findUnique({
-    where: { id: accountId }
+  return prisma.organizerAccount.findFirst({
+    where: {
+      id: accountId,
+      isDisabled: false
+    }
   });
 }

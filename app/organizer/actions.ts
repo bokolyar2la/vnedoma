@@ -113,6 +113,10 @@ export async function registerOrganizer(formData: FormData) {
     fail(returnPath, "Этот email уже зарегистрирован. Войдите или укажите текущий пароль.");
   }
 
+  if (existingAccount?.isDisabled) {
+    fail(returnPath, "Аккаунт организатора отключен.");
+  }
+
   const account = existingAccount
     ? await prisma.organizerAccount.update({
         where: { id: existingAccount.id },
@@ -149,7 +153,7 @@ export async function loginOrganizer(formData: FormData) {
     where: { email }
   });
 
-  if (!account || !verifyPassword(password, account.passwordHash)) {
+  if (!account || account.isDisabled || !verifyPassword(password, account.passwordHash)) {
     fail("/organizer/login", "Неверный email или пароль.");
   }
 

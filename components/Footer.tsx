@@ -2,6 +2,7 @@ import Link from "next/link";
 import { legalConfig, legalOwnerLabel } from "@/lib/legal";
 
 const footerLinks = [
+  { label: "Организаторам", href: "/organizers" },
   { label: "Контакты", href: "/contacts" },
   { label: "Политика обработки данных", href: "/privacy" },
   { label: "Согласие на обработку данных", href: "/personal-data-consent" },

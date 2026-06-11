@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OrganizerRequestStatus } from "@prisma/client";
 import Link from "next/link";
 import {
   approveClaimRequest,
@@ -105,9 +106,28 @@ function sortByStatusAndDate<T extends { status: string; createdAt: Date }>(item
   });
 }
 
-export default async function OrganizerRequestsPage() {
+type PageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function getSearchParam(
+  params: Record<string, string | string[] | undefined>,
+  key: string
+) {
+  const value = params[key];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function OrganizerRequestsPage({ searchParams }: PageProps) {
+  const params = searchParams ? await searchParams : {};
+  const showAll = getSearchParam(params, "show") === "all";
+  const requestWhere = showAll
+    ? undefined
+    : { status: OrganizerRequestStatus.pending };
+
   const [claimRequests, editRequests, eventRequests] = await Promise.all([
     prisma.organizerClaimRequest.findMany({
+      where: requestWhere,
       include: {
         account: true,
         organizer: true,
@@ -117,6 +137,7 @@ export default async function OrganizerRequestsPage() {
       take: 50
     }),
     prisma.organizerEditRequest.findMany({
+      where: requestWhere,
       include: {
         account: true,
         activity: true
@@ -125,6 +146,7 @@ export default async function OrganizerRequestsPage() {
       take: 50
     }),
     prisma.organizerEventRequest.findMany({
+      where: requestWhere,
       include: {
         account: true,
         activity: true
@@ -152,6 +174,15 @@ export default async function OrganizerRequestsPage() {
           <h1 className="mt-3 text-3xl font-bold text-city-ink">Заявки организаторов</h1>
           <p className="mt-3 text-city-muted">
             На проверке: <span className="font-semibold text-city-ink">{pendingCount}</span>
+          </p>
+          <p className="mt-2 text-sm text-city-muted">
+            {showAll ? "Показана вся история заявок." : "Показаны только новые заявки."}{" "}
+            <Link
+              href={showAll ? "/admin/organizer-requests" : "/admin/organizer-requests?show=all"}
+              className="font-semibold text-city-green hover:text-city-blue"
+            >
+              {showAll ? "Вернуться к новым" : "Показать историю"}
+            </Link>
           </p>
         </div>
         <Link

@@ -7,6 +7,7 @@ import { reachMetrikaGoal } from '@/components/MetrikaGoals'
 
 const mobileMenuLinks = [
 	{ label: 'Все активности', href: '/tula' },
+	{ label: 'Организаторам', href: '/organizers' },
 	{ label: 'Игры и клубы', href: '/tula/igry-i-kluby' },
 	{ label: 'Танцы', href: '/tula/tancy' },
 	{ label: 'Спорт и прогулки', href: '/tula/sport-i-progulki' },
@@ -56,6 +57,12 @@ export function Header() {
 						Все активности
 					</Link>
 					<Link
+						href='/organizers'
+						className='rounded-full px-3 py-2 transition hover:bg-white hover:text-city-green hover:shadow-sm'
+					>
+						Организаторам
+					</Link>
+					<Link
 						href='/add'
 						onClick={() => reachMetrikaGoal('add_activity_click')}
 						className='rounded-full bg-city-green px-4 py-2 text-white shadow-sm transition hover:bg-city-blue'
@@ -84,11 +91,11 @@ export function Header() {
 									key={link.href}
 									href={link.href}
 									onClick={() => {
-										reachMetrikaGoal(
-											link.href === '/tula'
-												? 'view_all_activities_click'
-												: 'quick_choice_click'
-										)
+										if (link.href === '/tula') {
+											reachMetrikaGoal('view_all_activities_click')
+										} else if (link.href.startsWith('/tula/')) {
+											reachMetrikaGoal('quick_choice_click')
+										}
 										setIsMenuOpen(false)
 									}}
 									className='rounded-2xl px-4 py-3 text-base font-semibold text-city-ink transition hover:bg-city-soft hover:text-city-green'

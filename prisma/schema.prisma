@@ -67,6 +67,7 @@ model OrganizerAccount {
   name         String
   contact      String?
   passwordHash String
+  isDisabled   Boolean                 @default(false)
   accesses     OrganizerAccess[]
   claims       OrganizerClaimRequest[]
   editRequests OrganizerEditRequest[]
