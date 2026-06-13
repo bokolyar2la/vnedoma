@@ -3,6 +3,7 @@
 import { ActivityStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { normalizeContactUrlInput } from "@/lib/contact-url";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueSlug } from "@/lib/slug";
 
@@ -82,6 +83,7 @@ async function getTulaCity() {
 async function getOrCreateOrganizer(formData: FormData, cityId: number) {
   const organizerName = getString(formData, "organizerName") || "Не указан";
   const address = getString(formData, "address") || "Адрес уточняется";
+  const contactUrl = normalizeContactUrlInput(getString(formData, "contactUrl"));
 
   return prisma.organizer.upsert({
     where: {
@@ -93,7 +95,7 @@ async function getOrCreateOrganizer(formData: FormData, cityId: number) {
     update: {
       address,
       phone: getOptionalString(formData, "contactPhone"),
-      websiteUrl: getOptionalString(formData, "contactUrl")
+      websiteUrl: contactUrl
     },
     create: {
       name: organizerName,
@@ -101,7 +103,7 @@ async function getOrCreateOrganizer(formData: FormData, cityId: number) {
       address,
       cityId,
       phone: getOptionalString(formData, "contactPhone"),
-      websiteUrl: getOptionalString(formData, "contactUrl")
+      websiteUrl: contactUrl
     }
   });
 }
@@ -135,8 +137,8 @@ export async function createAdminActivity(formData: FormData) {
       beginnerFriendly: formData.get("beginnerFriendly") === "on",
       canComeAlone: formData.get("canComeAlone") === "on",
       contactPhone: getOptionalString(formData, "contactPhone"),
-      contactUrl: getOptionalString(formData, "contactUrl"),
-      sourceUrl: getOptionalString(formData, "sourceUrl"),
+      contactUrl: normalizeContactUrlInput(getString(formData, "contactUrl")),
+      sourceUrl: normalizeContactUrlInput(getString(formData, "sourceUrl")),
       imageUrl: getOptionalString(formData, "imageUrl"),
       isVerified: formData.get("isVerified") === "on",
       activityType: getOptionalString(formData, "activityType"),
@@ -222,8 +224,8 @@ export async function updateActivity(formData: FormData) {
       beginnerFriendly: formData.get("beginnerFriendly") === "on",
       canComeAlone: formData.get("canComeAlone") === "on",
       contactPhone: getOptionalString(formData, "contactPhone"),
-      contactUrl: getOptionalString(formData, "contactUrl"),
-      sourceUrl: getOptionalString(formData, "sourceUrl"),
+      contactUrl: normalizeContactUrlInput(getString(formData, "contactUrl")),
+      sourceUrl: normalizeContactUrlInput(getString(formData, "sourceUrl")),
       isVerified: formData.get("isVerified") === "on",
       imageUrl: getOptionalString(formData, "imageUrl"),
       activityType: getOptionalString(formData, "activityType"),

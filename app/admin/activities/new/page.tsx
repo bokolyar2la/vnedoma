@@ -165,7 +165,6 @@ export default async function NewActivityPage() {
               <input
                 id="contactUrl"
                 name="contactUrl"
-                type="url"
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
                 placeholder="VK, Telegram, сайт, Timepad или страница записи"
               />
@@ -180,7 +179,6 @@ export default async function NewActivityPage() {
               <input
                 id="sourceUrl"
                 name="sourceUrl"
-                type="url"
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
                 placeholder="Откуда взяли информацию"
               />
