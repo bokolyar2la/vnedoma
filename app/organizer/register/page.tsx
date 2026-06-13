@@ -78,7 +78,7 @@ export default async function OrganizerRegisterPage({ searchParams }: RegisterPa
               name="name"
               required
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-              placeholder="Например: Finca, студия танцев или ваше имя"
+              placeholder="Имя, название клуба или студии"
             />
           </div>
 
