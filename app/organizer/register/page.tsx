@@ -71,14 +71,14 @@ export default async function OrganizerRegisterPage({ searchParams }: RegisterPa
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label htmlFor="name" className="text-sm font-semibold text-city-ink">
-              Ваше имя или организация
+              Имя, клуб или студия
             </label>
             <input
               id="name"
               name="name"
               required
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-              placeholder="Даниил / клуб / студия"
+              placeholder="Например: Finca, студия танцев или ваше имя"
             />
           </div>
 
