@@ -30,7 +30,8 @@ export default async function OrganizerLoginPage({ searchParams }: LoginPageProp
       </p>
       <h1 className="mt-3 text-3xl font-bold text-city-ink">Вход в кабинет</h1>
       <p className="mt-4 text-city-muted">
-        Войдите, чтобы отправлять правки по своим карточкам и добавлять ближайшие события.
+        Войдите, чтобы проверить статус заявки. Правки и ближайшие события доступны
+        только после подтверждения доступа.
       </p>
 
       {error ? (

@@ -50,7 +50,8 @@ export default async function OrganizerRegisterPage({ searchParams }: RegisterPa
         Получить доступ к карточке
       </h1>
       <p className="mt-4 text-city-muted">
-        Отправьте заявку, если вы представляете активность. После проверки вы сможете предлагать правки и ближайшие события.
+        Отправьте заявку, если вы представляете активность. Кабинет с правками и
+        ближайшими событиями откроется только после ручного подтверждения.
       </p>
 
       <div className="mt-6 rounded-3xl border border-city-line bg-city-soft p-5">
@@ -99,7 +100,7 @@ export default async function OrganizerRegisterPage({ searchParams }: RegisterPa
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label htmlFor="email" className="text-sm font-semibold text-city-ink">
-              Email для входа
+              Email для проверки статуса
             </label>
             <input
               id="email"
@@ -113,7 +114,7 @@ export default async function OrganizerRegisterPage({ searchParams }: RegisterPa
 
           <div>
             <label htmlFor="password" className="text-sm font-semibold text-city-ink">
-              Пароль
+              Пароль для повторного входа
             </label>
             <input
               id="password"
@@ -156,12 +157,12 @@ export default async function OrganizerRegisterPage({ searchParams }: RegisterPa
         </div>
 
         <button className="min-h-12 rounded-full bg-city-green px-6 font-semibold text-white transition hover:bg-city-blue">
-          Отправить заявку
+          Отправить на проверку
         </button>
       </form>
 
       <Link href="/organizer/login" className="mt-6 inline-flex text-sm font-semibold text-city-green hover:text-city-blue">
-        Уже есть доступ? Войти
+        Уже отправляли заявку или получили доступ? Войти
       </Link>
     </div>
   );

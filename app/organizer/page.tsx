@@ -24,6 +24,7 @@ type NavigationItem = {
   label: string;
   href?: string;
   active?: boolean;
+  disabled?: boolean;
 };
 
 function hasParam(params: Record<string, string | string[] | undefined>, key: string) {
@@ -186,12 +187,156 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
     }))
   ].slice(0, 6);
 
+  if (accesses.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#eef4f1] px-3 py-5 sm:px-5 lg:px-8">
+        <div className="mx-auto grid max-w-5xl overflow-hidden rounded-[28px] border border-white/70 bg-white/85 shadow-soft backdrop-blur lg:grid-cols-[220px_minmax(0,1fr)]">
+          <aside className="border-b border-city-line/70 bg-[#f7fbf9] p-5 lg:border-b-0 lg:border-r">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-city-green text-sm font-bold text-white">
+                В
+              </div>
+              <div>
+                <p className="font-bold leading-tight text-city-ink">влюди</p>
+                <p className="text-xs text-city-muted">Заявка организатора</p>
+              </div>
+            </div>
+
+            <div className="mt-8 rounded-[24px] bg-[#fff7df] p-5">
+              <p className="text-sm font-bold text-[#8a6419]">Доступ еще не подтвержден</p>
+              <p className="mt-2 text-xs leading-5 text-city-muted">
+                Кабинет с правками и событиями откроется после ручной проверки заявки.
+              </p>
+            </div>
+
+            <form action={logoutOrganizer} className="mt-5">
+              <button className="w-full rounded-2xl border border-city-line bg-white px-4 py-3 text-sm font-semibold text-city-ink transition hover:border-city-green hover:text-city-green">
+                Выйти
+              </button>
+            </form>
+          </aside>
+
+          <main className="p-5 sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
+              Влюди · проверка доступа
+            </p>
+            <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight text-city-ink sm:text-4xl">
+              Заявка отправлена и ждет проверки
+            </h1>
+            <p className="mt-4 max-w-3xl leading-7 text-city-muted">
+              Сейчас это еще не полноценный кабинет организатора. Мы сначала проверяем, что
+              заявитель действительно связан с активностью, и только после этого открываем
+              доступ к редактированию карточки и добавлению ближайших событий.
+            </p>
+
+            {hasParam(params, "registered") ? (
+              <div className="mt-6 rounded-2xl border border-city-green/30 bg-city-green/10 p-4 text-sm font-semibold text-city-ink">
+                Спасибо, заявка принята. Если понадобится уточнение, мы свяжемся по указанному
+                контакту.
+              </div>
+            ) : null}
+
+            <section className="mt-8 grid gap-4 md:grid-cols-3">
+              <div className="rounded-[24px] border border-city-line bg-white p-5 shadow-sm">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-city-green text-lg font-bold text-white">
+                  1
+                </div>
+                <h2 className="mt-5 text-base font-bold text-city-ink">Заявка создана</h2>
+                <p className="mt-2 text-sm leading-6 text-city-muted">
+                  Мы получили данные и ссылку для подтверждения.
+                </p>
+              </div>
+              <div className="rounded-[24px] border border-city-line bg-white p-5 shadow-sm">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff7df] text-lg font-bold text-[#8a6419]">
+                  2
+                </div>
+                <h2 className="mt-5 text-base font-bold text-city-ink">Ручная проверка</h2>
+                <p className="mt-2 text-sm leading-6 text-city-muted">
+                  Проверяем связь с организатором и карточкой.
+                </p>
+              </div>
+              <div className="rounded-[24px] border border-city-line bg-white p-5 shadow-sm">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-city-soft text-lg font-bold text-city-green">
+                  3
+                </div>
+                <h2 className="mt-5 text-base font-bold text-city-ink">Доступ к ЛК</h2>
+                <p className="mt-2 text-sm leading-6 text-city-muted">
+                  После одобрения появятся карточки, правки и события.
+                </p>
+              </div>
+            </section>
+
+            <section className="mt-8 rounded-[24px] border border-city-line bg-white p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-city-ink">Ваши заявки</h2>
+                  <p className="mt-2 text-sm leading-6 text-city-muted">
+                    Здесь виден статус запросов на доступ. Если заявку отклонят по ошибке,
+                    можно написать на почту проекта.
+                  </p>
+                </div>
+                <span className="rounded-full bg-city-soft px-3 py-1 text-xs font-semibold text-city-green">
+                  {claims.length}
+                </span>
+              </div>
+
+              <div className="mt-5 grid gap-3">
+                {claims.length ? (
+                  claims.map((claim) => (
+                    <div
+                      key={claim.id}
+                      className="flex flex-col gap-3 rounded-2xl bg-city-soft p-4 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-city-ink">
+                          {claim.activity?.title ?? claim.organizer.name}
+                        </p>
+                        <p className="mt-1 text-xs text-city-muted">Доступ к карточке</p>
+                      </div>
+                      <span
+                        className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${statusClass(
+                          claim.status
+                        )}`}
+                      >
+                        {statusText(claim.status)}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="rounded-2xl bg-city-soft p-4 text-sm leading-6 text-city-muted">
+                    Активных заявок пока нет. Откройте карточку активности и нажмите “Я
+                    организатор”, если хотите запросить доступ.
+                  </p>
+                )}
+              </div>
+            </section>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/tula"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-city-green px-5 text-sm font-semibold text-white transition hover:bg-city-blue"
+              >
+                Вернуться в каталог
+              </Link>
+              <Link
+                href="/contacts"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-city-line bg-white px-5 text-sm font-semibold text-city-ink transition hover:border-city-green hover:text-city-green"
+              >
+                Написать в Влюди
+              </Link>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   const navigationItems: NavigationItem[] = [
     { label: "Мои активности", active: true },
     { label: "Добавить активность", href: "/add" },
-    { label: "Заявки и правки" },
-    { label: "Статистика" },
-    { label: "Настройки" }
+    { label: "Заявки и правки", disabled: true },
+    { label: "Статистика", disabled: true },
+    { label: "Настройки", disabled: true }
   ];
 
   const quickActions = [
@@ -204,19 +349,16 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
     {
       label: "Локально",
       text: "Покажите свою активность в Туле",
-      href: "/tula",
       mark: "Т"
     },
     {
       label: "Бесплатно",
       text: "Базовое размещение без оплаты",
-      href: "/organizers",
       mark: "0"
     },
     {
       label: "Для сообщества",
       text: "Находите единомышленников и участников",
-      href: "/organizers",
       mark: "Л"
     }
   ];
@@ -251,8 +393,11 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
                   className={`rounded-2xl px-4 py-3 text-sm font-semibold ${
                     item.active
                       ? "bg-city-green/10 text-city-green"
+                      : item.disabled
+                        ? "cursor-not-allowed text-city-muted/55"
                       : "text-city-muted"
                   }`}
+                  aria-disabled={item.disabled}
                 >
                   {item.label}
                 </span>
@@ -308,19 +453,33 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
           ) : null}
 
           <section className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {quickActions.map((action) => (
-              <Link
-                key={action.label}
-                href={action.href}
-                className="group rounded-[24px] border border-city-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-city-green hover:shadow-soft"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-city-green text-lg font-bold text-white transition group-hover:bg-city-ink">
-                  {action.mark}
+            {quickActions.map((action) =>
+              action.href ? (
+                <Link
+                  key={action.label}
+                  href={action.href}
+                  className="group rounded-[24px] border border-city-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-city-green hover:shadow-soft"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-city-green text-lg font-bold text-white transition group-hover:bg-city-ink">
+                    {action.mark}
+                  </div>
+                  <h2 className="mt-5 text-base font-bold text-city-ink">{action.label}</h2>
+                  <p className="mt-2 text-sm leading-6 text-city-muted">{action.text}</p>
+                  <p className="mt-4 text-sm font-semibold text-city-green">Открыть</p>
+                </Link>
+              ) : (
+                <div
+                  key={action.label}
+                  className="rounded-[24px] border border-city-line bg-white p-5 shadow-sm"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-city-green text-lg font-bold text-white">
+                    {action.mark}
+                  </div>
+                  <h2 className="mt-5 text-base font-bold text-city-ink">{action.label}</h2>
+                  <p className="mt-2 text-sm leading-6 text-city-muted">{action.text}</p>
                 </div>
-                <h2 className="mt-5 text-base font-bold text-city-ink">{action.label}</h2>
-                <p className="mt-2 text-sm leading-6 text-city-muted">{action.text}</p>
-              </Link>
-            ))}
+              )
+            )}
           </section>
 
           <section className="mt-8">
