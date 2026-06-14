@@ -84,3 +84,21 @@ export async function deleteEmptyOrganizer(formData: FormData) {
 
   refreshAdminPages();
 }
+
+export async function deleteOrganizerWithActivities(formData: FormData) {
+  const id = getId(formData, "organizerId");
+  const confirmed = formData.get("confirmDeleteWithActivities") === "on";
+
+  if (!confirmed) {
+    throw new Error("Подтвердите удаление организатора вместе с активностями.");
+  }
+
+  await prisma.organizer.delete({
+    where: { id }
+  });
+
+  refreshAdminPages();
+  revalidatePath("/admin/activities");
+  revalidatePath("/tula");
+  revalidatePath("/");
+}

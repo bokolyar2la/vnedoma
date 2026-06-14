@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   deleteEmptyOrganizer,
+  deleteOrganizerWithActivities,
   deleteOrganizerAccount,
   disableOrganizerAccount,
   enableOrganizerAccount,
@@ -187,7 +188,8 @@ export default async function AdminOrganizersPage() {
           <div>
             <h2 className="text-2xl font-bold text-city-ink">Организаторы в каталоге</h2>
             <p className="mt-2 text-sm text-city-muted">
-              Организатора можно удалить только если у него нет активностей.
+              Пустого организатора можно удалить сразу. Организатора с активностями удаляйте
+              только для тестовых или ошибочных записей: вместе с ним удалятся его карточки.
             </p>
           </div>
         </div>
@@ -237,7 +239,19 @@ export default async function AdminOrganizersPage() {
                       <AdminButton danger>Удалить</AdminButton>
                     </form>
                   ) : (
-                    <Dash />
+                    <form action={deleteOrganizerWithActivities} className="grid gap-2">
+                      <input type="hidden" name="organizerId" value={organizer.id} />
+                      <label className="flex items-center gap-2 text-xs text-city-muted">
+                        <input
+                          name="confirmDeleteWithActivities"
+                          type="checkbox"
+                          required
+                          className="h-4 w-4"
+                        />
+                        удалить {organizer._count.activities} активн.
+                      </label>
+                      <AdminButton danger>Удалить всё</AdminButton>
+                    </form>
                   )}
                 </td>
               </tr>
