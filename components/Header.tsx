@@ -23,6 +23,8 @@ const mobileMenuLinks = [
 	{ label: 'На выходные', href: '/tula/chem-zanyatsya-v-vyhodnye' }
 ]
 
+const vkUrl = 'https://vk.com/vlyudi_tula'
+
 export function Header() {
 	const pathname = usePathname()
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -62,6 +64,14 @@ export function Header() {
 					>
 						Организаторам
 					</Link>
+					<a
+						href={vkUrl}
+						target='_blank'
+						rel='noopener noreferrer'
+						className='rounded-full px-3 py-2 transition hover:bg-white hover:text-city-green hover:shadow-sm'
+					>
+						VK
+					</a>
 					<Link
 						href='/add'
 						onClick={() => reachMetrikaGoal('add_activity_click')}
@@ -104,6 +114,15 @@ export function Header() {
 								</Link>
 							))}
 						</nav>
+						<a
+							href={vkUrl}
+							target='_blank'
+							rel='noopener noreferrer'
+							onClick={() => setIsMenuOpen(false)}
+							className='mt-1 block rounded-2xl px-4 py-3 text-base font-semibold text-city-ink transition hover:bg-city-soft hover:text-city-green'
+						>
+							ВКонтакте
+						</a>
 						<Link
 							href='/add'
 							onClick={() => {

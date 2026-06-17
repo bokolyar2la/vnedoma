@@ -9,6 +9,8 @@ const footerLinks = [
   { label: "Пользовательское соглашение", href: "/terms" }
 ];
 
+const vkUrl = "https://vk.com/vlyudi_tula";
+
 export function Footer() {
   return (
     <footer className="mt-16 border-t border-city-line/80 bg-white/80">
@@ -48,6 +50,14 @@ export function Footer() {
               {link.label}
             </Link>
           ))}
+          <a
+            href={vkUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-city-ink transition hover:text-city-green"
+          >
+            ВКонтакте
+          </a>
         </nav>
       </div>
     </footer>
