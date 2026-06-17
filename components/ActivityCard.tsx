@@ -13,6 +13,7 @@ type ActivityCardProps = {
     priceTo: number | null;
     isFree: boolean;
     isForAdults: boolean;
+    isAdultsOnly?: boolean;
     beginnerFriendly: boolean;
     canComeAlone: boolean;
     imageUrl?: string | null;
@@ -29,6 +30,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
     activity.canComeAlone ? "Можно одному" : null,
     activity.beginnerFriendly ? "Новичкам" : null,
     activity.isFree ? "Бесплатно" : null,
+    activity.isAdultsOnly ? "18+" : null,
     activity.socialLevel === "высокая" ? "Много общения" : null,
     isTripActivity(activity.activityType) ? "Выезд" : null
   ].filter((badge): badge is string => Boolean(badge));

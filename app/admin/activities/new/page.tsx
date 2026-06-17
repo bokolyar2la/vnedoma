@@ -257,6 +257,10 @@ export default async function NewActivityPage() {
               Бесплатно
             </label>
             <label className="flex items-center gap-2 text-sm text-city-muted">
+              <input name="isAdultsOnly" type="checkbox" className="h-4 w-4 accent-city-green" />
+              18+ / только для взрослых
+            </label>
+            <label className="flex items-center gap-2 text-sm text-city-muted">
               <input name="beginnerFriendly" type="checkbox" className="h-4 w-4 accent-city-green" />
               Подходит новичкам
             </label>

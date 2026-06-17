@@ -117,6 +117,7 @@ export async function createActivity(formData: FormData) {
       priceTo: isFree ? null : getNumberValue(formData, "priceTo"),
       isFree,
       isForAdults: true,
+      isAdultsOnly: formData.get("isAdultsOnly") === "on",
       beginnerFriendly: formData.get("beginnerFriendly") === "on",
       canComeAlone: formData.get("canComeAlone") === "on",
       contactPhone: contactPhone || null,

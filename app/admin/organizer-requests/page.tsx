@@ -259,6 +259,7 @@ export default async function OrganizerRequestsPage({ searchParams }: PageProps)
                   <p><b>Название:</b> {value(edit.title)}</p>
                   <p><b>Адрес:</b> {value(edit.address)}</p>
                   <p><b>Цена:</b> {edit.isFree ? "бесплатно" : `${value(edit.priceFrom)} - ${value(edit.priceTo)}`}</p>
+                  <p><b>18+:</b> {value(edit.isAdultsOnly)}</p>
                   <p><b>Новичкам:</b> {value(edit.beginnerFriendly)}</p>
                   <p><b>Можно одному:</b> {value(edit.canComeAlone)}</p>
                   <p><b>Телефон:</b> {value(edit.contactPhone)}</p>

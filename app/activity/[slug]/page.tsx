@@ -247,6 +247,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     activity.canComeAlone ? "Можно прийти одному" : null,
     activity.beginnerFriendly ? "Подходит новичкам" : null,
     activity.isFree ? "Бесплатно" : null,
+    activity.isAdultsOnly ? "18+" : null,
     activity.socialLevel === "высокая" ? "Много общения" : null,
     trip ? "Выезд" : null
   ].filter((condition): condition is string => Boolean(condition));
@@ -254,6 +255,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   const infoCards = [
     { label: "Адрес", value: activity.address },
     { label: "Цена", value: price },
+    activity.isAdultsOnly ? { label: "Возраст", value: "18+" } : null,
     hasOrganizer ? { label: "Организатор", value: organizerName } : null,
     { label: "Телефон", value: activity.contactPhone ?? "Телефон не указан" },
     { label: "Тип", value: activity.activityType ?? "Уточняется" },

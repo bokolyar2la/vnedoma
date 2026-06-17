@@ -205,6 +205,7 @@ export default async function AdminActivitiesPage({
             activity.canComeAlone ? "можно одному" : null,
             activity.isFree ? "бесплатно" : null,
             activity.beginnerFriendly ? "новичкам" : null,
+            activity.isAdultsOnly ? "18+" : null,
             isTripActivity(activity.activityType) ? "выезд" : null
           ].filter((item): item is string => Boolean(item));
 

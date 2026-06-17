@@ -168,10 +168,14 @@ export default async function AddPage({ searchParams }: AddPageProps) {
           </div>
         </div>
 
-        <div className="grid gap-3 text-sm text-city-muted sm:grid-cols-3">
+        <div className="grid gap-3 text-sm text-city-muted sm:grid-cols-4">
           <label className="flex items-center gap-2">
             <input name="isFree" type="checkbox" className="h-4 w-4 accent-city-green" />
             Бесплатно
+          </label>
+          <label className="flex items-center gap-2">
+            <input name="isAdultsOnly" type="checkbox" className="h-4 w-4 accent-city-green" />
+            18+
           </label>
           <label className="flex items-center gap-2">
             <input name="beginnerFriendly" type="checkbox" className="h-4 w-4 accent-city-green" />

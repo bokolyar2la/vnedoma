@@ -102,6 +102,7 @@ model Activity {
   priceTo          Int?
   isFree           Boolean        @default(false)
   isForAdults      Boolean        @default(true)
+  isAdultsOnly     Boolean        @default(false)
   beginnerFriendly Boolean        @default(false)
   canComeAlone     Boolean        @default(false)
   contactPhone     String?
@@ -167,6 +168,7 @@ model OrganizerEditRequest {
   priceFrom        Int?
   priceTo          Int?
   isFree           Boolean?
+  isAdultsOnly     Boolean?
   beginnerFriendly Boolean?
   canComeAlone     Boolean?
   contactPhone     String?

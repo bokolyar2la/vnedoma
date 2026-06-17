@@ -229,10 +229,14 @@ export default async function OrganizerActivityPage({
             </label>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-4">
             <label className="flex items-center gap-3 rounded-2xl bg-city-soft p-4 text-sm font-semibold text-city-ink">
               <input name="isFree" type="checkbox" defaultChecked={activity.isFree} className="h-4 w-4" />
               Бесплатно
+            </label>
+            <label className="flex items-center gap-3 rounded-2xl bg-city-soft p-4 text-sm font-semibold text-city-ink">
+              <input name="isAdultsOnly" type="checkbox" defaultChecked={activity.isAdultsOnly} className="h-4 w-4" />
+              18+
             </label>
             <label className="flex items-center gap-3 rounded-2xl bg-city-soft p-4 text-sm font-semibold text-city-ink">
               <input
