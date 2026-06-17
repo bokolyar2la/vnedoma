@@ -11,6 +11,7 @@ type ActivityCardProps = {
     address: string;
     priceFrom: number | null;
     priceTo: number | null;
+    priceNote?: string | null;
     isFree: boolean;
     isForAdults: boolean;
     isAdultsOnly?: boolean;

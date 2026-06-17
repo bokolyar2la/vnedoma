@@ -2,9 +2,14 @@ export function formatPrice(options: {
   isFree: boolean;
   priceFrom: number | null;
   priceTo: number | null;
+  priceNote?: string | null;
 }) {
   if (options.isFree) {
     return "Бесплатно";
+  }
+
+  if (options.priceNote) {
+    return options.priceNote;
   }
 
   if (options.priceFrom && options.priceTo) {

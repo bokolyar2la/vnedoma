@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { logoutOrganizer } from "@/app/organizer/actions";
 import { ActivityImage } from "@/components/ActivityImage";
+import { formatPrice } from "@/lib/format";
 import { getOrganizerAccount } from "@/lib/organizer-auth";
 import { prisma } from "@/lib/prisma";
 
@@ -68,30 +69,6 @@ function formatEventTime(date: Date) {
     hour: "2-digit",
     minute: "2-digit"
   }).format(date);
-}
-
-function formatDashboardPrice(activity: {
-  isFree: boolean;
-  priceFrom: number | null;
-  priceTo: number | null;
-}) {
-  if (activity.isFree) {
-    return "Бесплатно";
-  }
-
-  if (activity.priceFrom && activity.priceTo) {
-    return `${activity.priceFrom.toLocaleString("ru-RU")}-${activity.priceTo.toLocaleString("ru-RU")} ₽`;
-  }
-
-  if (activity.priceFrom) {
-    return `от ${activity.priceFrom.toLocaleString("ru-RU")} ₽`;
-  }
-
-  if (activity.priceTo) {
-    return `до ${activity.priceTo.toLocaleString("ru-RU")} ₽`;
-  }
-
-  return "Цена уточняется";
 }
 
 export default async function OrganizerCabinetPage({ searchParams }: OrganizerPageProps) {
@@ -525,7 +502,7 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
                         {activity.address}
                       </p>
                       <p className="mt-1 text-sm font-semibold text-city-ink">
-                        {formatDashboardPrice(activity)}
+                        {formatPrice(activity)}
                       </p>
                       <div className="mt-3 flex items-center justify-between gap-2">
                         <span

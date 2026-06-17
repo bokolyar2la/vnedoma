@@ -100,6 +100,7 @@ model Activity {
   address          String
   priceFrom        Int?
   priceTo          Int?
+  priceNote        String?
   isFree           Boolean        @default(false)
   isForAdults      Boolean        @default(true)
   isAdultsOnly     Boolean        @default(false)
@@ -167,6 +168,7 @@ model OrganizerEditRequest {
   address          String?
   priceFrom        Int?
   priceTo          Int?
+  priceNote        String?
   isFree           Boolean?
   isAdultsOnly     Boolean?
   beginnerFriendly Boolean?

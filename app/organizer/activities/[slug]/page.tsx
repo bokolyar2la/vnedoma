@@ -205,6 +205,16 @@ export default async function OrganizerActivityPage({
           </label>
 
           <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-2 sm:col-span-2" htmlFor={fieldId("priceNote")}>
+              <span className="text-sm font-semibold text-city-ink">Текст стоимости</span>
+              <input
+                id={fieldId("priceNote")}
+                name="priceNote"
+                defaultValue={activity.priceNote ?? ""}
+                placeholder="Свободный взнос, донат, уточняется"
+                className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
+              />
+            </label>
             <label className="grid gap-2" htmlFor={fieldId("priceFrom")}>
               <span className="text-sm font-semibold text-city-ink">Цена от</span>
               <input

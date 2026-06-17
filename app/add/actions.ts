@@ -115,6 +115,7 @@ export async function createActivity(formData: FormData) {
       address: address || "Адрес уточняется",
       priceFrom: isFree ? null : getNumberValue(formData, "priceFrom"),
       priceTo: isFree ? null : getNumberValue(formData, "priceTo"),
+      priceNote: isFree ? null : getValue(formData, "priceNote") || null,
       isFree,
       isForAdults: true,
       isAdultsOnly: formData.get("isAdultsOnly") === "on",

@@ -280,6 +280,20 @@ export default async function NewActivityPage() {
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <div>
+              <label htmlFor="priceNote" className="text-sm font-semibold text-city-ink">
+                Текст стоимости
+              </label>
+              <input
+                id="priceNote"
+                name="priceNote"
+                className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                placeholder="Свободный взнос, донат, уточняется"
+              />
+              <p className="mt-2 text-xs leading-5 text-city-muted">
+                Если заполнено, на сайте покажется этот текст вместо цифр.
+              </p>
+            </div>
+            <div>
               <label htmlFor="priceFrom" className="text-sm font-semibold text-city-ink">
                 Цена от
               </label>
