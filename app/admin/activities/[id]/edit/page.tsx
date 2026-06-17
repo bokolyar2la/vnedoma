@@ -67,7 +67,11 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
         </Link>
       </div>
 
-      <form action={updateActivity} className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px]">
+      <form
+        action={updateActivity}
+        encType="multipart/form-data"
+        className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px]"
+      >
         <input type="hidden" name="id" value={activity.id} />
         <input type="hidden" name="slug" value={activity.slug} />
 
@@ -230,6 +234,19 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
                 defaultValue={activity.imageUrl ?? ""}
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
               />
+              <label htmlFor="imageFile" className="mt-4 block text-sm font-semibold text-city-ink">
+                Загрузить новую обложку
+              </label>
+              <input
+                id="imageFile"
+                name="imageFile"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="mt-2 w-full rounded-2xl border border-city-line px-4 py-3 text-sm text-city-muted outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-city-green file:px-4 file:py-2 file:font-semibold file:text-white focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+              />
+              <p className="mt-2 text-xs leading-5 text-city-muted">
+                JPG, PNG или WEBP до 5 МБ. Если файл не выбран, сохранится ссылка выше.
+              </p>
             </div>
           </div>
 

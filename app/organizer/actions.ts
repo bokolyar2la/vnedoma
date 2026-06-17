@@ -13,6 +13,7 @@ import {
 import { normalizeContactUrlInput } from "@/lib/contact-url";
 import { getEventExpiresAt } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
+import { uploadActivityImage } from "@/lib/s3-upload";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -172,6 +173,16 @@ export async function createOrganizerEditRequest(formData: FormData) {
   const { account, activity } = await ensureAccess(activityId);
   const isFree = formData.get("isFree") === "on";
   const priceNote = getString(formData, "priceNote") || null;
+  let imageUrl: string | null = null;
+
+  try {
+    imageUrl =
+      (await uploadActivityImage(formData)) ??
+      normalizeContactUrlInput(getString(formData, "imageUrl"));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Не удалось загрузить изображение.";
+    fail(`/organizer/activities/${activity.slug}`, message);
+  }
 
   await prisma.organizerEditRequest.create({
     data: {
@@ -189,7 +200,7 @@ export async function createOrganizerEditRequest(formData: FormData) {
       canComeAlone: formData.get("canComeAlone") === "on",
       contactPhone: getString(formData, "contactPhone") || null,
       contactUrl: normalizeContactUrlInput(getString(formData, "contactUrl")),
-      imageUrl: normalizeContactUrlInput(getString(formData, "imageUrl")),
+      imageUrl,
       note: getString(formData, "note") || null
     }
   });

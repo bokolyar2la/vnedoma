@@ -172,7 +172,11 @@ export default async function OrganizerActivityPage({
           </span>
         </div>
 
-        <form action={createOrganizerEditRequest} className="mt-6 grid gap-5">
+        <form
+          action={createOrganizerEditRequest}
+          encType="multipart/form-data"
+          className="mt-6 grid gap-5"
+        >
           <input type="hidden" name="activityId" value={activity.id} />
 
           <label className="grid gap-2" htmlFor={fieldId("title")}>
@@ -301,6 +305,20 @@ export default async function OrganizerActivityPage({
               placeholder="Можно оставить текущую или прислать новую ссылку"
               className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
             />
+          </label>
+
+          <label className="grid gap-2" htmlFor={fieldId("imageFile")}>
+            <span className="text-sm font-semibold text-city-ink">Загрузить фото</span>
+            <input
+              id={fieldId("imageFile")}
+              name="imageFile"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="rounded-2xl border border-city-line px-4 py-3 text-sm text-city-muted outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-city-green file:px-4 file:py-2 file:font-semibold file:text-white focus:border-city-green"
+            />
+            <span className="text-xs leading-5 text-city-muted">
+              Можно оставить текущую ссылку или загрузить новую обложку. JPG, PNG или WEBP до 5 МБ.
+            </span>
           </label>
 
           <label className="grid gap-2" htmlFor={fieldId("note")}>

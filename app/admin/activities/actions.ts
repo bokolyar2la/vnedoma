@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
 import { prisma } from "@/lib/prisma";
+import { uploadActivityImage } from "@/lib/s3-upload";
 import { generateUniqueSlug } from "@/lib/slug";
 
 function getString(formData: FormData, key: string) {
@@ -121,6 +122,7 @@ export async function createAdminActivity(formData: FormData) {
   const organizer = await getOrCreateOrganizer(formData, city.id);
   const isFree = formData.get("isFree") === "on";
   const priceNote = getOptionalString(formData, "priceNote");
+  const imageUrl = (await uploadActivityImage(formData)) ?? getOptionalString(formData, "imageUrl");
 
   await prisma.activity.create({
     data: {
@@ -142,7 +144,7 @@ export async function createAdminActivity(formData: FormData) {
       contactPhone: getOptionalString(formData, "contactPhone"),
       contactUrl: normalizeContactUrlInput(getString(formData, "contactUrl")),
       sourceUrl: normalizeContactUrlInput(getString(formData, "sourceUrl")),
-      imageUrl: getOptionalString(formData, "imageUrl"),
+      imageUrl,
       isVerified: formData.get("isVerified") === "on",
       activityType: getOptionalString(formData, "activityType"),
       socialLevel: getOptionalString(formData, "socialLevel"),
@@ -212,6 +214,7 @@ export async function updateActivity(formData: FormData) {
   const organizer = await getOrCreateOrganizer(formData, activity.cityId);
   const isFree = formData.get("isFree") === "on";
   const priceNote = getOptionalString(formData, "priceNote");
+  const imageUrl = (await uploadActivityImage(formData)) ?? getOptionalString(formData, "imageUrl");
 
   await prisma.activity.update({
     where: { id },
@@ -233,7 +236,7 @@ export async function updateActivity(formData: FormData) {
       contactUrl: normalizeContactUrlInput(getString(formData, "contactUrl")),
       sourceUrl: normalizeContactUrlInput(getString(formData, "sourceUrl")),
       isVerified: formData.get("isVerified") === "on",
-      imageUrl: getOptionalString(formData, "imageUrl"),
+      imageUrl,
       activityType: getOptionalString(formData, "activityType"),
       socialLevel: getOptionalString(formData, "socialLevel"),
       needsCheck: formData.get("needsCheck") === "on",
