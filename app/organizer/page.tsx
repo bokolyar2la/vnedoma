@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { logoutOrganizer } from "@/app/organizer/actions";
 import { ActivityImage } from "@/components/ActivityImage";
+import { getUpcomingEventWhere } from "@/lib/events";
 import { formatPrice } from "@/lib/format";
 import { getOrganizerAccount } from "@/lib/organizer-auth";
 import { prisma } from "@/lib/prisma";
@@ -90,11 +91,7 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
               include: {
                 category: true,
                 events: {
-                  where: {
-                    startsAt: {
-                      gte: now
-                    }
-                  },
+                  where: getUpcomingEventWhere(now),
                   orderBy: {
                     startsAt: "asc"
                   },

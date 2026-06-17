@@ -6,6 +6,7 @@ import {
   createOrganizerEventRequest
 } from "@/app/organizer/actions";
 import { ActivityImage } from "@/components/ActivityImage";
+import { getUpcomingEventWhere } from "@/lib/events";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { getOrganizerAccount } from "@/lib/organizer-auth";
 import { prisma } from "@/lib/prisma";
@@ -54,6 +55,7 @@ export default async function OrganizerActivityPage({
       category: true,
       organizer: true,
       events: {
+        where: getUpcomingEventWhere(new Date()),
         orderBy: { startsAt: "asc" },
         take: 5
       }

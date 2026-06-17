@@ -11,6 +11,7 @@ import {
   verifyPassword
 } from "@/lib/organizer-auth";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
+import { getEventExpiresAt } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 
 function getString(formData: FormData, key: string) {
@@ -215,6 +216,14 @@ export async function createOrganizerEventRequest(formData: FormData) {
     fail(`/organizer/activities/${activity.slug}`, "Проверьте дату и время события.");
   }
 
+  if (endsAt && endsAt <= startsAt) {
+    fail(`/organizer/activities/${activity.slug}`, "Окончание события должно быть позже начала.");
+  }
+
+  if (getEventExpiresAt({ startsAt, endsAt }) < new Date()) {
+    fail(`/organizer/activities/${activity.slug}`, "Нельзя отправить на проверку уже прошедшее событие.");
+  }
+
   await prisma.organizerEventRequest.create({
     data: {
       accountId: account.id,
@@ -364,6 +373,10 @@ async function markEventRequestWithStatus(formData: FormData, status: OrganizerR
   });
 
   if (status === OrganizerRequestStatus.done) {
+    if (getEventExpiresAt(request) < new Date()) {
+      throw new Error("Нельзя опубликовать уже прошедшее событие.");
+    }
+
     await prisma.event.create({
       data: {
         activityId: request.activityId,

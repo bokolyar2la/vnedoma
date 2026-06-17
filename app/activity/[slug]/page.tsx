@@ -7,6 +7,7 @@ import { ActivityImage } from "@/components/ActivityImage";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { TrackedExternalLink } from "@/components/MetrikaGoals";
 import { getSocialLevelLabel, isTripActivity } from "@/lib/activity-social";
+import { getUpcomingEventWhere } from "@/lib/events";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
@@ -50,11 +51,7 @@ async function getActivity(slug: string) {
       category: true,
       organizer: true,
       events: {
-        where: {
-          startsAt: {
-            gte: new Date()
-          }
-        },
+        where: getUpcomingEventWhere(new Date()),
         orderBy: {
           startsAt: "asc"
         }
