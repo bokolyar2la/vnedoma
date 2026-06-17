@@ -37,6 +37,7 @@ export async function createActivity(formData: FormData) {
   const submittedByOrganizer = formData.get("submittedByOrganizer") === "on";
   const submitterContact = getValue(formData, "submitterContact");
   const isFree = formData.get("isFree") === "on";
+  const priceNote = getValue(formData, "priceNote") || null;
   const privacyConsent = formData.get("privacyConsent") === "on";
   const rightsConfirmation = formData.get("rightsConfirmation") === "on";
 
@@ -113,9 +114,9 @@ export async function createActivity(formData: FormData) {
       categoryId: category.id,
       organizerId: organizer.id,
       address: address || "Адрес уточняется",
-      priceFrom: isFree ? null : getNumberValue(formData, "priceFrom"),
-      priceTo: isFree ? null : getNumberValue(formData, "priceTo"),
-      priceNote: isFree ? null : getValue(formData, "priceNote") || null,
+      priceFrom: isFree || priceNote ? null : getNumberValue(formData, "priceFrom"),
+      priceTo: isFree || priceNote ? null : getNumberValue(formData, "priceTo"),
+      priceNote,
       isFree,
       isForAdults: true,
       isAdultsOnly: formData.get("isAdultsOnly") === "on",

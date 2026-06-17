@@ -120,6 +120,7 @@ export async function createAdminActivity(formData: FormData) {
   const city = await getTulaCity();
   const organizer = await getOrCreateOrganizer(formData, city.id);
   const isFree = formData.get("isFree") === "on";
+  const priceNote = getOptionalString(formData, "priceNote");
 
   await prisma.activity.create({
     data: {
@@ -130,9 +131,9 @@ export async function createAdminActivity(formData: FormData) {
       categoryId,
       organizerId: organizer.id,
       address: getString(formData, "address") || "Адрес уточняется",
-      priceFrom: isFree ? null : getNumber(formData, "priceFrom"),
-      priceTo: isFree ? null : getNumber(formData, "priceTo"),
-      priceNote: isFree ? null : getOptionalString(formData, "priceNote"),
+      priceFrom: isFree || priceNote ? null : getNumber(formData, "priceFrom"),
+      priceTo: isFree || priceNote ? null : getNumber(formData, "priceTo"),
+      priceNote,
       isFree,
       isForAdults: true,
       isAdultsOnly: formData.get("isAdultsOnly") === "on",
@@ -210,6 +211,7 @@ export async function updateActivity(formData: FormData) {
 
   const organizer = await getOrCreateOrganizer(formData, activity.cityId);
   const isFree = formData.get("isFree") === "on";
+  const priceNote = getOptionalString(formData, "priceNote");
 
   await prisma.activity.update({
     where: { id },
@@ -220,9 +222,9 @@ export async function updateActivity(formData: FormData) {
       categoryId,
       organizerId: organizer.id,
       address: getString(formData, "address") || "Адрес уточняется",
-      priceFrom: isFree ? null : getNumber(formData, "priceFrom"),
-      priceTo: isFree ? null : getNumber(formData, "priceTo"),
-      priceNote: isFree ? null : getOptionalString(formData, "priceNote"),
+      priceFrom: isFree || priceNote ? null : getNumber(formData, "priceFrom"),
+      priceTo: isFree || priceNote ? null : getNumber(formData, "priceTo"),
+      priceNote,
       isFree,
       isAdultsOnly: formData.get("isAdultsOnly") === "on",
       beginnerFriendly: formData.get("beginnerFriendly") === "on",

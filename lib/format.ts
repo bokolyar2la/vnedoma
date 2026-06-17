@@ -4,12 +4,12 @@ export function formatPrice(options: {
   priceTo: number | null;
   priceNote?: string | null;
 }) {
-  if (options.isFree) {
-    return "Бесплатно";
-  }
-
   if (options.priceNote) {
     return options.priceNote;
+  }
+
+  if (options.isFree) {
+    return "Бесплатно";
   }
 
   if (options.priceFrom && options.priceTo) {

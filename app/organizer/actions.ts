@@ -170,6 +170,7 @@ export async function createOrganizerEditRequest(formData: FormData) {
   const activityId = getActivityId(formData);
   const { account, activity } = await ensureAccess(activityId);
   const isFree = formData.get("isFree") === "on";
+  const priceNote = getString(formData, "priceNote") || null;
 
   await prisma.organizerEditRequest.create({
     data: {
@@ -178,9 +179,9 @@ export async function createOrganizerEditRequest(formData: FormData) {
       title: getString(formData, "title") || null,
       description: getString(formData, "description") || null,
       address: getString(formData, "address") || null,
-      priceFrom: isFree ? null : getNumber(formData, "priceFrom"),
-      priceTo: isFree ? null : getNumber(formData, "priceTo"),
-      priceNote: isFree ? null : getString(formData, "priceNote") || null,
+      priceFrom: isFree || priceNote ? null : getNumber(formData, "priceFrom"),
+      priceTo: isFree || priceNote ? null : getNumber(formData, "priceTo"),
+      priceNote,
       isFree,
       isAdultsOnly: formData.get("isAdultsOnly") === "on",
       beginnerFriendly: formData.get("beginnerFriendly") === "on",
@@ -307,9 +308,9 @@ async function markEditRequestWithStatus(formData: FormData, status: OrganizerRe
         title: request.title ?? request.activity.title,
         description: request.description ?? request.activity.description,
         address: request.address ?? request.activity.address,
-        priceFrom: request.isFree ? null : request.priceFrom,
-        priceTo: request.isFree ? null : request.priceTo,
-        priceNote: request.isFree === true ? null : request.priceNote ?? request.activity.priceNote,
+        priceFrom: request.isFree || request.priceNote ? null : request.priceFrom,
+        priceTo: request.isFree || request.priceNote ? null : request.priceTo,
+        priceNote: request.priceNote ?? (request.isFree === true ? null : request.activity.priceNote),
         isFree: request.isFree ?? request.activity.isFree,
         isAdultsOnly: request.isAdultsOnly ?? request.activity.isAdultsOnly,
         beginnerFriendly: request.beginnerFriendly ?? request.activity.beginnerFriendly,

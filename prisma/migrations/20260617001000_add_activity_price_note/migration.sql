@@ -1,0 +1,2 @@
+ALTER TABLE "Activity" ADD COLUMN IF NOT EXISTS "priceNote" TEXT;
+ALTER TABLE "OrganizerEditRequest" ADD COLUMN IF NOT EXISTS "priceNote" TEXT;
