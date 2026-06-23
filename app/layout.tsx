@@ -13,9 +13,6 @@ export const metadata: Metadata = {
   },
   description:
     "Игры, танцы, прогулки, мастер-классы, клубы и встречи в Туле, куда можно прийти одному и оказаться среди людей.",
-  alternates: {
-    canonical: "/"
-  },
   icons: {
     icon: [
       { url: "/favicon-120x120.png", sizes: "120x120", type: "image/png" },

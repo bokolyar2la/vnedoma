@@ -4,7 +4,9 @@ import { legalConfig, legalOwnerLabel } from "@/lib/legal";
 export const metadata: Metadata = {
   title: "Согласие на обработку персональных данных",
   description:
-    "Согласие пользователя на обработку персональных данных при добавлении активности или обращении через сайт Влюди."
+    "Согласие пользователя на обработку персональных данных при добавлении активности или обращении через сайт Влюди.",
+  alternates: { canonical: "/personal-data-consent" },
+  robots: { index: false, follow: true }
 };
 
 export default function PersonalDataConsentPage() {

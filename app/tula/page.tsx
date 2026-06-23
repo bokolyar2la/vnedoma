@@ -3,17 +3,17 @@ import { ActivityCatalog } from "@/components/ActivityCatalog";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Куда сходить и чем заняться в Туле",
+const tulaMetadata: Metadata = {
+  title: "Куда сходить и куда пойти в Туле: активности и события",
   description:
-    "Каталог активностей в Туле: игры, танцы, прогулки, мастер-классы, клубы и встречи, куда можно прийти одному или с компанией.",
+    "Куда сходить и чем заняться в Туле: игры, танцы, прогулки, мастер-классы, клубы и ближайшие события для одного или компании.",
   alternates: {
     canonical: "/tula"
   },
   openGraph: {
-    title: "Куда сходить и чем заняться в Туле",
+    title: "Куда сходить и куда пойти в Туле: активности и события",
     description:
-      "Каталог активностей в Туле: игры, танцы, прогулки, мастер-классы, клубы и встречи, куда можно прийти одному или с компанией.",
+      "Актуальные активности, клубы и события Тулы: идеи на вечер и выходные, куда можно прийти одному или с компанией.",
     url: "https://vlyudi.ru/tula",
     siteName: "Влюди",
     locale: "ru_RU",
@@ -33,14 +33,26 @@ type TulaPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+export async function generateMetadata({ searchParams }: TulaPageProps): Promise<Metadata> {
+  const params = searchParams ? await searchParams : {};
+  const hasFilters = Object.values(params).some((value) =>
+    Array.isArray(value) ? value.some(Boolean) : Boolean(value)
+  );
+
+  return {
+    ...tulaMetadata,
+    ...(hasFilters ? { robots: { index: false, follow: true } } : {})
+  };
+}
+
 export default async function TulaPage({ searchParams }: TulaPageProps) {
   return (
     <ActivityCatalog
       searchParams={searchParams ? await searchParams : {}}
-      heading="Куда сходить и чем заняться в Туле"
-      description="Собрали места и встречи, где можно поиграть, потанцевать, погулять, попробовать новое и познакомиться с людьми."
+      heading="Куда сходить и куда пойти в Туле"
+      description="Актуальные активности, клубы и события Тулы: можно выбрать идею на вечер или выходные, прийти одному, попробовать новое и познакомиться с людьми."
       seoBlock={{
-        title: "Как выбрать активность в Туле",
+        title: "Как выбрать, куда пойти в Туле",
         paragraphs: [
           "Влюди помогает найти не просто мероприятие, а понятный сценарий для вечера, выходного или нового круга общения. В каталоге есть игры, танцы, прогулки, мастер-классы, клубы, волонтёрство и выездные форматы рядом с Тулой.",
           "Если вы идёте один, смотрите подборки “Можно одному” и “Новичкам”. Если хочется сэкономить, начните с бесплатных активностей. Для свободного дня подойдут прогулки, выезды и форматы на выходные.",

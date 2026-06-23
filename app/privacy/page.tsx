@@ -4,7 +4,9 @@ import { legalConfig, legalOwnerLabel } from "@/lib/legal";
 export const metadata: Metadata = {
   title: "Политика обработки персональных данных",
   description:
-    "Как Влюди обрабатывает персональные данные пользователей и организаторов при добавлении активностей и обращениях по сайту."
+    "Как Влюди обрабатывает персональные данные пользователей и организаторов при добавлении активностей и обращениях по сайту.",
+  alternates: { canonical: "/privacy" },
+  robots: { index: false, follow: true }
 };
 
 export default function PrivacyPage() {

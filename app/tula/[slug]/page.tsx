@@ -1,7 +1,13 @@
 ﻿import type { Metadata } from "next";
+import { ActivityStatus } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { ActivityCatalog } from "@/components/ActivityCatalog";
-import { getTulaSeoPage, tulaSeoPages } from "@/lib/seo-pages";
+import { prisma } from "@/lib/prisma";
+import {
+  getTulaSeoPage,
+  minIndexableActivities,
+  tulaSeoPages
+} from "@/lib/seo-pages";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +19,8 @@ type TulaSeoPageProps = {
 };
 
 export async function generateMetadata({
-  params
+  params,
+  searchParams
 }: TulaSeoPageProps): Promise<Metadata> {
   const { slug } = await params;
   const page = getTulaSeoPage(slug);
@@ -24,12 +31,31 @@ export async function generateMetadata({
     };
   }
 
+  const [activityCount, query] = await Promise.all([
+    prisma.activity.count({
+      where: {
+        AND: [
+          { status: ActivityStatus.published },
+          { city: { slug: "tula" } },
+          page.filters
+        ]
+      }
+    }),
+    searchParams ?? Promise.resolve({})
+  ]);
+  const hasFilters = Object.values(query).some((value) =>
+    Array.isArray(value) ? value.some(Boolean) : Boolean(value)
+  );
+
   return {
     title: page.title,
     description: page.description,
     alternates: {
       canonical: `/tula/${page.slug}`
     },
+    ...(activityCount < minIndexableActivities || hasFilters
+      ? { robots: { index: false, follow: true } }
+      : {}),
     openGraph: {
       title: page.title,
       description: page.description,

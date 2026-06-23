@@ -5,7 +5,8 @@ import { legalConfig, legalOwnerLabel } from "@/lib/legal";
 export const metadata: Metadata = {
   title: "Контакты",
   description:
-    "Контакты проекта Влюди в Туле: как сообщить об ошибке, добавить активность, уточнить информацию или попросить удалить карточку."
+    "Контакты проекта Влюди в Туле: как сообщить об ошибке, добавить активность, уточнить информацию или попросить удалить карточку.",
+  alternates: { canonical: "/contacts" }
 };
 
 export default function ContactsPage() {

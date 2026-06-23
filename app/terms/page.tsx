@@ -5,7 +5,9 @@ import { legalConfig, legalOwnerLabel } from "@/lib/legal";
 export const metadata: Metadata = {
   title: "Пользовательское соглашение",
   description:
-    "Правила использования каталога Влюди, добавления активностей и работы со справочной информацией."
+    "Правила использования каталога Влюди, добавления активностей и работы со справочной информацией.",
+  alternates: { canonical: "/terms" },
+  robots: { index: false, follow: true }
 };
 
 export default function TermsPage() {

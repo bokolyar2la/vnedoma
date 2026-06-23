@@ -14,6 +14,8 @@ export type TulaSeoPage = {
   filters: Prisma.ActivityWhereInput;
 };
 
+export const minIndexableActivities = 3;
+
 function makeFaq(topic: string, beginnerAnswer: string) {
   return [
     {
@@ -228,21 +230,6 @@ export const tulaSeoPages: TulaSeoPage[] = [
       "Для части выездов опыт не нужен, но всегда стоит проверить маршрут, длительность и уровень нагрузки."
     ),
     filters: { category: { slug: "vyezdy-i-priklyucheniya" } }
-  },
-  {
-    slug: "kuda-poiti-odnomu",
-    title: "Куда пойти одному в Туле",
-    heading: "Куда пойти одному в Туле",
-    description:
-      "Подборка мест и активностей в Туле, куда можно прийти одному и не чувствовать себя лишним.",
-    seoTitle: "Места, где один человек не выглядит лишним",
-    seoText:
-      "Эта страница закрывает простой бытовой вопрос: куда пойти одному, если хочется не сидеть дома. В подборке собраны форматы, где не нужно приходить готовой компанией: открытые игры, прогулки, танцы, мастер-классы, клубы и встречи. Выбирайте активность с понятным описанием и заранее проверяйте условия записи.",
-    faq: makeFaq(
-      "активность одному",
-      "Лучше начать с открытых встреч, игр, прогулок, танцев для начинающих или мастер-классов с понятным процессом."
-    ),
-    filters: { canComeAlone: true }
   },
   {
     slug: "chem-zanyatsya-v-vyhodnye",
