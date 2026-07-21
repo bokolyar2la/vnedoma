@@ -252,6 +252,7 @@ model ActivityBookingRequest {
   promoCode          String?               @default("ВЛЮДИ")
   discountText       String?
   status             ActivityBookingStatus @default(pending)
+  viewedAt           DateTime?
   activity           Activity              @relation(fields: [activityId], references: [id], onDelete: Cascade)
   organizerAccount   OrganizerAccount?     @relation(fields: [organizerAccountId], references: [id], onDelete: SetNull)
   createdAt          DateTime              @default(now())
@@ -259,6 +260,7 @@ model ActivityBookingRequest {
 
   @@index([activityId, createdAt])
   @@index([organizerAccountId, status])
+  @@index([organizerAccountId, viewedAt])
 }
 
 model OrganizerEventRequest {

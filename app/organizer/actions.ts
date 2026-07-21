@@ -242,6 +242,33 @@ export async function updateOrganizerBookingSettings(formData: FormData) {
   redirect("/organizer?tab=settings&booking=saved");
 }
 
+export async function markBookingRequestViewed(formData: FormData) {
+  const account = await getOrganizerAccount();
+
+  if (!account) {
+    redirect("/organizer/login");
+  }
+
+  const requestId = Number(getString(formData, "requestId"));
+
+  if (!Number.isInteger(requestId) || requestId <= 0) {
+    fail("/organizer?tab=requests", "Некорректная заявка.");
+  }
+
+  await prisma.activityBookingRequest.updateMany({
+    where: {
+      id: requestId,
+      organizerAccountId: account.id
+    },
+    data: {
+      viewedAt: new Date()
+    }
+  });
+
+  revalidatePath("/organizer");
+  redirect("/organizer?tab=requests");
+}
+
 export async function createOrganizerEditRequest(formData: FormData) {
   const activityId = getActivityId(formData);
   const { account, activity } = await ensureAccess(activityId);

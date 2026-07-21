@@ -4,6 +4,7 @@ import { ActivityStatType } from "@prisma/client";
 import { redirect } from "next/navigation";
 import {
   logoutOrganizer,
+  markBookingRequestViewed,
   updateOrganizerBookingSettings,
   updateOrganizerPassword
 } from "@/app/organizer/actions";
@@ -198,7 +199,7 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
 
   const pendingEdits = editRequests.filter((item) => item.status === "pending").length;
   const pendingEvents = eventRequests.filter((item) => item.status === "pending").length;
-  const newBookings = bookingRequests.filter((item) => item.status === "pending").length;
+  const newBookings = bookingRequests.filter((item) => !item.viewedAt).length;
   const publishedActivities = activities.filter((activity) => activity.status === "published").length;
   const verifiedActivities = activities.filter((activity) => activity.isVerified).length;
   const nextEvent = activities
@@ -339,13 +340,18 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
               <Link
                 key={item.id}
                 href={item.href}
-                className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                   currentTab === item.id
                     ? "bg-city-green/10 text-city-green"
                     : "text-city-muted hover:bg-white hover:text-city-green"
                 }`}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {item.id === "requests" && newBookings > 0 ? (
+                  <span className="rounded-full bg-city-green px-2 py-0.5 text-xs font-bold text-white">
+                    +{newBookings}
+                  </span>
+                ) : null}
               </Link>
             ))}
             <Link
@@ -555,10 +561,26 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
                 <div className="mt-4 grid gap-3">
                   {bookingRequests.length ? (
                     bookingRequests.map((request) => (
-                      <div key={request.id} className="rounded-2xl bg-white p-4">
+                      <div
+                        key={request.id}
+                        className={`rounded-2xl bg-white p-4 ${
+                          request.viewedAt ? "" : "ring-1 ring-city-green/25"
+                        }`}
+                      >
                         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                           <div>
-                            <p className="text-sm font-bold text-city-ink">{request.activity.title}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm font-bold text-city-ink">{request.activity.title}</p>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                  request.viewedAt
+                                    ? "bg-city-soft text-city-muted"
+                                    : "bg-city-green/10 text-city-green"
+                                }`}
+                              >
+                                {request.viewedAt ? "просмотрено" : "новая"}
+                              </span>
+                            </div>
                             <p className="mt-1 text-sm text-city-muted">
                               {request.name} · {request.contact}
                             </p>
@@ -569,12 +591,22 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
                               <p className="mt-2 text-xs font-semibold text-city-green">{request.discountText}</p>
                             ) : null}
                           </div>
-                          <Link
-                            href={`/activity/${request.activity.slug}`}
-                            className="text-sm font-semibold text-city-green transition hover:text-city-blue"
-                          >
-                            Открыть карточку
-                          </Link>
+                          <div className="flex flex-wrap gap-2 sm:justify-end">
+                            {!request.viewedAt ? (
+                              <form action={markBookingRequestViewed}>
+                                <input type="hidden" name="requestId" value={request.id} />
+                                <button className="rounded-full bg-city-green px-3 py-1 text-xs font-semibold text-white transition hover:bg-city-blue">
+                                  Отметить просмотренной
+                                </button>
+                              </form>
+                            ) : null}
+                            <Link
+                              href={`/activity/${request.activity.slug}`}
+                              className="rounded-full bg-city-soft px-3 py-1 text-xs font-semibold text-city-green transition hover:text-city-blue"
+                            >
+                              Открыть карточку
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     ))
