@@ -6,6 +6,7 @@ import { ActivityCard } from "@/components/ActivityCard";
 import { ActivityImage } from "@/components/ActivityImage";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ActivityStatOnMount, TrackedExternalLink } from "@/components/MetrikaGoals";
+import { createActivityBookingRequest } from "@/app/activity/actions";
 import { getSocialLevelLabel, isTripActivity } from "@/lib/activity-social";
 import { getUpcomingEventWhere } from "@/lib/events";
 import { formatDateTime, formatPrice } from "@/lib/format";
@@ -15,6 +16,7 @@ type ActivityPageProps = {
   params: Promise<{
     slug: string;
   }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 const baseUrl = "https://vlyudi.ru";
@@ -208,8 +210,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function ActivityPage({ params }: ActivityPageProps) {
+export default async function ActivityPage({ params, searchParams }: ActivityPageProps) {
   const { slug } = await params;
+  const query = searchParams ? await searchParams : {};
   const activity = await getActivity(slug);
 
   if (!activity) {
@@ -228,10 +231,26 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
     take: 3
   });
 
+  const bookingAccount = await prisma.organizerAccount.findFirst({
+    where: {
+      platformBookingEnabled: true,
+      isDisabled: false,
+      accesses: {
+        some: {
+          organizerId: activity.organizerId
+        }
+      }
+    },
+    select: {
+      platformBookingDiscountText: true
+    }
+  });
+
   const price = formatPrice(activity);
   const nextEvent = activity.events[0];
   const contactHref = activity.contactUrl ?? `tel:${activity.contactPhone ?? ""}`;
-  const hasContact = Boolean(activity.contactUrl || activity.contactPhone || nextEvent?.signupUrl);
+  const platformBookingEnabled = Boolean(bookingAccount);
+  const hasContact = Boolean(platformBookingEnabled || activity.contactUrl || activity.contactPhone || nextEvent?.signupUrl);
   const organizerName = getPublicOrganizerName(activity.organizer.name);
   const hasOrganizer = Boolean(organizerName);
   const yandexMapsUrl = `https://yandex.ru/maps/?text=${encodeURIComponent(
@@ -350,7 +369,19 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   </p>
                 </div>
               ) : null}
-              {hasContact ? (
+              {platformBookingEnabled ? (
+                <TrackedExternalLink
+                  goal="organizer_contact_click"
+                  activityStat={{
+                    activityId: activity.id,
+                    type: nextEvent ? "nearest_event_click" : "signup_click"
+                  }}
+                  href="#booking-form"
+                  className="mt-6 flex min-h-12 items-center justify-center rounded-full bg-city-green px-5 font-semibold text-white transition hover:bg-city-blue"
+                >
+                  Записаться через Влюди
+                </TrackedExternalLink>
+              ) : hasContact ? (
                 <TrackedExternalLink
                   goal="organizer_contact_click"
                   activityStat={{
@@ -402,16 +433,16 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                       {event.seatsAvailable ? ` · мест: ${event.seatsAvailable}` : ""}
                     </p>
                   </div>
-                  {(event.signupUrl || hasContact) ? (
+                  {(platformBookingEnabled || event.signupUrl || hasContact) ? (
                     <TrackedExternalLink
                       goal="organizer_contact_click"
                       activityStat={{
                         activityId: activity.id,
                         type: event.id === nextEvent?.id ? "nearest_event_click" : "signup_click"
                       }}
-                      href={event.signupUrl ?? contactHref}
-                      target={event.signupUrl || activity.contactUrl ? "_blank" : undefined}
-                      rel={event.signupUrl || activity.contactUrl ? "noopener noreferrer" : undefined}
+                      href={platformBookingEnabled ? "#booking-form" : event.signupUrl ?? contactHref}
+                      target={!platformBookingEnabled && (event.signupUrl || activity.contactUrl) ? "_blank" : undefined}
+                      rel={!platformBookingEnabled && (event.signupUrl || activity.contactUrl) ? "noopener noreferrer" : undefined}
                       className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-city-green transition hover:bg-city-green hover:text-white"
                     >
                       Записаться
@@ -427,6 +458,71 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
           </p>
         )}
       </section>
+
+      {platformBookingEnabled ? (
+        <section id="booking-form" className="mt-8 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
+          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
+                Запись через Влюди
+              </p>
+              <h2 className="mt-2 text-2xl font-bold text-city-ink">Оставить заявку организатору</h2>
+              <p className="mt-3 leading-7 text-city-muted">
+                Мы передадим заявку организатору. Укажите удобный контакт для связи и, если нужно,
+                короткий комментарий.
+              </p>
+              {bookingAccount?.platformBookingDiscountText ? (
+                <p className="mt-4 rounded-2xl bg-city-green/10 p-4 text-sm font-semibold leading-6 text-city-green">
+                  {bookingAccount.platformBookingDiscountText}
+                </p>
+              ) : null}
+              {query.booking === "sent" ? (
+                <p className="mt-4 rounded-2xl border border-city-green/30 bg-city-green/10 p-4 text-sm font-semibold text-city-ink">
+                  Заявка отправлена. Организатор свяжется с вами по указанному контакту.
+                </p>
+              ) : null}
+              {typeof query.bookingError === "string" ? (
+                <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
+                  {query.bookingError}
+                </p>
+              ) : null}
+            </div>
+            <form action={createActivityBookingRequest} className="rounded-[24px] bg-city-soft p-5">
+              <input type="hidden" name="activityId" value={activity.id} />
+              <label className="block">
+                <span className="text-sm font-semibold text-city-ink">Имя</span>
+                <input
+                  name="name"
+                  required
+                  className="mt-2 w-full rounded-2xl border border-city-line bg-white px-4 py-3 outline-none transition focus:border-city-green"
+                  placeholder="Как к вам обращаться"
+                />
+              </label>
+              <label className="mt-4 block">
+                <span className="text-sm font-semibold text-city-ink">Контакт</span>
+                <input
+                  name="contact"
+                  required
+                  className="mt-2 w-full rounded-2xl border border-city-line bg-white px-4 py-3 outline-none transition focus:border-city-green"
+                  placeholder="Телефон, Telegram или VK"
+                />
+              </label>
+              <label className="mt-4 block">
+                <span className="text-sm font-semibold text-city-ink">Комментарий</span>
+                <textarea
+                  name="message"
+                  rows={4}
+                  className="mt-2 w-full rounded-2xl border border-city-line bg-white px-4 py-3 outline-none transition focus:border-city-green"
+                  placeholder="Например: хочу прийти на ближайшую дату"
+                />
+              </label>
+              <button className="mt-5 min-h-12 w-full rounded-full bg-city-green px-5 font-semibold text-white transition hover:bg-city-blue">
+                Отправить заявку
+              </button>
+            </form>
+          </div>
+        </section>
+      ) : null}
 
       <section className="mt-8 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
         <h2 className="text-2xl font-bold text-city-ink">Куда написать / записаться</h2>

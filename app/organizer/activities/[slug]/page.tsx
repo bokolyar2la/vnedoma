@@ -58,7 +58,7 @@ function requestStatusText(status: string) {
     return "на проверке";
   }
   if (status === "done" || status === "approved") {
-    return "принято";
+    return "опубликовано";
   }
   if (status === "rejected") {
     return "отклонено";
@@ -150,10 +150,10 @@ export default async function OrganizerActivityPage({
     ? activity.events.find((event) => event.id === copyEventId)
     : null;
   const success =
-    getParam(query, "edit") === "sent"
-      ? "Правки отправлены на проверку."
-      : getParam(query, "event") === "sent"
-        ? "Событие отправлено на проверку."
+    getParam(query, "edit") === "published"
+      ? "Карточка обновлена на сайте."
+      : getParam(query, "event") === "published"
+        ? "Событие опубликовано на сайте."
         : "";
   const error = getParam(query, "error");
   const recentRequests = [
@@ -285,8 +285,8 @@ export default async function OrganizerActivityPage({
               </p>
               <h2 className="mt-2 text-2xl font-bold text-city-ink">Добавить дату / событие</h2>
               <p className="mt-2 leading-7 text-city-muted">
-                Обычно достаточно указать дату и время. Остальные поля заполняйте только если
-                цена, ссылка или количество мест отличаются от карточки.
+                Обычно достаточно указать дату и время. После отправки событие сразу появится
+                в карточке. Остальные поля заполняйте только если они отличаются от карточки.
               </p>
             </div>
             {eventToCopy ? (
@@ -367,7 +367,7 @@ export default async function OrganizerActivityPage({
               />
             </label>
             <label className="grid gap-2" htmlFor={fieldId("eventNote")}>
-              <span className="text-sm font-semibold text-city-ink">Комментарий для проверки</span>
+              <span className="text-sm font-semibold text-city-ink">Комментарий для Влюди</span>
               <textarea
                 id={fieldId("eventNote")}
                 name="eventNote"
@@ -377,7 +377,7 @@ export default async function OrganizerActivityPage({
               />
             </label>
             <button className="min-h-12 rounded-full bg-city-green px-6 font-semibold text-white transition hover:bg-city-blue sm:w-fit">
-              Отправить событие
+              Опубликовать событие
             </button>
           </form>
         </div>
@@ -418,7 +418,7 @@ export default async function OrganizerActivityPage({
           </div>
 
           <div className="rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
-            <h2 className="text-xl font-bold text-city-ink">Последние заявки</h2>
+            <h2 className="text-xl font-bold text-city-ink">Последние действия</h2>
             <div className="mt-4 space-y-3 text-sm text-city-muted">
               {recentRequests.map((request) => (
                 <div key={request.id} className="rounded-2xl bg-city-soft p-4">
@@ -428,7 +428,7 @@ export default async function OrganizerActivityPage({
                   <p className="mt-1">{formatDateTime(request.createdAt)}</p>
                 </div>
               ))}
-              {!recentRequests.length ? <p>Заявок пока нет.</p> : null}
+              {!recentRequests.length ? <p>Действий пока нет.</p> : null}
             </div>
           </div>
         </div>
@@ -445,7 +445,7 @@ export default async function OrganizerActivityPage({
             </p>
             <h2 className="mt-2 text-2xl font-bold text-city-ink">Изменить карточку активности</h2>
             <p className="mt-2 max-w-3xl leading-7 text-city-muted">
-              Эти изменения появятся на сайте после проверки. Обложку лучше загрузить файлом:
+              Эти изменения сразу появятся на сайте. Обложку лучше загрузить файлом:
               старая картинка сохранится, если новый файл не выбран.
             </p>
           </div>
@@ -625,7 +625,7 @@ export default async function OrganizerActivityPage({
           </label>
 
           <button className="min-h-12 rounded-full bg-city-green px-6 font-semibold text-white transition hover:bg-city-blue sm:w-fit">
-            Отправить правки
+            Сохранить изменения
           </button>
         </form>
       </section>

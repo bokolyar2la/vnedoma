@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ActivityStatType } from "@prisma/client";
 import { redirect } from "next/navigation";
-import { logoutOrganizer } from "@/app/organizer/actions";
+import {
+  logoutOrganizer,
+  updateOrganizerBookingSettings,
+  updateOrganizerPassword
+} from "@/app/organizer/actions";
 import { ActivityImage } from "@/components/ActivityImage";
 import { getUpcomingEventWhere } from "@/lib/events";
 import { formatPrice } from "@/lib/format";
@@ -90,7 +94,7 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
   const currentTab = getTab(params);
   const now = new Date();
 
-  const [accesses, claims, editRequests, eventRequests] = await Promise.all([
+  const [accesses, claims, editRequests, eventRequests, bookingRequests] = await Promise.all([
     prisma.organizerAccess.findMany({
       where: { accountId: account.id },
       include: {
@@ -126,6 +130,19 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
     prisma.organizerEventRequest.findMany({
       where: { accountId: account.id },
       include: { activity: true },
+      orderBy: { createdAt: "desc" },
+      take: 30
+    }),
+    prisma.activityBookingRequest.findMany({
+      where: { organizerAccountId: account.id },
+      include: {
+        activity: {
+          select: {
+            title: true,
+            slug: true
+          }
+        }
+      },
       orderBy: { createdAt: "desc" },
       take: 30
     })
@@ -181,6 +198,7 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
 
   const pendingEdits = editRequests.filter((item) => item.status === "pending").length;
   const pendingEvents = eventRequests.filter((item) => item.status === "pending").length;
+  const newBookings = bookingRequests.filter((item) => item.status === "pending").length;
   const publishedActivities = activities.filter((activity) => activity.status === "published").length;
   const verifiedActivities = activities.filter((activity) => activity.isVerified).length;
   const nextEvent = activities
@@ -508,7 +526,8 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
                 <div className="rounded-[24px] border border-city-line bg-white p-5 shadow-sm">
                   <h2 className="text-xl font-bold text-city-ink">Заявки и правки</h2>
                   <p className="mt-2 text-sm leading-6 text-city-muted">
-                    Правки на проверке: {pendingEdits}. События на проверке: {pendingEvents}.
+                    Заявки через Влюди: {newBookings}. Необработанные правки: {pendingEdits}.
+                    Необработанные события: {pendingEvents}.
                   </p>
                   <Link href="/organizer?tab=requests" className="mt-4 inline-flex text-sm font-semibold text-city-green">
                     Смотреть все
@@ -521,6 +540,51 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
           {currentTab === "requests" ? (
             <section className="mt-8 rounded-[24px] border border-city-line bg-white p-5 shadow-sm">
               <h2 className="text-2xl font-bold text-city-ink">Заявки и правки</h2>
+              <div className="mt-5 rounded-[24px] bg-city-soft p-4">
+                <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                  <div>
+                    <h3 className="text-lg font-bold text-city-ink">Заявки через Влюди</h3>
+                    <p className="mt-1 text-sm text-city-muted">
+                      Люди, которые оставили контакт на странице вашей активности.
+                    </p>
+                  </div>
+                  <span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-city-green">
+                    Новых: {newBookings}
+                  </span>
+                </div>
+                <div className="mt-4 grid gap-3">
+                  {bookingRequests.length ? (
+                    bookingRequests.map((request) => (
+                      <div key={request.id} className="rounded-2xl bg-white p-4">
+                        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                          <div>
+                            <p className="text-sm font-bold text-city-ink">{request.activity.title}</p>
+                            <p className="mt-1 text-sm text-city-muted">
+                              {request.name} · {request.contact}
+                            </p>
+                            {request.message ? (
+                              <p className="mt-2 text-sm leading-6 text-city-muted">{request.message}</p>
+                            ) : null}
+                            {request.discountText ? (
+                              <p className="mt-2 text-xs font-semibold text-city-green">{request.discountText}</p>
+                            ) : null}
+                          </div>
+                          <Link
+                            href={`/activity/${request.activity.slug}`}
+                            className="text-sm font-semibold text-city-green transition hover:text-city-blue"
+                          >
+                            Открыть карточку
+                          </Link>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="rounded-2xl bg-white p-4 text-sm leading-6 text-city-muted">
+                      Заявок через Влюди пока нет. Их можно включить в настройках.
+                    </p>
+                  )}
+                </div>
+              </div>
               <div className="mt-5 grid gap-3">
                 {requestItems.length ? (
                   requestItems.map((item) => (
@@ -604,10 +668,115 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
                   <p className="mt-2 font-semibold text-city-ink">{account.contact ?? "Не указан"}</p>
                 </div>
               </div>
-              <p className="mt-5 rounded-2xl bg-city-green/10 p-4 text-sm leading-6 text-city-muted">
-                Смену пароля и редактирование профиля добавим отдельным аккуратным шагом. Сейчас раздел оставлен как справка,
-                чтобы не обещать неработающие действия.
-              </p>
+              {params.password === "changed" ? (
+                <p className="mt-5 rounded-2xl border border-city-green/30 bg-city-green/10 p-4 text-sm font-semibold text-city-ink">
+                  Пароль обновлен.
+                </p>
+              ) : null}
+              {params.booking === "saved" ? (
+                <p className="mt-5 rounded-2xl border border-city-green/30 bg-city-green/10 p-4 text-sm font-semibold text-city-ink">
+                  Настройки записи сохранены.
+                </p>
+              ) : null}
+              {typeof params.error === "string" ? (
+                <p className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
+                  {params.error}
+                </p>
+              ) : null}
+
+              <div className="mt-6 grid gap-5 xl:grid-cols-2">
+                <form action={updateOrganizerBookingSettings} className="rounded-[24px] bg-city-soft p-5">
+                  <h3 className="text-xl font-bold text-city-ink">Запись через Влюди</h3>
+                  <p className="mt-2 text-sm leading-6 text-city-muted">
+                    Если включить, на ваших карточках появится форма заявки через платформу.
+                    Участнику будет показан бонус: промокод ВЛЮДИ.
+                  </p>
+                  <label className="mt-5 flex gap-3 rounded-2xl bg-white p-4">
+                    <input
+                      type="checkbox"
+                      name="platformBookingEnabled"
+                      defaultChecked={account.platformBookingEnabled}
+                      className="mt-1 h-4 w-4 accent-city-green"
+                    />
+                    <span>
+                      <span className="block text-sm font-bold text-city-ink">Включить запись через Влюди</span>
+                      <span className="mt-1 block text-sm leading-5 text-city-muted">
+                        Заявки будут сохраняться в разделе “Заявки и правки”.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="mt-4 block">
+                    <span className="text-sm font-semibold text-city-ink">Email для уведомлений</span>
+                    <input
+                      name="notificationEmail"
+                      type="email"
+                      defaultValue={account.notificationEmail ?? account.email}
+                      className="mt-2 w-full rounded-2xl border border-city-line bg-white px-4 py-3 outline-none transition focus:border-city-green"
+                      placeholder="email@example.ru"
+                    />
+                  </label>
+                  <label className="mt-4 block">
+                    <span className="text-sm font-semibold text-city-ink">Telegram для уведомлений</span>
+                    <input
+                      name="notificationTelegram"
+                      defaultValue={account.notificationTelegram ?? ""}
+                      className="mt-2 w-full rounded-2xl border border-city-line bg-white px-4 py-3 outline-none transition focus:border-city-green"
+                      placeholder="chat_id Telegram"
+                    />
+                    <span className="mt-2 block text-xs leading-5 text-city-muted">
+                      Для автоматической отправки нужен Telegram-бот и chat_id. Сейчас контакт сохраняется для заявок.
+                    </span>
+                  </label>
+                  <label className="mt-4 block">
+                    <span className="text-sm font-semibold text-city-ink">Бонус для участников</span>
+                    <input
+                      name="platformBookingDiscountText"
+                      defaultValue={account.platformBookingDiscountText ?? "Промокод ВЛЮДИ: 10% скидка"}
+                      className="mt-2 w-full rounded-2xl border border-city-line bg-white px-4 py-3 outline-none transition focus:border-city-green"
+                    />
+                  </label>
+                  <button className="mt-5 min-h-12 w-full rounded-full bg-city-green px-5 font-semibold text-white transition hover:bg-city-blue">
+                    Сохранить настройки записи
+                  </button>
+                </form>
+
+                <form action={updateOrganizerPassword} className="rounded-[24px] bg-city-soft p-5">
+                  <h3 className="text-xl font-bold text-city-ink">Смена пароля</h3>
+                  <p className="mt-2 text-sm leading-6 text-city-muted">
+                    Для безопасности нужно указать текущий пароль.
+                  </p>
+                  <label className="mt-5 block">
+                    <span className="text-sm font-semibold text-city-ink">Текущий пароль</span>
+                    <input
+                      name="currentPassword"
+                      type="password"
+                      autoComplete="current-password"
+                      className="mt-2 w-full rounded-2xl border border-city-line bg-white px-4 py-3 outline-none transition focus:border-city-green"
+                    />
+                  </label>
+                  <label className="mt-4 block">
+                    <span className="text-sm font-semibold text-city-ink">Новый пароль</span>
+                    <input
+                      name="newPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      className="mt-2 w-full rounded-2xl border border-city-line bg-white px-4 py-3 outline-none transition focus:border-city-green"
+                    />
+                  </label>
+                  <label className="mt-4 block">
+                    <span className="text-sm font-semibold text-city-ink">Повторите новый пароль</span>
+                    <input
+                      name="repeatPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      className="mt-2 w-full rounded-2xl border border-city-line bg-white px-4 py-3 outline-none transition focus:border-city-green"
+                    />
+                  </label>
+                  <button className="mt-5 min-h-12 w-full rounded-full bg-city-ink px-5 font-semibold text-white transition hover:bg-city-blue">
+                    Обновить пароль
+                  </button>
+                </form>
+              </div>
             </section>
           ) : null}
         </main>

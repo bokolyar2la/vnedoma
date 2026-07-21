@@ -31,7 +31,8 @@ function getNumber(formData: FormData, key: string) {
 }
 
 function fail(path: string, message: string): never {
-  redirect(`${path}?error=${encodeURIComponent(message)}`);
+  const separator = path.includes("?") ? "&" : "?";
+  redirect(`${path}${separator}error=${encodeURIComponent(message)}`);
 }
 
 function getActivityId(formData: FormData) {
@@ -171,12 +172,92 @@ export async function logoutOrganizer() {
   redirect("/organizer/login");
 }
 
+export async function updateOrganizerPassword(formData: FormData) {
+  const account = await getOrganizerAccount();
+
+  if (!account) {
+    redirect("/organizer/login");
+  }
+
+  const currentPassword = getString(formData, "currentPassword");
+  const newPassword = getString(formData, "newPassword");
+  const repeatPassword = getString(formData, "repeatPassword");
+  const returnPath = "/organizer?tab=settings";
+
+  if (!verifyPassword(currentPassword, account.passwordHash)) {
+    fail(returnPath, "Текущий пароль указан неверно.");
+  }
+
+  if (newPassword.length < 8) {
+    fail(returnPath, "Новый пароль должен быть не короче 8 символов.");
+  }
+
+  if (newPassword !== repeatPassword) {
+    fail(returnPath, "Новый пароль и повтор не совпадают.");
+  }
+
+  await prisma.organizerAccount.update({
+    where: { id: account.id },
+    data: {
+      passwordHash: hashPassword(newPassword)
+    }
+  });
+
+  redirect("/organizer?tab=settings&password=changed");
+}
+
+export async function updateOrganizerBookingSettings(formData: FormData) {
+  const account = await getOrganizerAccount();
+
+  if (!account) {
+    redirect("/organizer/login");
+  }
+
+  const enabled = formData.get("platformBookingEnabled") === "on";
+  const notificationEmail = getString(formData, "notificationEmail") || account.email;
+  const notificationTelegram = getString(formData, "notificationTelegram") || null;
+  const discountText =
+    getString(formData, "platformBookingDiscountText") || "Промокод ВЛЮДИ: 10% скидка";
+  const returnPath = "/organizer?tab=settings";
+
+  if (notificationEmail && !notificationEmail.includes("@")) {
+    fail(returnPath, "Проверьте email для уведомлений.");
+  }
+
+  if (enabled && !notificationEmail && !notificationTelegram) {
+    fail(returnPath, "Укажите email или Telegram, чтобы получать заявки.");
+  }
+
+  await prisma.organizerAccount.update({
+    where: { id: account.id },
+    data: {
+      notificationEmail,
+      notificationTelegram,
+      platformBookingEnabled: enabled,
+      platformBookingDiscountText: discountText
+    }
+  });
+
+  revalidatePath("/organizer");
+  redirect("/organizer?tab=settings&booking=saved");
+}
+
 export async function createOrganizerEditRequest(formData: FormData) {
   const activityId = getActivityId(formData);
   const { account, activity } = await ensureAccess(activityId);
   const isFree = formData.get("isFree") === "on";
   const priceNote = getString(formData, "priceNote") || null;
+  const title = getString(formData, "title");
+  const description = getString(formData, "description");
+  const address = getString(formData, "address");
   let imageUrl: string | null = null;
+
+  if (!title || !description || !address) {
+    fail(
+      `/organizer/activities/${activity.slug}`,
+      "Заполните название, описание и адрес."
+    );
+  }
 
   try {
     imageUrl =
@@ -188,30 +269,49 @@ export async function createOrganizerEditRequest(formData: FormData) {
     fail(`/organizer/activities/${activity.slug}`, message);
   }
 
-  await prisma.organizerEditRequest.create({
-    data: {
-      accountId: account.id,
-      activityId,
-      title: getString(formData, "title") || null,
-      description: getString(formData, "description") || null,
-      whyGoText: getString(formData, "whyGoText") || null,
-      address: getString(formData, "address") || null,
-      priceFrom: isFree || priceNote ? null : getNumber(formData, "priceFrom"),
-      priceTo: isFree || priceNote ? null : getNumber(formData, "priceTo"),
-      priceNote,
-      isFree,
-      isAdultsOnly: formData.get("isAdultsOnly") === "on",
-      beginnerFriendly: formData.get("beginnerFriendly") === "on",
-      canComeAlone: formData.get("canComeAlone") === "on",
-      contactPhone: getString(formData, "contactPhone") || null,
-      contactUrl: normalizeContactUrlInput(getString(formData, "contactUrl")),
-      imageUrl,
-      note: getString(formData, "note") || null
-    }
-  });
+  const updateData = {
+    title,
+    description,
+    whyGoText: getString(formData, "whyGoText") || null,
+    address,
+    priceFrom: isFree || priceNote ? null : getNumber(formData, "priceFrom"),
+    priceTo: isFree || priceNote ? null : getNumber(formData, "priceTo"),
+    priceNote,
+    isFree,
+    isAdultsOnly: formData.get("isAdultsOnly") === "on",
+    beginnerFriendly: formData.get("beginnerFriendly") === "on",
+    canComeAlone: formData.get("canComeAlone") === "on",
+    contactPhone: getString(formData, "contactPhone") || null,
+    contactUrl: normalizeContactUrlInput(getString(formData, "contactUrl")),
+    imageUrl
+  };
+
+  await prisma.$transaction([
+    prisma.activity.update({
+      where: { id: activityId },
+      data: {
+        ...updateData,
+        isVerified: true
+      }
+    }),
+    prisma.organizerEditRequest.create({
+      data: {
+        accountId: account.id,
+        activityId,
+        status: OrganizerRequestStatus.done,
+        ...updateData,
+        note: getString(formData, "note") || null,
+        adminComment: "Изменение опубликовано организатором без модерации."
+      }
+    })
+  ]);
 
   revalidatePath("/admin/organizer-requests");
-  redirect(`/organizer/activities/${activity.slug}?edit=sent`);
+  revalidatePath("/organizer");
+  revalidatePath(`/organizer/activities/${activity.slug}`);
+  revalidatePath("/tula");
+  revalidatePath(`/activity/${activity.slug}`);
+  redirect(`/organizer/activities/${activity.slug}?edit=published`);
 }
 
 export async function createOrganizerEventRequest(formData: FormData) {
@@ -242,26 +342,40 @@ export async function createOrganizerEventRequest(formData: FormData) {
   if (getEventExpiresAt({ startsAt, endsAt }) < new Date()) {
     fail(
       `/organizer/activities/${activity.slug}`,
-      "Нельзя отправить на проверку уже прошедшее событие."
+      "Нельзя опубликовать уже прошедшее событие."
     );
   }
 
-  await prisma.organizerEventRequest.create({
-    data: {
-      accountId: account.id,
-      activityId,
-      title,
-      startsAt,
-      endsAt,
-      price: getNumber(formData, "eventPrice"),
-      seatsAvailable: getNumber(formData, "seatsAvailable"),
-      signupUrl: normalizeContactUrlInput(getString(formData, "signupUrl")),
-      note: getString(formData, "eventNote") || null
-    }
-  });
+  const eventData = {
+    activityId,
+    title,
+    startsAt,
+    endsAt,
+    price: getNumber(formData, "eventPrice"),
+    seatsAvailable: getNumber(formData, "seatsAvailable"),
+    signupUrl: normalizeContactUrlInput(getString(formData, "signupUrl"))
+  };
+
+  await prisma.$transaction([
+    prisma.event.create({
+      data: eventData
+    }),
+    prisma.organizerEventRequest.create({
+      data: {
+        accountId: account.id,
+        status: OrganizerRequestStatus.done,
+        ...eventData,
+        note: getString(formData, "eventNote") || null,
+        adminComment: "Событие опубликовано организатором без модерации."
+      }
+    })
+  ]);
 
   revalidatePath("/admin/organizer-requests");
-  redirect(`/organizer/activities/${activity.slug}?event=sent`);
+  revalidatePath("/organizer");
+  revalidatePath(`/organizer/activities/${activity.slug}`);
+  revalidatePath(`/activity/${activity.slug}`);
+  redirect(`/organizer/activities/${activity.slug}?event=published`);
 }
 
 async function markClaimRequestWithStatus(formData: FormData, status: OrganizerRequestStatus) {
@@ -376,6 +490,23 @@ export async function rejectEditRequest(formData: FormData) {
   await markEditRequestWithStatus(formData, OrganizerRequestStatus.rejected);
 }
 
+export async function updateEditRequestComment(formData: FormData) {
+  const id = Number(getString(formData, "id"));
+
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error("Некорректная заявка.");
+  }
+
+  await prisma.organizerEditRequest.update({
+    where: { id },
+    data: {
+      adminComment: getString(formData, "adminComment") || null
+    }
+  });
+
+  revalidatePath("/admin/organizer-requests");
+}
+
 async function markEventRequestWithStatus(formData: FormData, status: OrganizerRequestStatus) {
   const id = Number(getString(formData, "id"));
 
@@ -431,4 +562,21 @@ export async function approveEventRequest(formData: FormData) {
 
 export async function rejectEventRequest(formData: FormData) {
   await markEventRequestWithStatus(formData, OrganizerRequestStatus.rejected);
+}
+
+export async function updateEventRequestComment(formData: FormData) {
+  const id = Number(getString(formData, "id"));
+
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error("Некорректная заявка.");
+  }
+
+  await prisma.organizerEventRequest.update({
+    where: { id },
+    data: {
+      adminComment: getString(formData, "adminComment") || null
+    }
+  });
+
+  revalidatePath("/admin/organizer-requests");
 }

@@ -31,6 +31,12 @@ enum ActivityStatType {
   nearest_event_click
 }
 
+enum ActivityBookingStatus {
+  pending
+  contacted
+  cancelled
+}
+
 model City {
   id         Int         @id @default(autoincrement())
   name       String
@@ -79,10 +85,15 @@ model OrganizerAccount {
   contact      String?
   passwordHash String
   isDisabled   Boolean                 @default(false)
+  notificationEmail String?
+  notificationTelegram String?
+  platformBookingEnabled Boolean       @default(false)
+  platformBookingDiscountText String?  @default("Промокод ВЛЮДИ: 10% скидка")
   accesses     OrganizerAccess[]
   claims       OrganizerClaimRequest[]
   editRequests OrganizerEditRequest[]
   eventRequests OrganizerEventRequest[]
+  bookingRequests ActivityBookingRequest[]
   createdAt    DateTime                @default(now())
   updatedAt    DateTime                @updatedAt
 }
@@ -139,6 +150,7 @@ model Activity {
   events           Event[]
   media            ActivityMedia[]
   stats            ActivityStatEvent[]
+  bookingRequests  ActivityBookingRequest[]
   tags             ActivityTag[]
   organizerClaims  OrganizerClaimRequest[]
   editRequests     OrganizerEditRequest[]
@@ -228,6 +240,25 @@ model ActivityStatEvent {
 
   @@index([activityId, type, createdAt])
   @@index([createdAt])
+}
+
+model ActivityBookingRequest {
+  id                 Int                   @id @default(autoincrement())
+  activityId          Int
+  organizerAccountId  Int?
+  name               String
+  contact            String
+  message            String?
+  promoCode          String?               @default("ВЛЮДИ")
+  discountText       String?
+  status             ActivityBookingStatus @default(pending)
+  activity           Activity              @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  organizerAccount   OrganizerAccount?     @relation(fields: [organizerAccountId], references: [id], onDelete: SetNull)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  @@index([activityId, createdAt])
+  @@index([organizerAccountId, status])
 }
 
 model OrganizerEventRequest {

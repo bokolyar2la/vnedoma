@@ -7,7 +7,9 @@ import {
   approveEventRequest,
   rejectClaimRequest,
   rejectEditRequest,
-  rejectEventRequest
+  rejectEventRequest,
+  updateEditRequestComment,
+  updateEventRequestComment
 } from "@/app/organizer/actions";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -87,6 +89,26 @@ function RequestActions({
   );
 }
 
+function CommentAction({
+  id,
+  action
+}: {
+  id: number;
+  action: (formData: FormData) => Promise<void>;
+}) {
+  return (
+    <div className="mt-4">
+      <input type="hidden" name="id" value={id} />
+      <button
+        formAction={action}
+        className="rounded-full border border-city-line bg-white px-4 py-2 text-sm font-semibold text-city-ink transition hover:border-city-green hover:text-city-green"
+      >
+        Сохранить комментарий
+      </button>
+    </div>
+  );
+}
+
 const statusOrder: Record<string, number> = {
   pending: 0,
   approved: 1,
@@ -124,6 +146,13 @@ export default async function OrganizerRequestsPage({ searchParams }: PageProps)
   const requestWhere = showAll
     ? undefined
     : { status: OrganizerRequestStatus.pending };
+  const organizerActionWhere = showAll
+    ? undefined
+    : {
+        status: {
+          in: [OrganizerRequestStatus.pending, OrganizerRequestStatus.done]
+        }
+      };
 
   const [claimRequests, editRequests, eventRequests] = await Promise.all([
     prisma.organizerClaimRequest.findMany({
@@ -137,7 +166,7 @@ export default async function OrganizerRequestsPage({ searchParams }: PageProps)
       take: 50
     }),
     prisma.organizerEditRequest.findMany({
-      where: requestWhere,
+      where: organizerActionWhere,
       include: {
         account: true,
         activity: true
@@ -146,7 +175,7 @@ export default async function OrganizerRequestsPage({ searchParams }: PageProps)
       take: 50
     }),
     prisma.organizerEventRequest.findMany({
-      where: requestWhere,
+      where: organizerActionWhere,
       include: {
         account: true,
         activity: true
@@ -176,7 +205,9 @@ export default async function OrganizerRequestsPage({ searchParams }: PageProps)
             На проверке: <span className="font-semibold text-city-ink">{pendingCount}</span>
           </p>
           <p className="mt-2 text-sm text-city-muted">
-            {showAll ? "Показана вся история заявок." : "Показаны только новые заявки."}{" "}
+            {showAll
+              ? "Показана вся история заявок."
+              : "Показаны новые заявки и последние опубликованные изменения."}{" "}
             <Link
               href={showAll ? "/admin/organizer-requests" : "/admin/organizer-requests?show=all"}
               className="font-semibold text-city-green hover:text-city-blue"
@@ -282,7 +313,9 @@ export default async function OrganizerRequestsPage({ searchParams }: PageProps)
                     approveAction={approveEditRequest}
                     rejectAction={rejectEditRequest}
                   />
-                ) : null}
+                ) : (
+                  <CommentAction id={edit.id} action={updateEditRequestComment} />
+                )}
               </form>
             ))
           ) : (
@@ -327,7 +360,9 @@ export default async function OrganizerRequestsPage({ searchParams }: PageProps)
                     approveAction={approveEventRequest}
                     rejectAction={rejectEventRequest}
                   />
-                ) : null}
+                ) : (
+                  <CommentAction id={event.id} action={updateEventRequestComment} />
+                )}
               </form>
             ))
           ) : (
