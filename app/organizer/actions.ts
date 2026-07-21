@@ -53,7 +53,7 @@ async function ensureAccess(activityId: number) {
 
   const activity = await prisma.activity.findUniqueOrThrow({
     where: { id: activityId },
-    select: { id: true, slug: true, organizerId: true }
+    select: { id: true, slug: true, title: true, organizerId: true }
   });
 
   const access = await prisma.organizerAccess.findUnique({
@@ -190,6 +190,7 @@ export async function createOrganizerEditRequest(formData: FormData) {
       activityId,
       title: getString(formData, "title") || null,
       description: getString(formData, "description") || null,
+      whyGoText: getString(formData, "whyGoText") || null,
       address: getString(formData, "address") || null,
       priceFrom: isFree || priceNote ? null : getNumber(formData, "priceFrom"),
       priceTo: isFree || priceNote ? null : getNumber(formData, "priceTo"),
@@ -212,11 +213,11 @@ export async function createOrganizerEditRequest(formData: FormData) {
 export async function createOrganizerEventRequest(formData: FormData) {
   const activityId = getActivityId(formData);
   const { account, activity } = await ensureAccess(activityId);
-  const title = getString(formData, "eventTitle");
+  const title = getString(formData, "eventTitle") || activity.title;
   const startsAtValue = getString(formData, "startsAt");
 
-  if (!title || !startsAtValue) {
-    fail(`/organizer/activities/${activity.slug}`, "Укажите название и дату события.");
+  if (!startsAtValue) {
+    fail(`/organizer/activities/${activity.slug}`, "Укажите дату события.");
   }
 
   const startsAt = new Date(startsAtValue);
@@ -327,6 +328,7 @@ async function markEditRequestWithStatus(formData: FormData, status: OrganizerRe
       data: {
         title: request.title ?? request.activity.title,
         description: request.description ?? request.activity.description,
+        whyGoText: request.whyGoText ?? request.activity.whyGoText,
         address: request.address ?? request.activity.address,
         priceFrom: request.isFree || request.priceNote ? null : request.priceFrom,
         priceTo: request.isFree || request.priceNote ? null : request.priceTo,

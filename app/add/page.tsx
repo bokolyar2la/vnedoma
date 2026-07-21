@@ -34,6 +34,16 @@ export default async function AddPage({ searchParams }: AddPageProps) {
   const params = searchParams ? await searchParams : {};
   const success = getSingleParam(params, "success") === "1";
   const error = getSingleParam(params, "error");
+  const defaults = {
+    title: getSingleParam(params, "title") ?? "",
+    categoryId: getSingleParam(params, "categoryId") ?? "",
+    organizerName: getSingleParam(params, "organizerName") ?? "",
+    description: getSingleParam(params, "description") ?? "",
+    address: getSingleParam(params, "address") ?? "",
+    priceNote: getSingleParam(params, "priceNote") ?? "",
+    contactPhone: getSingleParam(params, "contactPhone") ?? "",
+    contactUrl: getSingleParam(params, "contactUrl") ?? ""
+  };
   const categories = await prisma.category.findMany({
     where: { slug: { in: [...currentCategorySlugs] } }
   });
@@ -75,6 +85,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
             id="title"
             name="title"
             required
+            defaultValue={defaults.title}
             className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
             placeholder="Например, вечер настольных игр"
           />
@@ -89,6 +100,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
               id="categoryId"
               name="categoryId"
               required
+              defaultValue={defaults.categoryId}
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
             >
               <option value="">Выберите категорию</option>
@@ -107,6 +119,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
             <input
               id="organizerName"
               name="organizerName"
+              defaultValue={defaults.organizerName}
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
               placeholder="Название или имя"
             />
@@ -122,6 +135,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
             name="description"
             required
             rows={5}
+            defaultValue={defaults.description}
             className="mt-2 w-full rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
             placeholder="Что это за активность, как проходит встреча, можно ли прийти одному"
           />
@@ -134,6 +148,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
           <input
             id="address"
             name="address"
+            defaultValue={defaults.address}
             className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
             placeholder="Тула, улица и дом"
           />
@@ -147,6 +162,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
             <input
               id="priceNote"
               name="priceNote"
+              defaultValue={defaults.priceNote}
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
               placeholder="Свободный взнос, донат, уточняется"
             />
@@ -206,6 +222,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
             <input
               id="contactPhone"
               name="contactPhone"
+              defaultValue={defaults.contactPhone}
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
               placeholder="+7..."
             />
@@ -218,6 +235,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
               id="contactUrl"
               name="contactUrl"
               type="text"
+              defaultValue={defaults.contactUrl}
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
               placeholder="vk.com/..., t.me/..., @telegram или сайт"
             />

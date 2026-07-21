@@ -56,6 +56,11 @@ async function getActivity(slug: string) {
           startsAt: "asc"
         }
       },
+      media: {
+        orderBy: {
+          position: "asc"
+        }
+      },
       tags: {
         include: {
           tag: true
@@ -224,8 +229,9 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   });
 
   const price = formatPrice(activity);
+  const nextEvent = activity.events[0];
   const contactHref = activity.contactUrl ?? `tel:${activity.contactPhone ?? ""}`;
-  const hasContact = Boolean(activity.contactUrl || activity.contactPhone);
+  const hasContact = Boolean(activity.contactUrl || activity.contactPhone || nextEvent?.signupUrl);
   const organizerName = getPublicOrganizerName(activity.organizer.name);
   const hasOrganizer = Boolean(organizerName);
   const yandexMapsUrl = `https://yandex.ru/maps/?text=${encodeURIComponent(
@@ -330,15 +336,28 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   <p className="mt-1 font-semibold text-city-ink">{organizerName}</p>
                 </div>
               ) : null}
+              {nextEvent ? (
+                <div className="mt-5 rounded-2xl bg-white p-4 shadow-sm">
+                  <p className="text-sm font-semibold text-city-green">Ближайшая дата</p>
+                  <p className="mt-2 text-lg font-extrabold leading-6 text-city-ink">
+                    {formatDateTime(nextEvent.startsAt)}
+                  </p>
+                  <p className="mt-2 text-sm leading-5 text-city-muted">{nextEvent.title}</p>
+                  <p className="mt-2 text-sm font-semibold text-city-ink">
+                    {nextEvent.price ? `${nextEvent.price.toLocaleString("ru-RU")} ₽` : price}
+                    {nextEvent.seatsAvailable ? ` · мест: ${nextEvent.seatsAvailable}` : ""}
+                  </p>
+                </div>
+              ) : null}
               {hasContact ? (
                 <TrackedExternalLink
                   goal="organizer_contact_click"
-                  href={contactHref}
-                  target={activity.contactUrl ? "_blank" : undefined}
-                  rel={activity.contactUrl ? "noopener noreferrer" : undefined}
+                  href={nextEvent?.signupUrl ?? contactHref}
+                  target={nextEvent?.signupUrl || activity.contactUrl ? "_blank" : undefined}
+                  rel={nextEvent?.signupUrl || activity.contactUrl ? "noopener noreferrer" : undefined}
                   className="mt-6 flex min-h-12 items-center justify-center rounded-full bg-city-green px-5 font-semibold text-white transition hover:bg-city-blue"
                 >
-                  Записаться у организатора
+                  {nextEvent ? "Записаться на ближайшее событие" : "Записаться у организатора"}
                 </TrackedExternalLink>
               ) : (
                 <button
@@ -351,6 +370,53 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             </aside>
           </div>
         </div>
+      </section>
+
+      <section className="mt-8 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
+              Расписание
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-city-ink">Ближайшие события</h2>
+          </div>
+          {activity.events.length > 1 ? (
+            <p className="text-sm text-city-muted">Выберите удобную дату</p>
+          ) : null}
+        </div>
+        {activity.events.length > 0 ? (
+          <div className="mt-5 grid gap-3">
+            {activity.events.map((event) => (
+              <div key={event.id} className="rounded-2xl bg-city-soft p-4">
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                  <div>
+                    <h3 className="font-semibold text-city-ink">{event.title}</h3>
+                    <p className="mt-2 text-sm text-city-muted">
+                      {formatDateTime(event.startsAt)}
+                      {event.price ? ` · ${event.price.toLocaleString("ru-RU")} ₽` : ""}
+                      {event.seatsAvailable ? ` · мест: ${event.seatsAvailable}` : ""}
+                    </p>
+                  </div>
+                  {(event.signupUrl || hasContact) ? (
+                    <TrackedExternalLink
+                      goal="organizer_contact_click"
+                      href={event.signupUrl ?? contactHref}
+                      target={event.signupUrl || activity.contactUrl ? "_blank" : undefined}
+                      rel={event.signupUrl || activity.contactUrl ? "noopener noreferrer" : undefined}
+                      className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-city-green transition hover:bg-city-green hover:text-white"
+                    >
+                      Записаться
+                    </TrackedExternalLink>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4 text-city-muted">
+            Даты пока не добавлены. Свяжитесь с организатором, чтобы уточнить ближайшее занятие.
+          </p>
+        )}
       </section>
 
       <section className="mt-8 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
@@ -412,12 +478,49 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             Формат хорошо подходит для знакомства с людьми: участники взаимодействуют, играют, обсуждают или делают что-то вместе.
           </p>
         ) : null}
+        {activity.whyGoText ? (
+          <p className="mt-4 rounded-2xl bg-city-soft p-4 leading-7 text-city-ink">
+            {activity.whyGoText}
+          </p>
+        ) : null}
         {trip ? (
           <p className="mt-4 rounded-2xl bg-city-soft p-4 leading-7 text-city-ink">
             Это выездной формат: уточните даты и место проведения у организатора.
           </p>
         ) : null}
       </section>
+
+      {activity.media.length > 0 ? (
+        <section className="mt-8 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
+          <h2 className="text-2xl font-bold text-city-ink">Как проходит активность</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            {activity.media.map((media) => (
+              <div key={media.id} className="overflow-hidden rounded-[24px] bg-city-soft">
+                {media.type === "image" ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={media.url}
+                    alt={media.caption ?? activity.title}
+                    className="aspect-[4/3] w-full object-cover"
+                  />
+                ) : (
+                  <a
+                    href={media.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex aspect-[4/3] items-center justify-center p-5 text-center font-semibold text-city-green transition hover:text-city-blue"
+                  >
+                    Открыть видео
+                  </a>
+                )}
+                {media.caption ? (
+                  <p className="p-4 text-sm leading-6 text-city-muted">{media.caption}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {infoCards.map((item) => (
@@ -443,39 +546,6 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
             ) : null}
           </div>
         ))}
-      </section>
-
-      <section className="mt-8 rounded-[30px] border border-city-line bg-white p-6 shadow-soft">
-        <h2 className="text-2xl font-bold text-city-ink">Ближайшие события</h2>
-        {activity.events.length > 0 ? (
-          <div className="mt-5 grid gap-3">
-            {activity.events.map((event) => (
-              <div key={event.id} className="rounded-2xl bg-city-soft p-4">
-                <h3 className="font-semibold text-city-ink">{event.title}</h3>
-                <p className="mt-2 text-sm text-city-muted">
-                  {formatDateTime(event.startsAt)}
-                  {event.price ? ` · ${event.price.toLocaleString("ru-RU")} ₽` : ""}
-                  {event.seatsAvailable ? ` · мест: ${event.seatsAvailable}` : ""}
-                </p>
-                {event.signupUrl ? (
-                  <TrackedExternalLink
-                    goal="organizer_contact_click"
-                    href={event.signupUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 inline-flex text-sm font-semibold text-city-green transition hover:text-city-blue"
-                  >
-                    Записаться на событие
-                  </TrackedExternalLink>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-4 text-city-muted">
-            Даты пока не добавлены. Свяжитесь с организатором, чтобы уточнить ближайшее занятие.
-          </p>
-        )}
       </section>
 
       {similarActivities.length > 0 ? (

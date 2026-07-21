@@ -37,6 +37,15 @@ function fieldId(name: string) {
   return `organizer-${name}`;
 }
 
+function formatDateTimeLocal(date: Date | null) {
+  if (!date) {
+    return "";
+  }
+
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
 export default async function OrganizerActivityPage({
   params,
   searchParams
@@ -57,7 +66,7 @@ export default async function OrganizerActivityPage({
       events: {
         where: getUpcomingEventWhere(new Date()),
         orderBy: { startsAt: "asc" },
-        take: 5
+        take: 8
       }
     }
   });
@@ -98,6 +107,10 @@ export default async function OrganizerActivityPage({
     })
   ]);
 
+  const copyEventId = Number(getParam(query, "copyEventId"));
+  const eventToCopy = Number.isInteger(copyEventId)
+    ? activity.events.find((event) => event.id === copyEventId)
+    : null;
   const success =
     getParam(query, "edit") === "sent"
       ? "Правки отправлены на проверку."
@@ -121,6 +134,16 @@ export default async function OrganizerActivityPage({
   ]
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, 6);
+  const cloneCardHref = `/add?${new URLSearchParams({
+    title: activity.title,
+    categoryId: String(activity.categoryId),
+    organizerName: activity.organizer.name,
+    description: activity.description,
+    address: activity.address,
+    priceNote: activity.priceNote ?? "",
+    contactPhone: activity.contactPhone ?? "",
+    contactUrl: activity.contactUrl ?? ""
+  }).toString()}`;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -139,6 +162,20 @@ export default async function OrganizerActivityPage({
           <p className="mt-3 text-city-muted">
             Организатор: <span className="font-semibold text-city-ink">{activity.organizer.name}</span>
           </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href={`/activity/${activity.slug}`}
+              className="inline-flex min-h-11 items-center rounded-full border border-city-line bg-white px-5 text-sm font-semibold text-city-ink transition hover:border-city-green"
+            >
+              Открыть на сайте
+            </Link>
+            <Link
+              href={cloneCardHref}
+              className="inline-flex min-h-11 items-center rounded-full bg-city-soft px-5 text-sm font-semibold text-city-green transition hover:text-city-blue"
+            >
+              Создать похожую карточку
+            </Link>
+          </div>
         </div>
         <ActivityImage
           title={activity.title}
@@ -159,18 +196,166 @@ export default async function OrganizerActivityPage({
         </div>
       ) : null}
 
-      <section className="mt-8 rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-          <div>
-            <h2 className="text-2xl font-bold text-city-ink">Предложить правки</h2>
-            <p className="mt-2 max-w-3xl leading-7 text-city-muted">
-              Изменения появятся на сайте после проверки. Это защищает карточку от случайных ошибок.
-            </p>
+      <section className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(300px,0.55fr)]">
+        <div className="rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
+                Самое частое действие
+              </p>
+              <h2 className="mt-2 text-2xl font-bold text-city-ink">Добавить дату / событие</h2>
+              <p className="mt-2 leading-7 text-city-muted">
+                Достаточно указать дату и время. Остальные поля можно заполнить, если они отличаются от карточки.
+              </p>
+            </div>
+            {eventToCopy ? (
+              <span className="rounded-full bg-city-green/10 px-4 py-2 text-sm font-semibold text-city-green">
+                Заполнено из события
+              </span>
+            ) : null}
           </div>
-          <span className="rounded-full bg-city-soft px-4 py-2 text-sm font-semibold text-city-green">
-            Сейчас: {formatPrice(activity)}
-          </span>
+
+          <form action={createOrganizerEventRequest} className="mt-6 grid gap-4">
+            <input type="hidden" name="activityId" value={activity.id} />
+            <label className="grid gap-2" htmlFor={fieldId("eventTitle")}>
+              <span className="text-sm font-semibold text-city-ink">Название события</span>
+              <input
+                id={fieldId("eventTitle")}
+                name="eventTitle"
+                defaultValue={eventToCopy?.title ?? activity.title}
+                placeholder="Можно оставить название карточки"
+                className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
+              />
+            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2" htmlFor={fieldId("startsAt")}>
+                <span className="text-sm font-semibold text-city-ink">Дата и время начала</span>
+                <input
+                  id={fieldId("startsAt")}
+                  name="startsAt"
+                  type="datetime-local"
+                  className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
+                />
+              </label>
+              <label className="grid gap-2" htmlFor={fieldId("endsAt")}>
+                <span className="text-sm font-semibold text-city-ink">Окончание</span>
+                <input
+                  id={fieldId("endsAt")}
+                  name="endsAt"
+                  type="datetime-local"
+                  defaultValue={formatDateTimeLocal(eventToCopy?.endsAt ?? null)}
+                  className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
+                />
+              </label>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2" htmlFor={fieldId("eventPrice")}>
+                <span className="text-sm font-semibold text-city-ink">Цена</span>
+                <input
+                  id={fieldId("eventPrice")}
+                  name="eventPrice"
+                  type="number"
+                  min="0"
+                  defaultValue={eventToCopy?.price ?? ""}
+                  placeholder="Можно оставить пустым"
+                  className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
+                />
+              </label>
+              <label className="grid gap-2" htmlFor={fieldId("seatsAvailable")}>
+                <span className="text-sm font-semibold text-city-ink">Свободные места</span>
+                <input
+                  id={fieldId("seatsAvailable")}
+                  name="seatsAvailable"
+                  type="number"
+                  min="0"
+                  defaultValue={eventToCopy?.seatsAvailable ?? ""}
+                  placeholder="Если есть лимит"
+                  className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
+                />
+              </label>
+            </div>
+            <label className="grid gap-2" htmlFor={fieldId("signupUrl")}>
+              <span className="text-sm font-semibold text-city-ink">Ссылка на запись</span>
+              <input
+                id={fieldId("signupUrl")}
+                name="signupUrl"
+                defaultValue={eventToCopy?.signupUrl ?? activity.contactUrl ?? ""}
+                placeholder="VK, Telegram, Timepad или сайт"
+                className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
+              />
+            </label>
+            <label className="grid gap-2" htmlFor={fieldId("eventNote")}>
+              <span className="text-sm font-semibold text-city-ink">Комментарий для проверки</span>
+              <textarea
+                id={fieldId("eventNote")}
+                name="eventNote"
+                rows={2}
+                className="rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green"
+              />
+            </label>
+            <button className="min-h-12 rounded-full bg-city-green px-6 font-semibold text-white transition hover:bg-city-blue sm:w-fit">
+              Отправить событие
+            </button>
+          </form>
         </div>
+
+        <div className="grid gap-6">
+          <div className="rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
+            <h2 className="text-xl font-bold text-city-ink">Опубликованные даты</h2>
+            <div className="mt-4 space-y-3">
+              {activity.events.length ? (
+                activity.events.map((event) => (
+                  <div key={event.id} className="rounded-2xl bg-city-soft p-4 text-sm">
+                    <p className="font-semibold text-city-ink">{event.title}</p>
+                    <p className="mt-1 text-city-muted">{formatDateTime(event.startsAt)}</p>
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      <Link
+                        href={`/organizer/activities/${activity.slug}?copyEventId=${event.id}`}
+                        className="font-semibold text-city-green transition hover:text-city-blue"
+                      >
+                        Повторить
+                      </Link>
+                      {event.signupUrl ? (
+                        <a
+                          href={event.signupUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-city-green transition hover:text-city-blue"
+                        >
+                          Ссылка на запись
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-city-muted">Дат пока нет.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
+            <h2 className="text-xl font-bold text-city-ink">Последние заявки</h2>
+            <div className="mt-4 space-y-3 text-sm text-city-muted">
+              {recentRequests.map((request) => (
+                <div key={request.id} className="rounded-2xl bg-city-soft p-4">
+                  <p className="font-semibold text-city-ink">{request.type}: {request.status}</p>
+                  <p className="mt-1">{formatDateTime(request.createdAt)}</p>
+                </div>
+              ))}
+              {!recentRequests.length ? <p>Заявок пока нет.</p> : null}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <details className="mt-8 rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
+        <summary className="cursor-pointer text-2xl font-bold text-city-ink">
+          Изменить карточку активности
+        </summary>
+        <p className="mt-3 max-w-3xl leading-7 text-city-muted">
+          Эти изменения появятся на сайте после проверки. Обложку лучше загружать файлом, как в соцсетях.
+        </p>
 
         <form
           action={createOrganizerEditRequest}
@@ -178,6 +363,7 @@ export default async function OrganizerActivityPage({
           className="mt-6 grid gap-5"
         >
           <input type="hidden" name="activityId" value={activity.id} />
+          <input type="hidden" name="imageUrl" value={activity.imageUrl ?? ""} />
 
           <label className="grid gap-2" htmlFor={fieldId("title")}>
             <span className="text-sm font-semibold text-city-ink">Название</span>
@@ -195,31 +381,36 @@ export default async function OrganizerActivityPage({
               id={fieldId("description")}
               name="description"
               defaultValue={activity.description}
-              rows={6}
+              rows={5}
               className="rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green"
             />
           </label>
 
-          <label className="grid gap-2" htmlFor={fieldId("address")}>
-            <span className="text-sm font-semibold text-city-ink">Адрес</span>
-            <input
-              id={fieldId("address")}
-              name="address"
-              defaultValue={activity.address}
-              className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
+          <label className="grid gap-2" htmlFor={fieldId("whyGoText")}>
+            <span className="text-sm font-semibold text-city-ink">Почему стоит пойти</span>
+            <textarea
+              id={fieldId("whyGoText")}
+              name="whyGoText"
+              defaultValue={activity.whyGoText ?? ""}
+              rows={3}
+              placeholder="Что человек получит, какая атмосфера, кому особенно подойдёт."
+              className="rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green"
             />
           </label>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-2 sm:col-span-2" htmlFor={fieldId("priceNote")}>
-              <span className="text-sm font-semibold text-city-ink">Текст стоимости</span>
+              <span className="text-sm font-semibold text-city-ink">Как показать стоимость на сайте</span>
               <input
                 id={fieldId("priceNote")}
                 name="priceNote"
                 defaultValue={activity.priceNote ?? ""}
-                placeholder="Свободный взнос, донат, уточняется"
+                placeholder="Свободный взнос, средний чек 1 500 ₽, цена уточняется"
                 className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
               />
+              <span className="text-xs leading-5 text-city-muted">
+                Если заполнить это поле, на сайте покажется этот текст вместо чисел.
+              </span>
             </label>
             <label className="grid gap-2" htmlFor={fieldId("priceFrom")}>
               <span className="text-sm font-semibold text-city-ink">Цена от</span>
@@ -261,7 +452,7 @@ export default async function OrganizerActivityPage({
                 defaultChecked={activity.beginnerFriendly}
                 className="h-4 w-4"
               />
-              Подходит новичкам
+              Новичкам
             </label>
             <label className="flex items-center gap-3 rounded-2xl bg-city-soft p-4 text-sm font-semibold text-city-ink">
               <input
@@ -275,6 +466,15 @@ export default async function OrganizerActivityPage({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-2" htmlFor={fieldId("address")}>
+              <span className="text-sm font-semibold text-city-ink">Адрес</span>
+              <input
+                id={fieldId("address")}
+                name="address"
+                defaultValue={activity.address}
+                className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
+              />
+            </label>
             <label className="grid gap-2" htmlFor={fieldId("contactPhone")}>
               <span className="text-sm font-semibold text-city-ink">Телефон</span>
               <input
@@ -284,8 +484,8 @@ export default async function OrganizerActivityPage({
                 className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
               />
             </label>
-            <label className="grid gap-2" htmlFor={fieldId("contactUrl")}>
-              <span className="text-sm font-semibold text-city-ink">Ссылка для записи</span>
+            <label className="grid gap-2 sm:col-span-2" htmlFor={fieldId("contactUrl")}>
+              <span className="text-sm font-semibold text-city-ink">Ссылка для связи / записи</span>
               <input
                 id={fieldId("contactUrl")}
                 name="contactUrl"
@@ -296,29 +496,21 @@ export default async function OrganizerActivityPage({
             </label>
           </div>
 
-          <label className="grid gap-2" htmlFor={fieldId("imageUrl")}>
-            <span className="text-sm font-semibold text-city-ink">Ссылка на фото</span>
-            <input
-              id={fieldId("imageUrl")}
-              name="imageUrl"
-              defaultValue={activity.imageUrl ?? ""}
-              placeholder="Можно оставить текущую или прислать новую ссылку"
-              className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
-            />
-          </label>
-
-          <label className="grid gap-2" htmlFor={fieldId("imageFile")}>
-            <span className="text-sm font-semibold text-city-ink">Загрузить фото</span>
+          <label
+            className="grid cursor-pointer gap-3 rounded-3xl border-2 border-dashed border-city-green/40 bg-city-green/5 p-5 transition hover:border-city-green hover:bg-city-green/10"
+            htmlFor={fieldId("imageFile")}
+          >
+            <span className="text-base font-bold text-city-ink">Загрузить новую обложку</span>
+            <span className="text-sm leading-6 text-city-muted">
+              Старое фото сохранится, если файл не выбрать. JPG, PNG или WebP до 5 МБ.
+            </span>
             <input
               id={fieldId("imageFile")}
               name="imageFile"
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              className="rounded-2xl border border-city-line px-4 py-3 text-sm text-city-muted outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-city-green file:px-4 file:py-2 file:font-semibold file:text-white focus:border-city-green"
+              className="rounded-2xl border border-city-line bg-white px-4 py-3 text-sm text-city-muted outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-city-green file:px-4 file:py-2 file:font-semibold file:text-white focus:border-city-green"
             />
-            <span className="text-xs leading-5 text-city-muted">
-              Можно оставить текущую ссылку или загрузить новую обложку. JPG, PNG или WEBP до 5 МБ.
-            </span>
           </label>
 
           <label className="grid gap-2" htmlFor={fieldId("note")}>
@@ -336,133 +528,7 @@ export default async function OrganizerActivityPage({
             Отправить правки
           </button>
         </form>
-      </section>
-
-      <section className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
-          <h2 className="text-2xl font-bold text-city-ink">Ближайшее событие</h2>
-          <p className="mt-2 leading-7 text-city-muted">
-            Можно добавить конкретную дату встречи, занятия или набора.
-          </p>
-
-          <form action={createOrganizerEventRequest} className="mt-6 grid gap-4">
-            <input type="hidden" name="activityId" value={activity.id} />
-            <label className="grid gap-2" htmlFor={fieldId("eventTitle")}>
-              <span className="text-sm font-semibold text-city-ink">Название события</span>
-              <input
-                id={fieldId("eventTitle")}
-                name="eventTitle"
-                placeholder="Например, открытая встреча"
-                className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
-              />
-            </label>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2" htmlFor={fieldId("startsAt")}>
-                <span className="text-sm font-semibold text-city-ink">Начало</span>
-                <input
-                  id={fieldId("startsAt")}
-                  name="startsAt"
-                  type="datetime-local"
-                  className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
-                />
-              </label>
-              <label className="grid gap-2" htmlFor={fieldId("endsAt")}>
-                <span className="text-sm font-semibold text-city-ink">Окончание</span>
-                <input
-                  id={fieldId("endsAt")}
-                  name="endsAt"
-                  type="datetime-local"
-                  className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
-                />
-              </label>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2" htmlFor={fieldId("eventPrice")}>
-                <span className="text-sm font-semibold text-city-ink">Цена</span>
-                <input
-                  id={fieldId("eventPrice")}
-                  name="eventPrice"
-                  type="number"
-                  min="0"
-                  className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
-                />
-              </label>
-              <label className="grid gap-2" htmlFor={fieldId("seatsAvailable")}>
-                <span className="text-sm font-semibold text-city-ink">Свободные места</span>
-                <input
-                  id={fieldId("seatsAvailable")}
-                  name="seatsAvailable"
-                  type="number"
-                  min="0"
-                  className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
-                />
-              </label>
-            </div>
-            <label className="grid gap-2" htmlFor={fieldId("signupUrl")}>
-              <span className="text-sm font-semibold text-city-ink">Ссылка на запись</span>
-              <input
-                id={fieldId("signupUrl")}
-                name="signupUrl"
-                placeholder="VK, Telegram, Timepad или сайт"
-                className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
-              />
-            </label>
-            <label className="grid gap-2" htmlFor={fieldId("eventNote")}>
-              <span className="text-sm font-semibold text-city-ink">Комментарий</span>
-              <textarea
-                id={fieldId("eventNote")}
-                name="eventNote"
-                rows={3}
-                className="rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green"
-              />
-            </label>
-            <button className="min-h-12 rounded-full bg-city-green px-6 font-semibold text-white transition hover:bg-city-blue sm:w-fit">
-              Отправить событие
-            </button>
-          </form>
-        </div>
-
-        <div className="grid gap-6">
-          <div className="rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
-            <h2 className="text-xl font-bold text-city-ink">Опубликованные события</h2>
-            <div className="mt-4 space-y-3">
-              {activity.events.length ? (
-                activity.events.map((event) => (
-                  <div key={event.id} className="rounded-2xl bg-city-soft p-4 text-sm">
-                    <p className="font-semibold text-city-ink">{event.title}</p>
-                    <p className="mt-1 text-city-muted">{formatDateTime(event.startsAt)}</p>
-                    {event.signupUrl ? (
-                      <a
-                        href={event.signupUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex font-semibold text-city-green"
-                      >
-                        Ссылка на запись
-                      </a>
-                    ) : null}
-                  </div>
-                ))
-              ) : (
-                <p className="text-city-muted">Событий пока нет.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
-            <h2 className="text-xl font-bold text-city-ink">Последние заявки</h2>
-            <div className="mt-4 space-y-3 text-sm text-city-muted">
-              {recentRequests.map((request) => (
-                <div key={request.id} className="rounded-2xl bg-city-soft p-4">
-                  <p className="font-semibold text-city-ink">{request.type}: {request.status}</p>
-                  <p className="mt-1">{formatDateTime(request.createdAt)}</p>
-                </div>
-              ))}
-              {!recentRequests.length ? <p>Заявок пока нет.</p> : null}
-            </div>
-          </div>
-        </div>
-      </section>
+      </details>
     </div>
   );
 }

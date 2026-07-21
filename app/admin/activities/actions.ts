@@ -1,6 +1,6 @@
 "use server";
 
-import { ActivityStatus } from "@prisma/client";
+import { ActivityMediaType, ActivityStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
@@ -26,6 +26,38 @@ function getNumber(formData: FormData, key: string) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function getActivityMediaInput(formData: FormData) {
+  return [1, 2, 3]
+    .map((position) => {
+      const url = getOptionalString(formData, `media${position}Url`);
+      const rawType = getString(formData, `media${position}Type`);
+
+      if (!url) {
+        return null;
+      }
+
+      return {
+        type:
+          rawType === ActivityMediaType.video
+            ? ActivityMediaType.video
+            : ActivityMediaType.image,
+        url,
+        caption: getOptionalString(formData, `media${position}Caption`),
+        position
+      };
+    })
+    .filter(
+      (
+        media
+      ): media is {
+        type: ActivityMediaType;
+        url: string;
+        caption: string | null;
+        position: number;
+      } => Boolean(media)
+    );
 }
 
 function getRequiredId(formData: FormData) {
@@ -123,12 +155,14 @@ export async function createAdminActivity(formData: FormData) {
   const isFree = formData.get("isFree") === "on";
   const priceNote = getOptionalString(formData, "priceNote");
   const imageUrl = (await uploadActivityImage(formData)) ?? getOptionalString(formData, "imageUrl");
+  const media = getActivityMediaInput(formData);
 
-  await prisma.activity.create({
+  const activity = await prisma.activity.create({
     data: {
       title,
       slug: await generateUniqueSlug(title),
       description,
+      whyGoText: getOptionalString(formData, "whyGoText"),
       cityId: city.id,
       categoryId,
       organizerId: organizer.id,
@@ -155,6 +189,15 @@ export async function createAdminActivity(formData: FormData) {
       status: getStatus(formData, ActivityStatus.published)
     }
   });
+
+  if (media.length > 0) {
+    await prisma.activityMedia.createMany({
+      data: media.map((item) => ({
+        ...item,
+        activityId: activity.id
+      }))
+    });
+  }
 
   await revalidateAdmin();
   redirect("/admin/activities");
@@ -215,6 +258,7 @@ export async function updateActivity(formData: FormData) {
   const isFree = formData.get("isFree") === "on";
   const priceNote = getOptionalString(formData, "priceNote");
   const imageUrl = (await uploadActivityImage(formData)) ?? getOptionalString(formData, "imageUrl");
+  const media = getActivityMediaInput(formData);
 
   await prisma.activity.update({
     where: { id },
@@ -222,6 +266,7 @@ export async function updateActivity(formData: FormData) {
       title,
       slug,
       description,
+      whyGoText: getOptionalString(formData, "whyGoText"),
       categoryId,
       organizerId: organizer.id,
       address: getString(formData, "address") || "Адрес уточняется",
@@ -246,6 +291,19 @@ export async function updateActivity(formData: FormData) {
       status: getStatus(formData, ActivityStatus.draft)
     }
   });
+
+  await prisma.activityMedia.deleteMany({
+    where: { activityId: id }
+  });
+
+  if (media.length > 0) {
+    await prisma.activityMedia.createMany({
+      data: media.map((item) => ({
+        ...item,
+        activityId: id
+      }))
+    });
+  }
 
   await revalidateAdmin();
   revalidatePath(`/activity/${slug}`);

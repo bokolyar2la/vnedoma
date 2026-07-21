@@ -266,6 +266,7 @@ export default async function OrganizerRequestsPage({ searchParams }: PageProps)
                   <p><b>Телефон:</b> {value(edit.contactPhone)}</p>
                   <p><b>Ссылка:</b> {value(edit.contactUrl)}</p>
                   <p><b>Фото:</b> {value(edit.imageUrl)}</p>
+                  <p><b>Почему стоит пойти:</b> {value(edit.whyGoText)}</p>
                   <p><b>Текущая цена:</b> {formatPrice(edit.activity)}</p>
                 </div>
                 {edit.description ? (

@@ -34,7 +34,10 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
       include: {
         category: true,
         organizer: true,
-        city: true
+        city: true,
+        media: {
+          orderBy: { position: "asc" }
+        }
       }
     }),
     prisma.category.findMany({ where: { slug: { in: [...currentCategorySlugs] } } })
@@ -100,6 +103,20 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
               rows={8}
               defaultValue={activity.description}
               className="mt-2 w-full rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="whyGoText" className="text-sm font-semibold text-city-ink">
+              Почему стоит пойти
+            </label>
+            <textarea
+              id="whyGoText"
+              name="whyGoText"
+              rows={4}
+              defaultValue={activity.whyGoText ?? ""}
+              className="mt-2 w-full rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+              placeholder="Коротко: что человек получит, какая атмосфера, кому подойдёт."
             />
           </div>
 
@@ -247,6 +264,46 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
               <p className="mt-2 text-xs leading-5 text-city-muted">
                 JPG, PNG или WEBP до 5 МБ. Если файл не выбран, сохранится ссылка выше.
               </p>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-city-line bg-city-soft p-4">
+            <h2 className="text-lg font-bold text-city-ink">Ð“Ð°Ð»ÐµÑ€ÐµÑ Ð¸ Ð²Ð¸Ð´ÐµÐ¾</h2>
+            <p className="mt-1 text-sm leading-6 text-city-muted">
+              Ð”Ð¾Ð±Ð°Ð²ÑŒÑ‚Ðµ Ð´Ð¾ 3 Ð¼ÐµÐ´Ð¸Ð°: Ñ„Ð¾Ñ‚Ð¾ Ð¿Ñ€Ð¾Ñ†ÐµÑÑÐ°, Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ð° Ð¸Ð»Ð¸ ÑÑÑ‹Ð»ÐºÑƒ Ð½Ð° Ð²Ð¸Ð´ÐµÐ¾.
+            </p>
+            <div className="mt-4 grid gap-4">
+              {[1, 2, 3].map((position) => {
+                const media = activity.media[position - 1];
+
+                return (
+                  <div key={position} className="rounded-2xl bg-white p-4">
+                    <p className="text-sm font-semibold text-city-ink">ÐœÐµÐ´Ð¸Ð° {position}</p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-[150px_1fr]">
+                      <select
+                        name={`media${position}Type`}
+                        defaultValue={media?.type ?? "image"}
+                        className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                      >
+                        <option value="image">Ð¤Ð¾Ñ‚Ð¾</option>
+                        <option value="video">Ð’Ð¸Ð´ÐµÐ¾</option>
+                      </select>
+                      <input
+                        name={`media${position}Url`}
+                        defaultValue={media?.url ?? ""}
+                        className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <input
+                      name={`media${position}Caption`}
+                      defaultValue={media?.caption ?? ""}
+                      className="mt-3 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                      placeholder="ÐŸÐ¾Ð´Ð¿Ð¸ÑÑŒ Ðº Ñ„Ð¾Ñ‚Ð¾ Ð¸Ð»Ð¸ Ð²Ð¸Ð´ÐµÐ¾"
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
 

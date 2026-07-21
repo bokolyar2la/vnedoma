@@ -20,6 +20,11 @@ enum OrganizerRequestStatus {
   done
 }
 
+enum ActivityMediaType {
+  image
+  video
+}
+
 model City {
   id         Int         @id @default(autoincrement())
   name       String
@@ -111,6 +116,7 @@ model Activity {
   sourceUrl        String?
   isVerified       Boolean        @default(false)
   imageUrl         String?
+  whyGoText        String?
   activityType     String?
   socialLevel      String?
   needsCheck       Boolean        @default(false)
@@ -125,6 +131,7 @@ model Activity {
   category         Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   organizer        Organizer      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
   events           Event[]
+  media            ActivityMedia[]
   tags             ActivityTag[]
   organizerClaims  OrganizerClaimRequest[]
   editRequests     OrganizerEditRequest[]
@@ -176,6 +183,7 @@ model OrganizerEditRequest {
   contactPhone     String?
   contactUrl       String?
   imageUrl         String?
+  whyGoText        String?
   note             String?
   adminComment     String?
   account          OrganizerAccount       @relation(fields: [accountId], references: [id], onDelete: Cascade)
@@ -186,6 +194,20 @@ model OrganizerEditRequest {
   @@index([status])
   @@index([accountId])
   @@index([activityId])
+}
+
+model ActivityMedia {
+  id         Int               @id @default(autoincrement())
+  activityId Int
+  type       ActivityMediaType
+  url        String
+  caption    String?
+  position   Int               @default(0)
+  activity   Activity          @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([activityId, position])
 }
 
 model OrganizerEventRequest {
