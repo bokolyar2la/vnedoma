@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { ActivityCard } from "@/components/ActivityCard";
 import { ActivityImage } from "@/components/ActivityImage";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { TrackedExternalLink } from "@/components/MetrikaGoals";
+import { ActivityStatOnMount, TrackedExternalLink } from "@/components/MetrikaGoals";
 import { getSocialLevelLabel, isTripActivity } from "@/lib/activity-social";
 import { getUpcomingEventWhere } from "@/lib/events";
 import { formatDateTime, formatPrice } from "@/lib/format";
@@ -274,6 +274,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <ActivityStatOnMount activityId={activity.id} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -352,6 +353,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
               {hasContact ? (
                 <TrackedExternalLink
                   goal="organizer_contact_click"
+                  activityStat={{
+                    activityId: activity.id,
+                    type: nextEvent ? "nearest_event_click" : "signup_click"
+                  }}
                   href={nextEvent?.signupUrl ?? contactHref}
                   target={nextEvent?.signupUrl || activity.contactUrl ? "_blank" : undefined}
                   rel={nextEvent?.signupUrl || activity.contactUrl ? "noopener noreferrer" : undefined}
@@ -400,6 +405,10 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
                   {(event.signupUrl || hasContact) ? (
                     <TrackedExternalLink
                       goal="organizer_contact_click"
+                      activityStat={{
+                        activityId: activity.id,
+                        type: event.id === nextEvent?.id ? "nearest_event_click" : "signup_click"
+                      }}
                       href={event.signupUrl ?? contactHref}
                       target={event.signupUrl || activity.contactUrl ? "_blank" : undefined}
                       rel={event.signupUrl || activity.contactUrl ? "noopener noreferrer" : undefined}
@@ -433,6 +442,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
         {activity.contactUrl ? (
           <TrackedExternalLink
             goal="organizer_contact_click"
+            activityStat={{ activityId: activity.id, type: "signup_click" }}
             href={activity.contactUrl}
             target="_blank"
             rel="noopener noreferrer"

@@ -13,6 +13,8 @@ type GoalName =
   | "add_activity_submit"
   | "organizer_contact_click";
 
+type ActivityStatType = "view" | "signup_click" | "nearest_event_click";
+
 type YmWindow = Window & {
   ym?: (
     counterId: number,
@@ -30,6 +32,34 @@ export function reachMetrikaGoal(goalName: GoalName) {
   }
 
   (window as YmWindow).ym?.(metrikaId, "reachGoal", goalName);
+}
+
+function sendActivityStat(activityId: number, type: ActivityStatType) {
+  if (typeof window === "undefined" || !activityId) {
+    return;
+  }
+
+  const payload = JSON.stringify({
+    activityId,
+    type,
+    path: window.location.pathname,
+    referrer: document.referrer || null
+  });
+
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon(
+      "/api/activity-stats",
+      new Blob([payload], { type: "application/json" })
+    );
+    return;
+  }
+
+  fetch("/api/activity-stats", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: payload,
+    keepalive: true
+  }).catch(() => undefined);
 }
 
 type TrackedLinkProps = LinkProps & {
@@ -60,10 +90,15 @@ export function TrackedLink({
 
 type TrackedExternalLinkProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
   goal: GoalName;
+  activityStat?: {
+    activityId: number;
+    type: ActivityStatType;
+  };
 };
 
 export function TrackedExternalLink({
   goal,
+  activityStat,
   children,
   onClick,
   ...props
@@ -73,6 +108,9 @@ export function TrackedExternalLink({
       {...props}
       onClick={(event) => {
         reachMetrikaGoal(goal);
+        if (activityStat) {
+          sendActivityStat(activityStat.activityId, activityStat.type);
+        }
         onClick?.(event);
       }}
     >
@@ -103,6 +141,24 @@ export function MetrikaGoalOnMount({ goal }: { goal: GoalName }) {
   useEffect(() => {
     reachMetrikaGoal(goal);
   }, [goal]);
+
+  return null;
+}
+
+export function ActivityStatOnMount({
+  activityId,
+  type = "view"
+}: {
+  activityId: number;
+  type?: ActivityStatType;
+}) {
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      sendActivityStat(activityId, type);
+    }, 800);
+
+    return () => window.clearTimeout(timer);
+  }, [activityId, type]);
 
   return null;
 }

@@ -3,6 +3,8 @@
 import { OrganizerRequestStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { normalizeContactUrlInput } from "@/lib/contact-url";
+import { getEventExpiresAt } from "@/lib/events";
 import {
   clearOrganizerSession,
   getOrganizerAccount,
@@ -10,8 +12,6 @@ import {
   setOrganizerSession,
   verifyPassword
 } from "@/lib/organizer-auth";
-import { normalizeContactUrlInput } from "@/lib/contact-url";
-import { getEventExpiresAt } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 import { uploadActivityImage } from "@/lib/s3-upload";
 
@@ -112,7 +112,10 @@ export async function registerOrganizer(formData: FormData) {
   });
 
   if (existingAccount && !verifyPassword(password, existingAccount.passwordHash)) {
-    fail(returnPath, "Этот email уже зарегистрирован. Войдите или укажите текущий пароль.");
+    fail(
+      returnPath,
+      "Этот email уже зарегистрирован. Войдите или укажите текущий пароль."
+    );
   }
 
   if (existingAccount?.isDisabled) {
@@ -180,7 +183,8 @@ export async function createOrganizerEditRequest(formData: FormData) {
       (await uploadActivityImage(formData)) ??
       normalizeContactUrlInput(getString(formData, "imageUrl"));
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Не удалось загрузить изображение.";
+    const message =
+      error instanceof Error ? error.message : "Не удалось загрузить изображение.";
     fail(`/organizer/activities/${activity.slug}`, message);
   }
 
@@ -229,11 +233,17 @@ export async function createOrganizerEventRequest(formData: FormData) {
   }
 
   if (endsAt && endsAt <= startsAt) {
-    fail(`/organizer/activities/${activity.slug}`, "Окончание события должно быть позже начала.");
+    fail(
+      `/organizer/activities/${activity.slug}`,
+      "Окончание события должно быть позже начала."
+    );
   }
 
   if (getEventExpiresAt({ startsAt, endsAt }) < new Date()) {
-    fail(`/organizer/activities/${activity.slug}`, "Нельзя отправить на проверку уже прошедшее событие.");
+    fail(
+      `/organizer/activities/${activity.slug}`,
+      "Нельзя отправить на проверку уже прошедшее событие."
+    );
   }
 
   await prisma.organizerEventRequest.create({

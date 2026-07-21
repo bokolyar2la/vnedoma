@@ -25,6 +25,12 @@ enum ActivityMediaType {
   video
 }
 
+enum ActivityStatType {
+  view
+  signup_click
+  nearest_event_click
+}
+
 model City {
   id         Int         @id @default(autoincrement())
   name       String
@@ -132,6 +138,7 @@ model Activity {
   organizer        Organizer      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
   events           Event[]
   media            ActivityMedia[]
+  stats            ActivityStatEvent[]
   tags             ActivityTag[]
   organizerClaims  OrganizerClaimRequest[]
   editRequests     OrganizerEditRequest[]
@@ -208,6 +215,19 @@ model ActivityMedia {
   updatedAt  DateTime          @updatedAt
 
   @@index([activityId, position])
+}
+
+model ActivityStatEvent {
+  id         Int              @id @default(autoincrement())
+  activityId Int
+  type       ActivityStatType
+  path       String?
+  referrer   String?
+  createdAt  DateTime         @default(now())
+  activity   Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([activityId, type, createdAt])
+  @@index([createdAt])
 }
 
 model OrganizerEventRequest {

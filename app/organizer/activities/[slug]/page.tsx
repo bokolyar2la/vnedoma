@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ActivityStatType } from "@prisma/client";
 import { redirect } from "next/navigation";
 import {
   createOrganizerEditRequest,
@@ -28,6 +29,12 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+const statLabels: Record<ActivityStatType, string> = {
+  view: "Просмотры",
+  signup_click: "Клики записаться",
+  nearest_event_click: "Клики на ближайшую дату"
+};
+
 function getParam(params: Record<string, string | string[] | undefined>, key: string) {
   const value = params[key];
   return typeof value === "string" ? value : "";
@@ -44,6 +51,19 @@ function formatDateTimeLocal(date: Date | null) {
 
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
   return local.toISOString().slice(0, 16);
+}
+
+function requestStatusText(status: string) {
+  if (status === "pending") {
+    return "на проверке";
+  }
+  if (status === "done" || status === "approved") {
+    return "принято";
+  }
+  if (status === "rejected") {
+    return "отклонено";
+  }
+  return status;
 }
 
 export default async function OrganizerActivityPage({
@@ -88,7 +108,8 @@ export default async function OrganizerActivityPage({
     redirect("/organizer");
   }
 
-  const [editRequests, eventRequests] = await Promise.all([
+  const statsSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const [editRequests, eventRequests, statRows] = await Promise.all([
     prisma.organizerEditRequest.findMany({
       where: {
         accountId: account.id,
@@ -104,8 +125,25 @@ export default async function OrganizerActivityPage({
       },
       orderBy: { createdAt: "desc" },
       take: 5
+    }),
+    prisma.activityStatEvent.groupBy({
+      by: ["type"],
+      where: {
+        activityId: activity.id,
+        createdAt: { gte: statsSince }
+      },
+      _count: { _all: true }
     })
   ]);
+
+  const totals: Record<ActivityStatType, number> = {
+    view: 0,
+    signup_click: 0,
+    nearest_event_click: 0
+  };
+  statRows.forEach((row) => {
+    totals[row.type] = row._count._all;
+  });
 
   const copyEventId = Number(getParam(query, "copyEventId"));
   const eventToCopy = Number.isInteger(copyEventId)
@@ -121,13 +159,13 @@ export default async function OrganizerActivityPage({
   const recentRequests = [
     ...editRequests.map((request) => ({
       id: `edit-${request.id}`,
-      type: "Правка",
+      type: "Правка карточки",
       status: request.status,
       createdAt: request.createdAt
     })),
     ...eventRequests.map((request) => ({
       id: `event-${request.id}`,
-      type: "Событие",
+      type: "Дата / событие",
       status: request.status,
       createdAt: request.createdAt
     }))
@@ -146,12 +184,23 @@ export default async function OrganizerActivityPage({
   }).toString()}`;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <Link href="/organizer" className="text-sm font-semibold text-city-green hover:text-city-blue">
-        Вернуться в кабинет
-      </Link>
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href="/organizer"
+          className="inline-flex min-h-11 items-center rounded-full border border-city-line bg-white px-5 text-sm font-semibold text-city-ink transition hover:border-city-green hover:text-city-green"
+        >
+          Вернуться в кабинет
+        </Link>
+        <Link
+          href={`/activity/${activity.slug}`}
+          className="inline-flex min-h-11 items-center rounded-full bg-city-soft px-5 text-sm font-semibold text-city-green transition hover:text-city-blue"
+        >
+          Открыть на сайте
+        </Link>
+      </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(320px,0.55fr)]">
+      <section className="mt-6 grid gap-6 rounded-[28px] border border-city-line bg-white p-5 shadow-soft sm:p-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
             {activity.category.name}
@@ -160,20 +209,42 @@ export default async function OrganizerActivityPage({
             {activity.title}
           </h1>
           <p className="mt-3 text-city-muted">
-            Организатор: <span className="font-semibold text-city-ink">{activity.organizer.name}</span>
+            Организатор:{" "}
+            <span className="font-semibold text-city-ink">{activity.organizer.name}</span>
           </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link
-              href={`/activity/${activity.slug}`}
-              className="inline-flex min-h-11 items-center rounded-full border border-city-line bg-white px-5 text-sm font-semibold text-city-ink transition hover:border-city-green"
+          <p className="mt-2 text-city-muted">
+            Стоимость:{" "}
+            <span className="font-semibold text-city-ink">
+              {formatPrice({
+                isFree: activity.isFree,
+                priceFrom: activity.priceFrom,
+                priceTo: activity.priceTo,
+                priceNote: activity.priceNote
+              })}
+            </span>
+          </p>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <a
+              href="#event-form"
+              className="rounded-3xl bg-city-green p-5 text-white shadow-soft transition hover:bg-city-blue"
             >
-              Открыть на сайте
-            </Link>
+              <span className="block text-sm font-semibold opacity-90">Самое частое</span>
+              <span className="mt-2 block text-xl font-bold">Добавить дату</span>
+            </a>
+            <a
+              href="#edit-card"
+              className="rounded-3xl border border-city-line bg-city-soft p-5 text-city-ink transition hover:border-city-green"
+            >
+              <span className="block text-sm font-semibold text-city-green">Если что-то устарело</span>
+              <span className="mt-2 block text-xl font-bold">Изменить карточку</span>
+            </a>
             <Link
               href={cloneCardHref}
-              className="inline-flex min-h-11 items-center rounded-full bg-city-soft px-5 text-sm font-semibold text-city-green transition hover:text-city-blue"
+              className="rounded-3xl border border-city-green/40 bg-white p-5 text-city-ink transition hover:border-city-green hover:bg-city-green/5"
             >
-              Создать похожую карточку
+              <span className="block text-sm font-semibold text-city-green">Похожий формат</span>
+              <span className="mt-2 block text-xl font-bold">Создать копию</span>
             </Link>
           </div>
         </div>
@@ -183,7 +254,7 @@ export default async function OrganizerActivityPage({
           imageUrl={activity.imageUrl}
           className="aspect-[16/10] rounded-[24px]"
         />
-      </div>
+      </section>
 
       {success ? (
         <div className="mt-6 rounded-2xl border border-city-green/30 bg-city-green/10 p-4 text-sm font-semibold text-city-ink">
@@ -196,16 +267,26 @@ export default async function OrganizerActivityPage({
         </div>
       ) : null}
 
+      <section className="mt-6 grid gap-4 sm:grid-cols-3">
+        {(Object.values(ActivityStatType) as ActivityStatType[]).map((type) => (
+          <div key={type} className="rounded-3xl border border-city-line bg-white p-5 shadow-soft">
+            <p className="text-sm text-city-muted">{statLabels[type]} за 30 дней</p>
+            <p className="mt-2 text-3xl font-bold text-city-ink">{totals[type]}</p>
+          </div>
+        ))}
+      </section>
+
       <section className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(300px,0.55fr)]">
-        <div className="rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
+        <div id="event-form" className="scroll-mt-24 rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
-                Самое частое действие
+                Быстрое действие
               </p>
               <h2 className="mt-2 text-2xl font-bold text-city-ink">Добавить дату / событие</h2>
               <p className="mt-2 leading-7 text-city-muted">
-                Достаточно указать дату и время. Остальные поля можно заполнить, если они отличаются от карточки.
+                Обычно достаточно указать дату и время. Остальные поля заполняйте только если
+                цена, ссылка или количество мест отличаются от карточки.
               </p>
             </div>
             {eventToCopy ? (
@@ -234,6 +315,7 @@ export default async function OrganizerActivityPage({
                   id={fieldId("startsAt")}
                   name="startsAt"
                   type="datetime-local"
+                  defaultValue={formatDateTimeLocal(eventToCopy?.startsAt ?? null)}
                   className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
                 />
               </label>
@@ -250,7 +332,7 @@ export default async function OrganizerActivityPage({
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2" htmlFor={fieldId("eventPrice")}>
-                <span className="text-sm font-semibold text-city-ink">Цена</span>
+                <span className="text-sm font-semibold text-city-ink">Цена события</span>
                 <input
                   id={fieldId("eventPrice")}
                   name="eventPrice"
@@ -290,6 +372,7 @@ export default async function OrganizerActivityPage({
                 id={fieldId("eventNote")}
                 name="eventNote"
                 rows={2}
+                placeholder="Например: это повтор той же встречи каждую пятницу"
                 className="rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green"
               />
             </label>
@@ -310,7 +393,7 @@ export default async function OrganizerActivityPage({
                     <p className="mt-1 text-city-muted">{formatDateTime(event.startsAt)}</p>
                     <div className="mt-3 flex flex-wrap gap-3">
                       <Link
-                        href={`/organizer/activities/${activity.slug}?copyEventId=${event.id}`}
+                        href={`/organizer/activities/${activity.slug}?copyEventId=${event.id}#event-form`}
                         className="font-semibold text-city-green transition hover:text-city-blue"
                       >
                         Повторить
@@ -329,7 +412,7 @@ export default async function OrganizerActivityPage({
                   </div>
                 ))
               ) : (
-                <p className="text-city-muted">Дат пока нет.</p>
+                <p className="text-city-muted">Дат пока нет. Добавьте ближайшую встречу слева.</p>
               )}
             </div>
           </div>
@@ -339,7 +422,9 @@ export default async function OrganizerActivityPage({
             <div className="mt-4 space-y-3 text-sm text-city-muted">
               {recentRequests.map((request) => (
                 <div key={request.id} className="rounded-2xl bg-city-soft p-4">
-                  <p className="font-semibold text-city-ink">{request.type}: {request.status}</p>
+                  <p className="font-semibold text-city-ink">
+                    {request.type}: {requestStatusText(request.status)}
+                  </p>
                   <p className="mt-1">{formatDateTime(request.createdAt)}</p>
                 </div>
               ))}
@@ -349,13 +434,28 @@ export default async function OrganizerActivityPage({
         </div>
       </section>
 
-      <details className="mt-8 rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
-        <summary className="cursor-pointer text-2xl font-bold text-city-ink">
-          Изменить карточку активности
-        </summary>
-        <p className="mt-3 max-w-3xl leading-7 text-city-muted">
-          Эти изменения появятся на сайте после проверки. Обложку лучше загружать файлом, как в соцсетях.
-        </p>
+      <section
+        id="edit-card"
+        className="mt-8 scroll-mt-24 rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6"
+      >
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
+              Правки карточки
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-city-ink">Изменить карточку активности</h2>
+            <p className="mt-2 max-w-3xl leading-7 text-city-muted">
+              Эти изменения появятся на сайте после проверки. Обложку лучше загрузить файлом:
+              старая картинка сохранится, если новый файл не выбран.
+            </p>
+          </div>
+          <Link
+            href={cloneCardHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-city-green/40 bg-city-green/5 px-5 text-sm font-semibold text-city-green transition hover:border-city-green"
+          >
+            Создать похожую карточку
+          </Link>
+        </div>
 
         <form
           action={createOrganizerEditRequest}
@@ -393,7 +493,7 @@ export default async function OrganizerActivityPage({
               name="whyGoText"
               defaultValue={activity.whyGoText ?? ""}
               rows={3}
-              placeholder="Что человек получит, какая атмосфера, кому особенно подойдёт."
+              placeholder="Что человек получит, какая атмосфера, кому особенно подойдет."
               className="rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green"
             />
           </label>
@@ -497,7 +597,7 @@ export default async function OrganizerActivityPage({
           </div>
 
           <label
-            className="grid cursor-pointer gap-3 rounded-3xl border-2 border-dashed border-city-green/40 bg-city-green/5 p-5 transition hover:border-city-green hover:bg-city-green/10"
+            className="grid cursor-pointer gap-3 rounded-3xl border-2 border-dashed border-city-green/50 bg-city-green/5 p-5 transition hover:border-city-green hover:bg-city-green/10"
             htmlFor={fieldId("imageFile")}
           >
             <span className="text-base font-bold text-city-ink">Загрузить новую обложку</span>
@@ -528,7 +628,7 @@ export default async function OrganizerActivityPage({
             Отправить правки
           </button>
         </form>
-      </details>
+      </section>
     </div>
   );
 }
