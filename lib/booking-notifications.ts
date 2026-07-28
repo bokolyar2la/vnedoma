@@ -1,3 +1,5 @@
+import { getAppBaseUrl, sendServiceEmail, textToHtml } from "@/lib/email";
+
 type BookingNotificationInput = {
   activityTitle: string;
   customerName: string;
@@ -8,20 +10,70 @@ type BookingNotificationInput = {
   discountText?: string | null;
 };
 
+type OrganizerServiceNotificationInput = {
+  email?: string | null;
+  name?: string | null;
+  activityTitle?: string | null;
+  organizerName?: string | null;
+};
+
+const DEFAULT_DISCOUNT_TEXT = "Промокод ВЛЮДИ: 10% скидка";
+
+function cleanOptional(value?: string | null) {
+  const trimmed = value?.trim();
+
+  if (!trimmed || /[ÐÑ]/.test(trimmed)) {
+    return null;
+  }
+
+  return trimmed;
+}
+
 function buildBookingText(input: BookingNotificationInput) {
+  const discountText = cleanOptional(input.discountText) || DEFAULT_DISCOUNT_TEXT;
+
   return [
-    `Новая заявка через Влюди: ${input.activityTitle}`,
+    `У вас новая заявка на активность «${input.activityTitle}» через Влюди.`,
+    "",
     `Имя: ${input.customerName}`,
     `Контакт: ${input.customerContact}`,
     input.message ? `Комментарий: ${input.message}` : null,
-    input.discountText ? `Условие: ${input.discountText}` : null
+    `Бонус для участника: ${discountText}`,
+    "",
+    `Посмотреть заявку: ${getAppBaseUrl()}/organizer?tab=requests`
   ]
-    .filter((line): line is string => Boolean(line))
+    .filter((line): line is string => line !== null)
     .join("\n");
+}
+
+async function sendEmailSafely(to: string | null | undefined, subject: string, text: string) {
+  const email = to?.trim();
+
+  if (!email) {
+    return;
+  }
+
+  try {
+    await sendServiceEmail({
+      to: email,
+      subject,
+      text,
+      html: textToHtml(text)
+    });
+  } catch (error) {
+    console.error("Failed to send service email", error);
+  }
 }
 
 export async function notifyOrganizerAboutBooking(input: BookingNotificationInput) {
   const text = buildBookingText(input);
+
+  await sendEmailSafely(
+    input.notificationEmail,
+    "Новая заявка через Влюди",
+    text
+  );
+
   const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
   const telegramChatId = input.notificationTelegram?.trim();
   const notificationWebhookUrl = process.env.NOTIFICATION_WEBHOOK_URL;
@@ -50,4 +102,50 @@ export async function notifyOrganizerAboutBooking(input: BookingNotificationInpu
       })
     }).catch(() => null);
   }
+}
+
+export async function notifyOrganizerRegistrationReceived(
+  input: OrganizerServiceNotificationInput
+) {
+  const title = cleanOptional(input.activityTitle);
+  const text = [
+    input.name ? `${input.name}, здравствуйте!` : "Здравствуйте!",
+    "",
+    "Заявка на кабинет получена, после проверки доступ откроется.",
+    title ? `Карточка: ${title}` : null,
+    "",
+    `Кабинет организатора: ${getAppBaseUrl()}/organizer`
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n");
+
+  await sendEmailSafely(
+    input.email,
+    "Заявка на кабинет Влюди получена",
+    text
+  );
+}
+
+export async function notifyOrganizerAccessApproved(
+  input: OrganizerServiceNotificationInput
+) {
+  const title = cleanOptional(input.activityTitle);
+  const organizerName = cleanOptional(input.organizerName);
+  const text = [
+    input.name ? `${input.name}, здравствуйте!` : "Здравствуйте!",
+    "",
+    "Доступ открыт, можно добавлять события и редактировать карточку.",
+    title ? `Карточка: ${title}` : null,
+    organizerName ? `Организатор: ${organizerName}` : null,
+    "",
+    `Кабинет организатора: ${getAppBaseUrl()}/organizer`
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n");
+
+  await sendEmailSafely(
+    input.email,
+    "Доступ к кабинету Влюди открыт",
+    text
+  );
 }

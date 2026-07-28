@@ -6,6 +6,10 @@ import { redirect } from "next/navigation";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
 import { getEventExpiresAt } from "@/lib/events";
 import {
+  notifyOrganizerAccessApproved,
+  notifyOrganizerRegistrationReceived
+} from "@/lib/booking-notifications";
+import {
   clearOrganizerSession,
   getOrganizerAccount,
   hashPassword,
@@ -101,7 +105,7 @@ export async function registerOrganizer(formData: FormData) {
 
   const activity = await prisma.activity.findUnique({
     where: { id: activityId },
-    select: { organizerId: true }
+    select: { organizerId: true, title: true }
   });
 
   if (!activity) {
@@ -145,6 +149,12 @@ export async function registerOrganizer(formData: FormData) {
       proofUrl,
       message: message || null
     }
+  });
+
+  await notifyOrganizerRegistrationReceived({
+    email: account.email,
+    name: account.name,
+    activityTitle: activity.title
   });
 
   await setOrganizerSession(account.id);
@@ -424,6 +434,11 @@ async function markClaimRequestWithStatus(formData: FormData, status: OrganizerR
     data: {
       status,
       adminComment: getString(formData, "adminComment") || null
+    },
+    include: {
+      account: true,
+      activity: true,
+      organizer: true
     }
   });
 
@@ -440,6 +455,13 @@ async function markClaimRequestWithStatus(formData: FormData, status: OrganizerR
         accountId: claim.accountId,
         organizerId: claim.organizerId
       }
+    });
+
+    await notifyOrganizerAccessApproved({
+      email: claim.account.email,
+      name: claim.account.name,
+      activityTitle: claim.activity?.title,
+      organizerName: claim.organizer.name
     });
   }
 
