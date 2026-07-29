@@ -3,6 +3,10 @@
 import { ActivityStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import {
+  extractEmailAddress,
+  notifySubmitterActivityReceived
+} from "@/lib/booking-notifications";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueSlug } from "@/lib/slug";
@@ -66,7 +70,11 @@ export async function createActivity(formData: FormData) {
   }
 
   if (submittedByOrganizer && !submitterContact) {
-    fail("Укажите, как с вами связаться: Telegram, VK, телефон или email.");
+    fail("Укажите email, чтобы мы могли прислать статус заявки.");
+  }
+
+  if (submittedByOrganizer && !extractEmailAddress(submitterContact)) {
+    fail("Укажите корректный email для уведомлений по заявке.");
   }
 
   const category = await prisma.category.findUnique({
@@ -105,7 +113,7 @@ export async function createActivity(formData: FormData) {
     }
   });
 
-  await prisma.activity.create({
+  const activity = await prisma.activity.create({
     data: {
       title,
       slug: await generateUniqueSlug(title),
@@ -132,6 +140,17 @@ export async function createActivity(formData: FormData) {
       submitterContact: submitterContact || null,
       status: ActivityStatus.draft
     }
+  });
+
+  await notifySubmitterActivityReceived({
+    activityId: activity.id,
+    activityTitle: activity.title,
+    activitySlug: activity.slug,
+    organizerName,
+    submitterContact,
+    contactPhone,
+    contactUrl,
+    description
   });
 
   revalidatePath("/tula");

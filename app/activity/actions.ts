@@ -15,10 +15,12 @@ function fail(slug: string, message: string): never {
   redirect(`/activity/${slug}?bookingError=${encodeURIComponent(message)}#booking-form`);
 }
 
-function sendNotificationInBackground(promise: Promise<void>, label: string) {
-  promise.catch((error) => {
+async function sendNotificationSafely(promise: Promise<void>, label: string) {
+  try {
+    await promise;
+  } catch (error) {
     console.error(`Failed to send ${label}`, error);
-  });
+  }
 }
 
 export async function createActivityBookingRequest(formData: FormData) {
@@ -90,7 +92,7 @@ export async function createActivityBookingRequest(formData: FormData) {
     }
   });
 
-  sendNotificationInBackground(
+  await sendNotificationSafely(
     notifyOrganizerAboutBooking({
       activityTitle: activity.title,
       customerName: name,

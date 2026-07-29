@@ -80,7 +80,7 @@ export default async function OrganizerRegisterPage({ searchParams }: RegisterPa
               name="name"
               required
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-              placeholder="Например: Данил, Booklya Tula или студия танцев"
+              placeholder="Ваше имя или название организации"
             />
             <p className="mt-2 text-xs leading-5 text-city-muted">
               Это имя будет видно администратору при проверке заявки.
@@ -133,7 +133,7 @@ export default async function OrganizerRegisterPage({ searchParams }: RegisterPa
               required
               minLength={8}
               className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-              placeholder="минимум 8 символов"
+              placeholder="Минимум 8 символов"
             />
             <p className="mt-2 text-xs leading-5 text-city-muted">
               Он понадобится, чтобы вернуться в кабинет после проверки.
@@ -149,7 +149,7 @@ export default async function OrganizerRegisterPage({ searchParams }: RegisterPa
             id="proofUrl"
             name="proofUrl"
             className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-            placeholder="Ссылка на группу, сайт, Timepad, афишу или пост"
+            placeholder="Ссылка на сайт, группу, афишу или страницу организации"
           />
           <p className="mt-2 text-xs leading-5 text-city-muted">
             Можно вставить ссылку без https://. Если ссылки нет, опишите связь в комментарии.
@@ -165,7 +165,7 @@ export default async function OrganizerRegisterPage({ searchParams }: RegisterPa
             name="message"
             rows={5}
             className="mt-2 w-full rounded-2xl border border-city-line px-4 py-3 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-            placeholder="Например: я веду эту группу, хочу обновлять расписание и описание карточки"
+            placeholder="Напишите, как вы связаны с карточкой и что хотите обновлять"
           />
         </div>
 

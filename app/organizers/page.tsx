@@ -42,16 +42,16 @@ export default function OrganizersPage() {
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
-                href="/organizer/login"
+                href="/organizer/claim"
                 className="rounded-full bg-city-green px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-city-blue"
               >
-                Войти в кабинет
+                Получить доступ
               </Link>
               <Link
-                href="/tula"
+                href="/organizer/login"
                 className="rounded-full border border-city-line bg-white px-5 py-3 text-sm font-semibold text-city-ink transition hover:border-city-green hover:text-city-green"
               >
-                Найти свою карточку
+                Войти в кабинет
               </Link>
             </div>
           </div>
@@ -62,7 +62,7 @@ export default function OrganizersPage() {
               <li>
                 <span className="font-semibold text-city-ink">1. Найдите карточку</span>
                 <br />
-                Откройте активность в каталоге и нажмите блок для организатора.
+                Откройте страницу поиска карточки и найдите активность по названию или организации.
               </li>
               <li>
                 <span className="font-semibold text-city-ink">2. Подтвердите связь</span>
@@ -97,6 +97,12 @@ export default function OrganizersPage() {
             className="mt-5 inline-flex rounded-full bg-city-green px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-city-blue"
           >
             Добавить активность
+          </Link>
+          <Link
+            href="/organizer/claim"
+            className="ml-3 mt-5 inline-flex rounded-full border border-city-line bg-white px-5 py-3 text-sm font-semibold text-city-ink transition hover:border-city-green hover:text-city-green"
+          >
+            Найти опубликованную карточку
           </Link>
         </section>
       </section>

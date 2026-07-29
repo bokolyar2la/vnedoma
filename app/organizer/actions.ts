@@ -39,10 +39,12 @@ function fail(path: string, message: string): never {
   redirect(`${path}${separator}error=${encodeURIComponent(message)}`);
 }
 
-function sendNotificationInBackground(promise: Promise<void>, label: string) {
-  promise.catch((error) => {
+async function sendNotificationSafely(promise: Promise<void>, label: string) {
+  try {
+    await promise;
+  } catch (error) {
     console.error(`Failed to send ${label}`, error);
-  });
+  }
 }
 
 function getActivityId(formData: FormData) {
@@ -157,7 +159,7 @@ export async function registerOrganizer(formData: FormData) {
     }
   });
 
-  sendNotificationInBackground(
+  await sendNotificationSafely(
     notifyOrganizerRegistrationReceived({
       email: account.email,
       name: account.name,
@@ -466,7 +468,7 @@ async function markClaimRequestWithStatus(formData: FormData, status: OrganizerR
       }
     });
 
-    sendNotificationInBackground(
+    await sendNotificationSafely(
       notifyOrganizerAccessApproved({
         email: claim.account.email,
         name: claim.account.name,

@@ -3,6 +3,7 @@
 import { ActivityMediaType, ActivityStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { notifySubmitterActivityPublished } from "@/lib/booking-notifications";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
 import { prisma } from "@/lib/prisma";
 import { uploadActivityImage } from "@/lib/s3-upload";
@@ -205,11 +206,34 @@ export async function createAdminActivity(formData: FormData) {
 
 export async function publishActivity(formData: FormData) {
   const id = getRequiredId(formData);
-
-  await prisma.activity.update({
+  const previousActivity = await prisma.activity.findUniqueOrThrow({
     where: { id },
-    data: { status: ActivityStatus.published }
+    select: { status: true }
   });
+
+  const activity = await prisma.activity.update({
+    where: { id },
+    data: { status: ActivityStatus.published },
+    include: {
+      organizer: true
+    }
+  });
+
+  if (
+    previousActivity.status !== ActivityStatus.published &&
+    activity.submittedByOrganizer
+  ) {
+    await notifySubmitterActivityPublished({
+      activityId: activity.id,
+      activityTitle: activity.title,
+      activitySlug: activity.slug,
+      organizerName: activity.organizer.name,
+      submitterContact: activity.submitterContact,
+      contactPhone: activity.contactPhone,
+      contactUrl: activity.contactUrl,
+      description: activity.description
+    });
+  }
 
   await revalidateAdmin();
 }

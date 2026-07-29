@@ -17,7 +17,23 @@ type OrganizerServiceNotificationInput = {
   organizerName?: string | null;
 };
 
+type ActivitySubmissionNotificationInput = {
+  activityId?: number | null;
+  activityTitle: string;
+  activitySlug?: string | null;
+  organizerName?: string | null;
+  submitterContact?: string | null;
+  contactPhone?: string | null;
+  contactUrl?: string | null;
+  description?: string | null;
+};
+
 const DEFAULT_DISCOUNT_TEXT = "Промокод ВЛЮДИ: 10% скидка";
+const EMAIL_PATTERN = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
+
+export function extractEmailAddress(value?: string | null) {
+  return value?.match(EMAIL_PATTERN)?.[0] ?? null;
+}
 
 function cleanOptional(value?: string | null) {
   const trimmed = value?.trim();
@@ -54,15 +70,61 @@ async function sendEmailSafely(to: string | null | undefined, subject: string, t
   }
 
   try {
-    await sendServiceEmail({
+    const result = await sendServiceEmail({
       to: email,
       subject,
       text,
       html: textToHtml(text)
     });
+
+    if (result.status === "skipped") {
+      console.warn(`Service email skipped: ${result.reason}`, { to: email, subject });
+    }
   } catch (error) {
     console.error("Failed to send service email", error);
   }
+}
+
+export async function notifySubmitterActivityReceived(
+  input: ActivitySubmissionNotificationInput
+) {
+  const email = extractEmailAddress(input.submitterContact);
+  const text = [
+    input.organizerName ? `${input.organizerName}, здравствуйте!` : "Здравствуйте!",
+    "",
+    `Ваша заявка на добавление активности «${input.activityTitle}» принята.`,
+    "Скоро проверим информацию и, если всё в порядке, опубликуем карточку во Влюди.",
+    "После публикации пришлём письмо со ссылкой, чтобы запросить доступ к карточке для редактирования и добавления событий.",
+    "",
+    "Влюди"
+  ].join("\n");
+
+  await sendEmailSafely(email, "Активность отправлена на проверку", text);
+}
+
+export async function notifySubmitterActivityPublished(
+  input: ActivitySubmissionNotificationInput
+) {
+  const email = extractEmailAddress(input.submitterContact);
+  const activityUrl = input.activitySlug
+    ? `${getAppBaseUrl()}/activity/${input.activitySlug}`
+    : getAppBaseUrl();
+  const claimUrl = input.activityId
+    ? `${getAppBaseUrl()}/organizer/register?activityId=${input.activityId}`
+    : `${getAppBaseUrl()}/organizer/claim`;
+  const text = [
+    input.organizerName ? `${input.organizerName}, здравствуйте!` : "Здравствуйте!",
+    "",
+    `Круто, ваша заявка одобрена: карточка «${input.activityTitle}» опубликована во Влюди.`,
+    "Теперь можно запросить доступ к карточке, чтобы редактировать её и добавлять ближайшие события.",
+    "",
+    `Запросить доступ: ${claimUrl}`,
+    `Открыть опубликованную карточку: ${activityUrl}`,
+    "",
+    "Влюди"
+  ].join("\n");
+
+  await sendEmailSafely(email, "Ваша карточка опубликована во Влюди", text);
 }
 
 export async function notifyOrganizerAboutBooking(input: BookingNotificationInput) {
