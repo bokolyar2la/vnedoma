@@ -27,6 +27,7 @@ type SmtpConfig = {
 
 const DEFAULT_SMTP_HOST = "postbox.cloud.yandex.net";
 const DEFAULT_SMTP_PORT = 465;
+const SMTP_TIMEOUT_MS = 6000;
 
 function getEnv(name: string) {
   return process.env[name]?.trim() || "";
@@ -176,7 +177,7 @@ function connectSmtp(config: SmtpConfig) {
     const socket = config.secure ? tls.connect(options) : net.connect(options);
 
     socket.setEncoding("utf8");
-    socket.setTimeout(20000);
+    socket.setTimeout(SMTP_TIMEOUT_MS);
     socket.once(config.secure ? "secureConnect" : "connect", () => resolve(socket));
     socket.once("timeout", () => {
       socket.destroy();

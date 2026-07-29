@@ -39,6 +39,12 @@ function fail(path: string, message: string): never {
   redirect(`${path}${separator}error=${encodeURIComponent(message)}`);
 }
 
+function sendNotificationInBackground(promise: Promise<void>, label: string) {
+  promise.catch((error) => {
+    console.error(`Failed to send ${label}`, error);
+  });
+}
+
 function getActivityId(formData: FormData) {
   const activityId = Number(getString(formData, "activityId"));
 
@@ -151,11 +157,14 @@ export async function registerOrganizer(formData: FormData) {
     }
   });
 
-  await notifyOrganizerRegistrationReceived({
-    email: account.email,
-    name: account.name,
-    activityTitle: activity.title
-  });
+  sendNotificationInBackground(
+    notifyOrganizerRegistrationReceived({
+      email: account.email,
+      name: account.name,
+      activityTitle: activity.title
+    }),
+    "organizer registration email"
+  );
 
   await setOrganizerSession(account.id);
   revalidatePath("/admin/organizer-requests");
@@ -457,12 +466,15 @@ async function markClaimRequestWithStatus(formData: FormData, status: OrganizerR
       }
     });
 
-    await notifyOrganizerAccessApproved({
-      email: claim.account.email,
-      name: claim.account.name,
-      activityTitle: claim.activity?.title,
-      organizerName: claim.organizer.name
-    });
+    sendNotificationInBackground(
+      notifyOrganizerAccessApproved({
+        email: claim.account.email,
+        name: claim.account.name,
+        activityTitle: claim.activity?.title,
+        organizerName: claim.organizer.name
+      }),
+      "organizer access approval email"
+    );
   }
 
   revalidatePath("/admin/organizer-requests");

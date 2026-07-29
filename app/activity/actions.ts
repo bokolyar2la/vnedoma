@@ -15,6 +15,12 @@ function fail(slug: string, message: string): never {
   redirect(`/activity/${slug}?bookingError=${encodeURIComponent(message)}#booking-form`);
 }
 
+function sendNotificationInBackground(promise: Promise<void>, label: string) {
+  promise.catch((error) => {
+    console.error(`Failed to send ${label}`, error);
+  });
+}
+
 export async function createActivityBookingRequest(formData: FormData) {
   const activityId = Number(getString(formData, "activityId"));
   const name = getString(formData, "name");
@@ -84,15 +90,18 @@ export async function createActivityBookingRequest(formData: FormData) {
     }
   });
 
-  await notifyOrganizerAboutBooking({
-    activityTitle: activity.title,
-    customerName: name,
-    customerContact: contact,
-    message,
-    notificationEmail: organizerAccount.notificationEmail,
-    notificationTelegram: organizerAccount.notificationTelegram,
-    discountText: organizerAccount.platformBookingDiscountText
-  });
+  sendNotificationInBackground(
+    notifyOrganizerAboutBooking({
+      activityTitle: activity.title,
+      customerName: name,
+      customerContact: contact,
+      message,
+      notificationEmail: organizerAccount.notificationEmail,
+      notificationTelegram: organizerAccount.notificationTelegram,
+      discountText: organizerAccount.platformBookingDiscountText
+    }),
+    "booking request email"
+  );
 
   revalidatePath("/organizer");
   redirect(`/activity/${activity.slug}?booking=sent#booking-form`);
