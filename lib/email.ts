@@ -25,9 +25,14 @@ type SmtpConfig = {
   configurationSet: string;
 };
 
+type SmtpConnection = {
+  socket: net.Socket | tls.TLSSocket;
+  readResponse: () => Promise<string>;
+};
+
 const DEFAULT_SMTP_HOST = "postbox.cloud.yandex.net";
 const DEFAULT_SMTP_PORT = 465;
-const SMTP_TIMEOUT_MS = 6000;
+const SMTP_TIMEOUT_MS = 10000;
 
 function getEnv(name: string) {
   return process.env[name]?.trim() || "";
@@ -52,7 +57,7 @@ function getSmtpConfig(): SmtpConfig {
   return {
     host: getEnv("POSTBOX_SMTP_HOST") || DEFAULT_SMTP_HOST,
     port,
-    secure: (getEnv("POSTBOX_SMTP_SECURE") || "true").toLowerCase() !== "false",
+    secure: (getEnv("POSTBOX_SMTP_SECURE") || String(port === 465)).toLowerCase() !== "false",
     user: getEnv("POSTBOX_SMTP_USER") || getEnv("POSTBOX_API_KEY_ID"),
     password: getEnv("POSTBOX_SMTP_PASSWORD") || getEnv("POSTBOX_API_KEY"),
     fromEmail: getEnv("POSTBOX_FROM_EMAIL") || getEnv("EMAIL_FROM"),
@@ -65,6 +70,19 @@ export function isEmailConfigured() {
   const config = getSmtpConfig();
 
   return Boolean(config.host && config.user && config.password && config.fromEmail);
+}
+
+export function getEmailConfigDiagnostics() {
+  const config = getSmtpConfig();
+
+  return {
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    hasUser: Boolean(config.user),
+    hasPassword: Boolean(config.password),
+    fromEmail: config.fromEmail || null
+  };
 }
 
 export function getAppBaseUrl() {
@@ -167,7 +185,100 @@ function buildMimeMessage(input: ServiceEmailInput, config: SmtpConfig, toAddres
   ].join("\r\n");
 }
 
-function connectSmtp(config: SmtpConfig) {
+function createSmtpConnection(socket: net.Socket | tls.TLSSocket): SmtpConnection {
+  let buffer = "";
+  const waiters: Array<{
+    resolve: (response: string) => void;
+    reject: (error: Error) => void;
+    timer: NodeJS.Timeout;
+  }> = [];
+
+  socket.setEncoding("utf8");
+  socket.setTimeout(SMTP_TIMEOUT_MS);
+  socket.on("data", (chunk) => {
+    buffer += chunk.toString();
+    flushResponses();
+  });
+  socket.on("error", rejectWaiters);
+  socket.on("timeout", () => {
+    socket.destroy();
+    rejectWaiters(new Error("SMTP connection timed out"));
+  });
+
+  function rejectWaiters(error: Error) {
+    while (waiters.length) {
+      const waiter = waiters.shift();
+      if (waiter) {
+        clearTimeout(waiter.timer);
+        waiter.reject(error);
+      }
+    }
+  }
+
+  function takeResponse() {
+    const lines: string[] = [];
+
+    while (buffer.includes("\n")) {
+      const index = buffer.indexOf("\n");
+      const line = buffer.slice(0, index).replace(/\r$/, "");
+      buffer = buffer.slice(index + 1);
+      lines.push(line);
+
+      if (/^\d{3} /.test(line)) {
+        return lines.join("\n");
+      }
+    }
+
+    if (lines.length) {
+      buffer = `${lines.join("\r\n")}\r\n${buffer}`;
+    }
+
+    return null;
+  }
+
+  function flushResponses() {
+    while (waiters.length) {
+      const response = takeResponse();
+
+      if (!response) {
+        return;
+      }
+
+      const waiter = waiters.shift();
+      if (waiter) {
+        clearTimeout(waiter.timer);
+        waiter.resolve(response);
+      }
+    }
+  }
+
+  return {
+    socket,
+    readResponse() {
+      const response = takeResponse();
+
+      if (response) {
+        return Promise.resolve(response);
+      }
+
+      return new Promise<string>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          const index = waiters.findIndex((waiter) => waiter.timer === timer);
+
+          if (index >= 0) {
+            waiters.splice(index, 1);
+          }
+
+          reject(new Error("SMTP response timed out"));
+        }, SMTP_TIMEOUT_MS);
+
+        waiters.push({ resolve, reject, timer });
+      });
+    }
+  };
+}
+
+function connectSocket(config: SmtpConfig) {
   return new Promise<net.Socket | tls.TLSSocket>((resolve, reject) => {
     const options = {
       host: config.host,
@@ -176,26 +287,36 @@ function connectSmtp(config: SmtpConfig) {
     };
     const socket = config.secure ? tls.connect(options) : net.connect(options);
 
-    socket.setEncoding("utf8");
-    socket.setTimeout(SMTP_TIMEOUT_MS);
     socket.once(config.secure ? "secureConnect" : "connect", () => resolve(socket));
-    socket.once("timeout", () => {
+    socket.once("error", reject);
+    socket.setTimeout(SMTP_TIMEOUT_MS, () => {
       socket.destroy();
       reject(new Error("SMTP connection timed out"));
     });
-    socket.once("error", reject);
+  });
+}
+
+function upgradeToTls(connection: SmtpConnection, config: SmtpConfig) {
+  return new Promise<SmtpConnection>((resolve, reject) => {
+    const secureSocket = tls.connect({
+      socket: connection.socket,
+      servername: config.host
+    });
+
+    secureSocket.once("secureConnect", () => resolve(createSmtpConnection(secureSocket)));
+    secureSocket.once("error", reject);
   });
 }
 
 async function sendSmtpCommand(
-  socket: net.Socket | tls.TLSSocket,
+  connection: SmtpConnection,
   command: string | null,
   expectedCodes: number[]
 ) {
-  const responsePromise = readSmtpResponse(socket);
+  const responsePromise = connection.readResponse();
 
   if (command !== null) {
-    socket.write(`${command}\r\n`);
+    connection.socket.write(`${command}\r\n`);
   }
 
   const response = await responsePromise;
@@ -208,63 +329,52 @@ async function sendSmtpCommand(
   return response;
 }
 
-function readSmtpResponse(socket: net.Socket | tls.TLSSocket) {
-  return new Promise<string>((resolve, reject) => {
-    let buffer = "";
-    const lines: string[] = [];
+async function authenticate(connection: SmtpConnection, config: SmtpConfig) {
+  try {
+    await sendSmtpCommand(
+      connection,
+      `AUTH PLAIN ${Buffer.from(`\0${config.user}\0${config.password}`).toString("base64")}`,
+      [235]
+    );
+    return;
+  } catch (error) {
+    console.warn("SMTP AUTH PLAIN failed, retrying AUTH LOGIN", error);
+  }
 
-    const cleanup = () => {
-      socket.off("data", onData);
-      socket.off("error", onError);
-    };
-
-    const onError = (error: Error) => {
-      cleanup();
-      reject(error);
-    };
-
-    const onData = (chunk: Buffer | string) => {
-      buffer += chunk.toString();
-
-      while (buffer.includes("\n")) {
-        const index = buffer.indexOf("\n");
-        const line = buffer.slice(0, index).replace(/\r$/, "");
-        buffer = buffer.slice(index + 1);
-        lines.push(line);
-
-        if (/^\d{3} /.test(line)) {
-          cleanup();
-          resolve(lines.join("\n"));
-          return;
-        }
-      }
-    };
-
-    socket.on("data", onData);
-    socket.once("error", onError);
-  });
+  await sendSmtpCommand(connection, "AUTH LOGIN", [334]);
+  await sendSmtpCommand(connection, Buffer.from(config.user).toString("base64"), [334]);
+  await sendSmtpCommand(connection, Buffer.from(config.password).toString("base64"), [235]);
 }
 
 async function sendViaSmtp(input: ServiceEmailInput, config: SmtpConfig, toAddresses: string[]) {
-  const socket = await connectSmtp(config);
+  let connection = createSmtpConnection(await connectSocket(config));
 
   try {
-    await sendSmtpCommand(socket, null, [220]);
-    await sendSmtpCommand(socket, "EHLO vlyudi.ru", [250]);
-    await sendSmtpCommand(socket, "AUTH LOGIN", [334]);
-    await sendSmtpCommand(socket, Buffer.from(config.user).toString("base64"), [334]);
-    await sendSmtpCommand(socket, Buffer.from(config.password).toString("base64"), [235]);
-    await sendSmtpCommand(socket, `MAIL FROM:<${config.fromEmail}>`, [250]);
+    await sendSmtpCommand(connection, null, [220]);
+    await sendSmtpCommand(connection, "EHLO vlyudi.ru", [250]);
 
-    for (const address of toAddresses) {
-      await sendSmtpCommand(socket, `RCPT TO:<${address}>`, [250, 251]);
+    if (!config.secure) {
+      await sendSmtpCommand(connection, "STARTTLS", [220]);
+      connection = await upgradeToTls(connection, config);
+      await sendSmtpCommand(connection, "EHLO vlyudi.ru", [250]);
     }
 
-    await sendSmtpCommand(socket, "DATA", [354]);
-    await sendSmtpCommand(socket, `${dotStuff(buildMimeMessage(input, config, toAddresses))}\r\n.`, [250]);
-    await sendSmtpCommand(socket, "QUIT", [221]);
+    await authenticate(connection, config);
+    await sendSmtpCommand(connection, `MAIL FROM:<${config.fromEmail}>`, [250]);
+
+    for (const address of toAddresses) {
+      await sendSmtpCommand(connection, `RCPT TO:<${address}>`, [250, 251]);
+    }
+
+    await sendSmtpCommand(connection, "DATA", [354]);
+    await sendSmtpCommand(
+      connection,
+      `${dotStuff(buildMimeMessage(input, config, toAddresses))}\r\n.`,
+      [250]
+    );
+    await sendSmtpCommand(connection, "QUIT", [221]);
   } finally {
-    socket.end();
+    connection.socket.end();
   }
 }
 
@@ -279,10 +389,19 @@ export async function sendServiceEmail(
   }
 
   if (!isEmailConfigured()) {
+    console.warn("Service email missing SMTP config", getEmailConfigDiagnostics());
     return { status: "skipped", reason: "missing_config" };
   }
 
   await sendViaSmtp(input, config, toAddresses);
+  console.info("Service email sent", {
+    toCount: toAddresses.length,
+    subject: input.subject,
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    fromEmail: config.fromEmail
+  });
 
   return { status: "sent" };
 }
