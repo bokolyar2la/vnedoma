@@ -70,6 +70,7 @@ export async function createActivityBookingRequest(formData: FormData) {
     },
     select: {
       id: true,
+      email: true,
       notificationEmail: true,
       notificationTelegram: true,
       platformBookingDiscountText: true
@@ -98,7 +99,7 @@ export async function createActivityBookingRequest(formData: FormData) {
       customerName: name,
       customerContact: contact,
       message,
-      notificationEmail: organizerAccount.notificationEmail,
+      notificationEmail: organizerAccount.notificationEmail || organizerAccount.email,
       notificationTelegram: organizerAccount.notificationTelegram,
       discountText: organizerAccount.platformBookingDiscountText
     }),

@@ -51,6 +51,8 @@ function buildBookingText(input: BookingNotificationInput) {
   return [
     `У вас новая заявка на активность «${input.activityTitle}» через Влюди.`,
     "",
+    "Свяжитесь с участником напрямую по указанному контакту и уточните детали записи.",
+    "",
     `Имя: ${input.customerName}`,
     `Контакт: ${input.customerContact}`,
     input.message ? `Комментарий: ${input.message}` : null,
@@ -132,7 +134,7 @@ export async function notifyOrganizerAboutBooking(input: BookingNotificationInpu
 
   await sendEmailSafely(
     input.notificationEmail,
-    "Новая заявка через Влюди",
+    `Новая заявка на «${input.activityTitle}»`,
     text
   );
 
