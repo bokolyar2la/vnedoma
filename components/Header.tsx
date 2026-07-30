@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { reachMetrikaGoal } from '@/components/MetrikaGoals'
@@ -37,8 +38,15 @@ export function Header() {
 		<header className='sticky top-0 z-20 border-b border-city-line/80 bg-white/90 backdrop-blur-xl'>
 			<div className='relative mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6'>
 				<Link href='/' className='group flex min-w-0 items-center gap-3'>
-					<span className='flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] bg-city-green text-lg font-extrabold text-white shadow-sm transition group-hover:bg-city-blue'>
-						В
+					<span className='flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-city-green shadow-sm ring-1 ring-city-line/50 transition group-hover:ring-city-green/40'>
+						<Image
+							src='/favicon.png'
+							alt=''
+							width={44}
+							height={44}
+							className='h-full w-full object-cover'
+							priority
+						/>
 					</span>
 					<span className='min-w-0'>
 						<span className='block text-2xl font-black leading-5 tracking-[-0.03em] text-city-ink'>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { ActivityStatType } from "@prisma/client";
 import { redirect } from "next/navigation";
 import {
@@ -247,8 +248,8 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
         <div className="mx-auto grid max-w-5xl overflow-hidden rounded-[28px] border border-white/70 bg-white/85 shadow-soft backdrop-blur lg:grid-cols-[220px_minmax(0,1fr)]">
           <aside className="border-b border-city-line/70 bg-[#f7fbf9] p-5 lg:border-b-0 lg:border-r">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-city-green text-sm font-bold text-white">
-                В
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-city-green ring-1 ring-city-line/50">
+                <Image src="/favicon.png" alt="" width={40} height={40} className="h-full w-full object-cover" />
               </div>
               <div>
                 <p className="font-bold leading-tight text-city-ink">влюди</p>
@@ -326,8 +327,8 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
       <div className="mx-auto grid max-w-7xl overflow-hidden rounded-[28px] border border-white/70 bg-white/80 shadow-soft backdrop-blur lg:grid-cols-[230px_minmax(0,1fr)]">
         <aside className="border-b border-city-line/70 bg-[#f7fbf9] p-5 lg:min-h-[calc(100vh-2.5rem)] lg:border-b-0 lg:border-r">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-city-green text-sm font-bold text-white">
-              В
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-city-green ring-1 ring-city-line/50">
+              <Image src="/favicon.png" alt="" width={40} height={40} className="h-full w-full object-cover" />
             </div>
             <div>
               <p className="font-bold leading-tight text-city-ink">влюди</p>
@@ -408,6 +409,54 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
             </div>
           ) : null}
 
+          {currentTab === "activities" ? (
+            <section className="mt-7 rounded-[24px] border border-city-line bg-white p-5 shadow-sm">
+              <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-start">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
+                    Первые шаги
+                  </p>
+                  <h2 className="mt-2 text-2xl font-bold text-city-ink">
+                    Что можно сделать в кабинете
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-city-muted">
+                    Поддерживайте карточку актуальной: добавляйте ближайшие события,
+                    обновляйте описание и принимайте заявки от участников через Влюди.
+                  </p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:min-w-[420px]">
+                  <Link
+                    href={activities[0] ? `/organizer/activities/${activities[0].slug}#event-form` : "/add"}
+                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-city-green px-5 text-sm font-semibold text-white transition hover:bg-city-blue"
+                  >
+                    Добавить дату
+                  </Link>
+                  <Link
+                    href="/organizer?tab=settings"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-city-line px-5 text-sm font-semibold text-city-ink transition hover:border-city-green hover:text-city-green"
+                  >
+                    Настроить запись
+                  </Link>
+                </div>
+              </div>
+              <div className="mt-5 grid gap-3 md:grid-cols-4">
+                {[
+                  "Добавить ближайшую дату или событие",
+                  "Отправить правку описания и контактов",
+                  "Включить запись через Влюди",
+                  "Смотреть заявки в разделе “Заявки и правки”"
+                ].map((item, index) => (
+                  <div key={item} className="rounded-2xl bg-city-soft p-4">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold text-city-green">
+                      {index + 1}
+                    </span>
+                    <p className="mt-3 text-sm font-semibold leading-5 text-city-ink">{item}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
           <section className="mt-7 grid gap-4 sm:grid-cols-3">
             <div className="rounded-[24px] border border-city-line bg-white p-5 shadow-sm">
               <p className="text-sm text-city-muted">Карточек</p>
@@ -467,6 +516,50 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
                           <p className="mt-3 text-xs text-city-muted">
                             Просмотры: {stats?.view ?? 0} · Записи: {stats?.signup_click ?? 0}
                           </p>
+                          <div className="mt-4 rounded-2xl bg-city-soft p-3">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div>
+                                <p className="text-sm font-bold text-city-ink">
+                                  Запись через Влюди {account.platformBookingEnabled ? "включена" : "выключена"}
+                                </p>
+                                <p className="mt-1 text-xs leading-5 text-city-muted">
+                                  {account.platformBookingEnabled
+                                    ? `Заявки приходят на ${account.notificationEmail ?? account.email}`
+                                    : "Можно принимать заявки прямо со страницы активности."}
+                                </p>
+                              </div>
+                              {account.platformBookingEnabled ? (
+                                <Link
+                                  href="/organizer?tab=settings"
+                                  className="inline-flex min-h-9 items-center justify-center rounded-full bg-white px-3 text-xs font-semibold text-city-green transition hover:text-city-blue"
+                                >
+                                  Настроить
+                                </Link>
+                              ) : (
+                                <form action={updateOrganizerBookingSettings}>
+                                  <input type="hidden" name="platformBookingEnabled" value="on" />
+                                  <input
+                                    type="hidden"
+                                    name="notificationEmail"
+                                    value={account.notificationEmail ?? account.email}
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name="notificationTelegram"
+                                    value={account.notificationTelegram ?? ""}
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name="platformBookingDiscountText"
+                                    value={account.platformBookingDiscountText ?? "Промокод ВЛЮДИ: 10% скидка"}
+                                  />
+                                  <button className="inline-flex min-h-9 items-center justify-center rounded-full bg-city-green px-3 text-xs font-semibold text-white transition hover:bg-city-blue">
+                                    Включить
+                                  </button>
+                                </form>
+                              )}
+                            </div>
+                          </div>
                           <div className="mt-4 grid gap-2 sm:grid-cols-2">
                             <Link
                               href={`/organizer/activities/${activity.slug}#event-form`}

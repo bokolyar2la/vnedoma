@@ -193,21 +193,32 @@ export async function notifyOrganizerAccessApproved(
 ) {
   const title = cleanOptional(input.activityTitle);
   const organizerName = cleanOptional(input.organizerName);
+  const cabinetUrl = `${getAppBaseUrl()}/organizer`;
+  const bookingSettingsUrl = `${getAppBaseUrl()}/organizer?tab=settings`;
+  const requestsUrl = `${getAppBaseUrl()}/organizer?tab=requests`;
   const text = [
     input.name ? `${input.name}, здравствуйте!` : "Здравствуйте!",
     "",
-    "Доступ открыт, можно добавлять события и редактировать карточку.",
+    "Доступ к кабинету Влюди открыт.",
     title ? `Карточка: ${title}` : null,
     organizerName ? `Организатор: ${organizerName}` : null,
     "",
-    `Кабинет организатора: ${getAppBaseUrl()}/organizer`
+    "Теперь в кабинете можно:",
+    "1. Добавлять ближайшие даты и события.",
+    "2. Отправлять правки к описанию, цене, адресу и контактам.",
+    "3. Включить запись через Влюди, чтобы участники оставляли заявки на странице активности.",
+    "4. Смотреть заявки в разделе «Заявки и правки».",
+    "",
+    `Открыть кабинет: ${cabinetUrl}`,
+    `Включить запись через Влюди: ${bookingSettingsUrl}`,
+    `Смотреть заявки: ${requestsUrl}`
   ]
     .filter((line): line is string => line !== null)
     .join("\n");
 
   await sendEmailSafely(
     input.email,
-    "Доступ к кабинету Влюди открыт",
+    "Доступ к кабинету Влюди открыт: что можно сделать дальше",
     text
   );
 }
