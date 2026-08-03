@@ -85,6 +85,46 @@ function formatEventTime(date: Date) {
   }).format(date);
 }
 
+const billingPlanLabels: Record<string, string> = {
+  free: "Базовое размещение",
+  active: "Активное размещение",
+  pro: "Продвижение"
+};
+
+const billingStatusLabels: Record<string, string> = {
+  free: "бесплатно",
+  trial: "тестовый период",
+  active: "активно",
+  expired: "истекло"
+};
+
+type OrganizerBillingFields = {
+  billingPlan: string;
+  billingStatus: string;
+  paidUntil: Date | null;
+  trialUntil: Date | null;
+};
+
+function formatBillingDate(date: Date | null) {
+  if (!date) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  }).format(date);
+}
+
+function getBillingUntil(account: {
+  billingStatus: string;
+  paidUntil: Date | null;
+  trialUntil: Date | null;
+}) {
+  return account.billingStatus === "trial" ? account.trialUntil : account.paidUntil;
+}
+
 export default async function OrganizerCabinetPage({ searchParams }: OrganizerPageProps) {
   const account = await getOrganizerAccount();
 
@@ -213,6 +253,11 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
       }))
     )
     .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime())[0];
+  const billingAccount = account as typeof account & OrganizerBillingFields;
+  const billingUntil = getBillingUntil(billingAccount);
+  const billingUntilText = formatBillingDate(billingUntil);
+  const billingPlanLabel = billingPlanLabels[billingAccount.billingPlan] ?? billingAccount.billingPlan;
+  const billingStatusLabel = billingStatusLabels[billingAccount.billingStatus] ?? billingAccount.billingStatus;
 
   const requestItems = [
     ...claims.map((claim) => ({
@@ -365,13 +410,14 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
 
           <div className="mt-8 rounded-[24px] bg-city-green/10 p-5">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-lg font-bold text-city-green">
-              0
+              {billingAccount.billingPlan === "pro" ? "PRO" : billingAccount.billingPlan === "active" ? "A" : "0"}
             </div>
             <p className="mt-4 text-sm font-bold leading-5 text-city-green">
-              Базовое размещение бесплатно
+              {billingPlanLabel}
             </p>
             <p className="mt-2 text-xs leading-5 text-city-muted">
-              Добавляйте даты и обновляйте карточку. После проверки изменения появятся на сайте.
+              Статус: {billingStatusLabel}
+              {billingUntilText ? ` до ${billingUntilText}` : ""}. Добавляйте даты и обновляйте карточку.
             </p>
           </div>
 
@@ -408,6 +454,34 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
               Заявка отправлена. После проверки карточка появится в разделе “Мои активности”.
             </div>
           ) : null}
+
+          <section className="mt-6 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+            <div className="rounded-[24px] border border-city-line bg-white p-5 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
+                Размещение
+              </p>
+              <h2 className="mt-2 text-2xl font-bold text-city-ink">{billingPlanLabel}</h2>
+              <p className="mt-2 text-sm leading-6 text-city-muted">
+                Статус: {billingStatusLabel}
+                {billingUntilText ? ` до ${billingUntilText}` : ""}.
+              </p>
+              <Link
+                href="/organizers"
+                className="mt-4 inline-flex text-sm font-semibold text-city-green"
+              >
+                Посмотреть возможности
+              </Link>
+            </div>
+            <div className="rounded-[24px] border border-city-line bg-white p-5 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
+                Что дает активное размещение
+              </p>
+              <p className="mt-2 text-sm leading-6 text-city-muted">
+                Заявки через Влюди, уведомления на почту, ближайшие события на карточке,
+                статистика и возможность попадать в подборки с актуальными датами.
+              </p>
+            </div>
+          </section>
 
           {currentTab === "activities" ? (
             <section className="mt-7 rounded-[24px] border border-city-line bg-white p-5 shadow-sm">

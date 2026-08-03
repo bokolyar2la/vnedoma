@@ -55,6 +55,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9
     },
     {
+      url: `${baseUrl}/kuda-shodit-v-tule`,
+      lastModified: catalogLastModified,
+      changeFrequency: "daily",
+      priority: 0.9
+    },
+    {
       url: `${baseUrl}/contacts`,
       changeFrequency: "monthly",
       priority: 0.4

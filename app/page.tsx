@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ActivityStatus } from "@prisma/client";
 import { ActivityCard } from "@/components/ActivityCard";
 import { TrackedForm, TrackedLink } from "@/components/MetrikaGoals";
+import { getUpcomingEventWhere } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 
 const quickLinks = [
@@ -59,6 +60,21 @@ const directionLinks = [
 
 type ActivityPreview = Parameters<typeof ActivityCard>[0]["activity"] & {
   id: number;
+};
+
+type UpcomingEventPreview = {
+  id: number;
+  title: string;
+  startsAt: Date;
+  price: number | null;
+  activity: {
+    title: string;
+    slug: string;
+    address: string;
+    category: {
+      name: string;
+    };
+  };
 };
 
 const homeSectionTake = 24;
@@ -132,6 +148,71 @@ function ActivitySection({
   );
 }
 
+function formatEventDate(date: Date) {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "long",
+    weekday: "short"
+  }).format(date);
+}
+
+function formatEventTime(date: Date) {
+  return new Intl.DateTimeFormat("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+}
+
+function UpcomingEventsSection({ events }: { events: UpcomingEventPreview[] }) {
+  if (events.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-city-ink sm:text-3xl">
+            Ближайшие события в Туле
+          </h2>
+          <p className="mt-2 text-city-muted">
+            Актуальные даты от организаторов. Если дат мало, раздел просто не занимает место.
+          </p>
+        </div>
+        <TrackedLink
+          href="/kuda-shodit-v-tule"
+          goal="view_all_activities_click"
+          className="hidden text-sm font-semibold text-city-green sm:inline"
+        >
+          Смотреть афишу
+        </TrackedLink>
+      </div>
+      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {events.map((event) => (
+          <TrackedLink
+            key={event.id}
+            href={`/activity/${event.activity.slug}`}
+            goal="view_all_activities_click"
+            className="rounded-[24px] border border-city-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-city-green hover:shadow-soft"
+          >
+            <p className="text-sm font-semibold text-city-green">
+              {formatEventDate(event.startsAt)} · {formatEventTime(event.startsAt)}
+            </p>
+            <h3 className="mt-3 text-xl font-bold text-city-ink">{event.title}</h3>
+            <p className="mt-2 text-sm leading-6 text-city-muted">
+              {event.activity.title} · {event.activity.category.name}
+            </p>
+            <p className="mt-2 text-sm text-city-muted">{event.activity.address}</p>
+            <span className="mt-4 inline-flex rounded-full bg-city-soft px-3 py-1 text-xs font-semibold text-city-green">
+              {event.price ? `от ${event.price} ₽` : "цена уточняется"}
+            </span>
+          </TrackedLink>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function getDailySeed() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -171,13 +252,40 @@ function rotateActivities<T extends { id: number; isPromoted?: boolean | null }>
 }
 
 export default async function HomePage() {
+  const now = new Date();
   const [
+    upcomingEvents,
     meetPeopleActivities,
     soloActivities,
     activeRestActivities,
     creativeActivities,
     weekendActivities
   ] = await Promise.all([
+    prisma.event.findMany({
+      where: {
+        ...getUpcomingEventWhere(now),
+        activity: {
+          status: ActivityStatus.published,
+          city: { slug: "tula" }
+        }
+      },
+      include: {
+        activity: {
+          select: {
+            title: true,
+            slug: true,
+            address: true,
+            category: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { startsAt: "asc" },
+      take: 6
+    }),
     prisma.activity.findMany({
       where: {
         status: ActivityStatus.published,
@@ -405,6 +513,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <UpcomingEventsSection events={upcomingEvents} />
 
       <ActivitySection
         title="Где познакомиться с новыми людьми"

@@ -7,7 +7,8 @@ import {
   deleteOrganizerAccount,
   disableOrganizerAccount,
   enableOrganizerAccount,
-  revokeOrganizerAccess
+  revokeOrganizerAccess,
+  updateOrganizerBilling
 } from "@/app/admin/organizers/actions";
 import { prisma } from "@/lib/prisma";
 
@@ -42,6 +43,65 @@ function AdminButton({
   );
 }
 
+const billingPlanLabels: Record<string, string> = {
+  free: "Бесплатно",
+  active: "Активное размещение",
+  pro: "Продвижение"
+};
+
+const billingStatusLabels: Record<string, string> = {
+  free: "бесплатно",
+  trial: "тест",
+  active: "оплачен",
+  expired: "истек"
+};
+
+type OrganizerBillingFields = {
+  billingPlan: string;
+  billingStatus: string;
+  paidUntil: Date | null;
+  trialUntil: Date | null;
+  billingComment: string | null;
+  platformBookingEnabled: boolean;
+};
+
+function formatDateInput(date: Date | null) {
+  return date ? date.toISOString().slice(0, 10) : "";
+}
+
+function formatAdminDate(date: Date | null) {
+  if (!date) {
+    return "не указано";
+  }
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).format(date);
+}
+
+function getAccountPromotion(account: {
+  accesses: Array<{
+    organizer: {
+      activities: Array<{
+        isPromoted: boolean;
+        priority: number;
+        promotedUntil: Date | null;
+      }>;
+    };
+  }>;
+}) {
+  const activities = account.accesses.flatMap((access) => access.organizer.activities);
+  const promoted = activities.filter((activity) => activity.isPromoted);
+
+  return {
+    enabled: promoted.length > 0,
+    priority: promoted[0]?.priority ?? 30,
+    promotedUntil: promoted[0]?.promotedUntil ?? null
+  };
+}
+
 export default async function AdminOrganizersPage() {
   const [organizers, accounts] = await Promise.all([
     prisma.organizer.findMany({
@@ -67,6 +127,13 @@ export default async function AdminOrganizersPage() {
                 _count: {
                   select: {
                     activities: true
+                  }
+                },
+                activities: {
+                  select: {
+                    isPromoted: true,
+                    priority: true,
+                    promotedUntil: true
                   }
                 }
               }
@@ -107,7 +174,11 @@ export default async function AdminOrganizersPage() {
         <h2 className="text-2xl font-bold text-city-ink">Аккаунты ЛК</h2>
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           {accounts.length ? (
-            accounts.map((account) => (
+            accounts.map((account) => {
+              const promotion = getAccountPromotion(account);
+              const billingAccount = account as typeof account & OrganizerBillingFields;
+
+              return (
               <article
                 key={account.id}
                 className="rounded-3xl border border-city-line bg-white p-5 shadow-soft"
@@ -130,6 +201,110 @@ export default async function AdminOrganizersPage() {
                   <p>Правки: {account._count.editRequests}</p>
                   <p>События: {account._count.eventRequests}</p>
                 </div>
+
+                <form action={updateOrganizerBilling} className="mt-4 rounded-2xl border border-city-line bg-city-soft p-4">
+                  <input type="hidden" name="accountId" value={account.id} />
+                  <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                    <div>
+                      <p className="text-sm font-semibold text-city-ink">Коммерция</p>
+                      <p className="mt-1 text-xs leading-5 text-city-muted">
+                        Сейчас: {billingPlanLabels[billingAccount.billingPlan] ?? billingAccount.billingPlan}, {billingStatusLabels[billingAccount.billingStatus] ?? billingAccount.billingStatus}.
+                        Оплачен до: {formatAdminDate(billingAccount.paidUntil)}.
+                      </p>
+                    </div>
+                    {promotion.enabled ? (
+                      <span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-city-green">
+                        продвижение до {formatAdminDate(promotion.promotedUntil)}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <label className="grid gap-1 text-xs font-semibold text-city-ink">
+                      Тариф
+                      <select
+                        name="billingPlan"
+                        defaultValue={billingAccount.billingPlan}
+                        className="rounded-2xl border border-city-line bg-white px-3 py-2 text-sm font-normal text-city-ink outline-none focus:border-city-green"
+                      >
+                        <option value="free">Бесплатно</option>
+                        <option value="active">Активное размещение</option>
+                        <option value="pro">Продвижение</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-city-ink">
+                      Статус
+                      <select
+                        name="billingStatus"
+                        defaultValue={billingAccount.billingStatus}
+                        className="rounded-2xl border border-city-line bg-white px-3 py-2 text-sm font-normal text-city-ink outline-none focus:border-city-green"
+                      >
+                        <option value="free">Бесплатно</option>
+                        <option value="trial">Тестовый период</option>
+                        <option value="active">Оплачен</option>
+                        <option value="expired">Истек</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-city-ink">
+                      Оплачен до
+                      <input
+                        name="paidUntil"
+                        type="date"
+                        defaultValue={formatDateInput(billingAccount.paidUntil)}
+                        className="rounded-2xl border border-city-line bg-white px-3 py-2 text-sm font-normal text-city-ink outline-none focus:border-city-green"
+                      />
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-city-ink">
+                      Тест до
+                      <input
+                        name="trialUntil"
+                        type="date"
+                        defaultValue={formatDateInput(billingAccount.trialUntil)}
+                        className="rounded-2xl border border-city-line bg-white px-3 py-2 text-sm font-normal text-city-ink outline-none focus:border-city-green"
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-city-ink">
+                      <input
+                        name="platformBookingEnabled"
+                        type="checkbox"
+                        defaultChecked={billingAccount.platformBookingEnabled}
+                        className="h-4 w-4 accent-city-green"
+                      />
+                      Заявки через Влюди
+                    </label>
+                    <label className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-city-ink">
+                      <input
+                        name="promoteActivities"
+                        type="checkbox"
+                        defaultChecked={promotion.enabled}
+                        className="h-4 w-4 accent-city-green"
+                      />
+                      Продвигать карточки
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-city-ink">
+                      Приоритет
+                      <input
+                        name="priority"
+                        type="number"
+                        min="0"
+                        max="100"
+                        defaultValue={promotion.priority}
+                        className="rounded-2xl border border-city-line bg-white px-3 py-2 text-sm font-normal text-city-ink outline-none focus:border-city-green"
+                      />
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-city-ink sm:col-span-2">
+                      Комментарий по оплате
+                      <input
+                        name="billingComment"
+                        defaultValue={billingAccount.billingComment ?? ""}
+                        placeholder="Например: счет ЮKassa 990 ₽, оплата 03.08"
+                        className="rounded-2xl border border-city-line bg-white px-3 py-2 text-sm font-normal text-city-ink outline-none focus:border-city-green"
+                      />
+                    </label>
+                  </div>
+                  <button className="mt-4 rounded-full bg-city-green px-4 py-2 text-xs font-semibold text-white transition hover:bg-city-blue">
+                    Сохранить коммерцию
+                  </button>
+                </form>
 
                 <div className="mt-4 rounded-2xl bg-city-soft p-4">
                   <p className="text-sm font-semibold text-city-ink">Доступы к карточкам</p>
@@ -176,7 +351,8 @@ export default async function AdminOrganizersPage() {
                   </form>
                 </div>
               </article>
-            ))
+              );
+            })
           ) : (
             <p className="text-city-muted">Аккаунтов ЛК пока нет.</p>
           )}

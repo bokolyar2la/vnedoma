@@ -85,6 +85,11 @@ model OrganizerAccount {
   contact      String?
   passwordHash String
   isDisabled   Boolean                 @default(false)
+  billingPlan  String                  @default("free")
+  billingStatus String                 @default("free")
+  paidUntil    DateTime?
+  trialUntil   DateTime?
+  billingComment String?
   notificationEmail String?
   notificationTelegram String?
   platformBookingEnabled Boolean       @default(false)
