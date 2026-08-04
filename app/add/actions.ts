@@ -30,6 +30,54 @@ function fail(message: string): never {
   redirect(`/add?error=${encodeURIComponent(message)}`);
 }
 
+function countMatches(value: string, pattern: RegExp) {
+  return value.match(pattern)?.length ?? 0;
+}
+
+function hasSuspiciousContent(values: string[]) {
+  const text = values.join("\n").toLowerCase();
+  const urlCount = countMatches(text, /(https?:\/\/|www\.|\.ru\b|\.com\b|\.net\b|\.org\b)/gi);
+  const htmlTagCount = countMatches(text, /<\/?[a-z][^>]*>/gi);
+  const suspiciousPatterns = [
+    /xrumer/i,
+    /strongai/i,
+    /avito/i,
+    /продвижени[ея]\s+сайт/i,
+    /оптимизаци[яию]\s+сайт/i,
+    /seo/i,
+    /backlink/i,
+    /href\s*=/i,
+    /\[url=/i,
+    /viagra/i,
+    /casino/i,
+    /crypto/i
+  ];
+
+  return (
+    htmlTagCount > 0 ||
+    urlCount > 2 ||
+    suspiciousPatterns.some((pattern) => pattern.test(text))
+  );
+}
+
+function isLikelySpam(formData: FormData, values: string[]) {
+  const honeypot = getValue(formData, "website");
+  const startedAt = Number(getValue(formData, "formStartedAt"));
+  const filledTooFast =
+    Number.isFinite(startedAt) && Date.now() - startedAt > 0 && Date.now() - startedAt < 3500;
+
+  return Boolean(
+    honeypot ||
+      !Number.isFinite(startedAt) ||
+      filledTooFast ||
+      hasSuspiciousContent(values)
+  );
+}
+
+function silentlySkipSpam(): never {
+  redirect("/add?success=1");
+}
+
 export async function createActivity(formData: FormData) {
   const title = getValue(formData, "title");
   const description = getValue(formData, "description");
@@ -44,6 +92,25 @@ export async function createActivity(formData: FormData) {
   const priceNote = getValue(formData, "priceNote") || null;
   const privacyConsent = formData.get("privacyConsent") === "on";
   const rightsConfirmation = formData.get("rightsConfirmation") === "on";
+
+  if (
+    isLikelySpam(formData, [
+      title,
+      description,
+      address,
+      organizerName,
+      contactPhone,
+      getValue(formData, "contactUrl"),
+      submitterContact,
+      priceNote ?? ""
+    ])
+  ) {
+    console.warn("Skipped likely spam activity submission", {
+      title,
+      organizerName
+    });
+    silentlySkipSpam();
+  }
 
   if (!title) {
     fail("Укажите название активности.");
