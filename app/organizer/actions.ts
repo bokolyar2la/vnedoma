@@ -1,6 +1,6 @@
 "use server";
 
-import { OrganizerRequestStatus } from "@prisma/client";
+import { ActivityMediaType, OrganizerRequestStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
@@ -17,7 +17,7 @@ import {
   verifyPassword
 } from "@/lib/organizer-auth";
 import { prisma } from "@/lib/prisma";
-import { uploadActivityImage } from "@/lib/s3-upload";
+import { uploadActivityImage, uploadActivityImageField } from "@/lib/s3-upload";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -32,6 +32,41 @@ function getNumber(formData: FormData, key: string) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+async function getActivityMediaInput(formData: FormData) {
+  const media = await Promise.all(
+    [1, 2, 3].map(async (position) => {
+      const uploadedUrl = await uploadActivityImageField(formData, `media${position}File`);
+      const url = uploadedUrl ?? getString(formData, `media${position}Url`);
+      const rawType = getString(formData, `media${position}Type`);
+
+      if (!url) {
+        return null;
+      }
+
+      return {
+        type:
+          uploadedUrl || rawType !== ActivityMediaType.video
+            ? ActivityMediaType.image
+            : ActivityMediaType.video,
+        url,
+        caption: getString(formData, `media${position}Caption`) || null,
+        position
+      };
+    })
+  );
+
+  return media.filter(
+    (
+      item
+    ): item is {
+      type: ActivityMediaType;
+      url: string;
+      caption: string | null;
+      position: number;
+    } => Boolean(item)
+  );
 }
 
 function fail(path: string, message: string): never {
@@ -317,6 +352,16 @@ export async function createOrganizerEditRequest(formData: FormData) {
     fail(`/organizer/activities/${activity.slug}`, message);
   }
 
+  let media: Awaited<ReturnType<typeof getActivityMediaInput>> = [];
+
+  try {
+    media = await getActivityMediaInput(formData);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Не удалось загрузить изображение в галерею.";
+    fail(`/organizer/activities/${activity.slug}`, message);
+  }
+
   const updateData = {
     title,
     description,
@@ -334,15 +379,29 @@ export async function createOrganizerEditRequest(formData: FormData) {
     imageUrl
   };
 
-  await prisma.$transaction([
-    prisma.activity.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.activity.update({
       where: { id: activityId },
       data: {
         ...updateData,
         isVerified: true
       }
-    }),
-    prisma.organizerEditRequest.create({
+    });
+
+    await tx.activityMedia.deleteMany({
+      where: { activityId }
+    });
+
+    if (media.length > 0) {
+      await tx.activityMedia.createMany({
+        data: media.map((item) => ({
+          ...item,
+          activityId
+        }))
+      });
+    }
+
+    await tx.organizerEditRequest.create({
       data: {
         accountId: account.id,
         activityId,
@@ -351,12 +410,13 @@ export async function createOrganizerEditRequest(formData: FormData) {
         note: getString(formData, "note") || null,
         adminComment: "Изменение опубликовано организатором без модерации."
       }
-    })
-  ]);
+    });
+  });
 
   revalidatePath("/admin/organizer-requests");
   revalidatePath("/organizer");
   revalidatePath(`/organizer/activities/${activity.slug}`);
+  revalidatePath("/kuda-shodit-v-tule");
   revalidatePath("/tula");
   revalidatePath(`/activity/${activity.slug}`);
   redirect(`/organizer/activities/${activity.slug}?edit=published`);

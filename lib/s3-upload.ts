@@ -71,9 +71,7 @@ function buildObjectKey(file: File, extension: string) {
   return `activities/${new Date().toISOString().slice(0, 10)}/${Date.now()}-${randomUUID()}-${name}.${extension}`;
 }
 
-export async function uploadActivityImage(formData: FormData) {
-  const value = formData.get("imageFile");
-
+async function uploadImageFile(value: FormDataEntryValue | null) {
   if (!(value instanceof File) || value.size === 0) {
     return null;
   }
@@ -155,4 +153,12 @@ export async function uploadActivityImage(formData: FormData) {
     .split("/")
     .map(encodeKeyPart)
     .join("/")}`;
+}
+
+export async function uploadActivityImage(formData: FormData) {
+  return uploadImageFile(formData.get("imageFile"));
+}
+
+export async function uploadActivityImageField(formData: FormData, fieldName: string) {
+  return uploadImageFile(formData.get(fieldName));
 }

@@ -29,6 +29,8 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+const mediaSlots = [1, 2, 3];
+
 const statLabels: Record<ActivityStatType, string> = {
   view: "Просмотры",
   signup_click: "Клики записаться",
@@ -83,6 +85,9 @@ export default async function OrganizerActivityPage({
     include: {
       category: true,
       organizer: true,
+      media: {
+        orderBy: { position: "asc" }
+      },
       events: {
         where: getUpcomingEventWhere(new Date()),
         orderBy: { startsAt: "asc" },
@@ -612,6 +617,78 @@ export default async function OrganizerActivityPage({
               className="rounded-2xl border border-city-line bg-white px-4 py-3 text-sm text-city-muted outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-city-green file:px-4 file:py-2 file:font-semibold file:text-white focus:border-city-green"
             />
           </label>
+
+          <div className="rounded-3xl border border-city-line bg-city-soft p-4 sm:p-5">
+            <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
+                  Фото и видео
+                </p>
+                <h3 className="mt-2 text-xl font-bold text-city-ink">Галерея карточки</h3>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-city-muted">
+                  Добавьте до 3 материалов: фото пространства, процесса, результата или ссылку на короткое видео.
+                </p>
+              </div>
+              <span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-city-green">
+                видно на странице
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-4">
+              {mediaSlots.map((position) => {
+                const media = activity.media[position - 1];
+
+                return (
+                  <div key={position} className="rounded-2xl border border-city-line bg-white p-4">
+                    <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                      <p className="text-sm font-semibold text-city-ink">Материал {position}</p>
+                      <span className="w-fit rounded-full bg-city-soft px-3 py-1 text-xs font-semibold text-city-green">
+                        фото или видео
+                      </span>
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-[150px_1fr]">
+                      <select
+                        name={`media${position}Type`}
+                        defaultValue={media?.type ?? "image"}
+                        className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green"
+                      >
+                        <option value="image">Фото</option>
+                        <option value="video">Видео</option>
+                      </select>
+                      <input
+                        name={`media${position}Url`}
+                        defaultValue={media?.url ?? ""}
+                        className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
+                        placeholder="Ссылка на фото или видео"
+                      />
+                    </div>
+                    <label
+                      htmlFor={fieldId(`media${position}File`)}
+                      className="mt-3 flex min-h-12 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-city-green/50 bg-city-green/5 px-4 text-sm font-semibold text-city-green transition hover:border-city-green hover:bg-white"
+                    >
+                      Загрузить фото
+                    </label>
+                    <input
+                      id={fieldId(`media${position}File`)}
+                      name={`media${position}File`}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                    />
+                    <p className="mt-2 text-xs leading-5 text-city-muted">
+                      Для фото можно выбрать файл или вставить ссылку. Видео пока добавляется ссылкой.
+                    </p>
+                    <input
+                      name={`media${position}Caption`}
+                      defaultValue={media?.caption ?? ""}
+                      className="mt-3 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
+                      placeholder="Подпись к фото или видео"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           <label className="grid gap-2" htmlFor={fieldId("note")}>
             <span className="text-sm font-semibold text-city-ink">Комментарий для Влюди</span>

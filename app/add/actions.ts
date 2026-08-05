@@ -1,6 +1,6 @@
 "use server";
 
-import { ActivityStatus } from "@prisma/client";
+import { ActivityMediaType, ActivityStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/lib/booking-notifications";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
 import { prisma } from "@/lib/prisma";
+import { uploadActivityImageField } from "@/lib/s3-upload";
 import { generateUniqueSlug } from "@/lib/slug";
 
 function getValue(formData: FormData, key: string) {
@@ -24,6 +25,41 @@ function getNumberValue(formData: FormData, key: string) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+async function getActivityMediaInput(formData: FormData) {
+  const media = await Promise.all(
+    [1, 2, 3].map(async (position) => {
+      const uploadedUrl = await uploadActivityImageField(formData, `media${position}File`);
+      const url = uploadedUrl ?? getValue(formData, `media${position}Url`);
+      const rawType = getValue(formData, `media${position}Type`);
+
+      if (!url) {
+        return null;
+      }
+
+      return {
+        type:
+          uploadedUrl || rawType !== ActivityMediaType.video
+            ? ActivityMediaType.image
+            : ActivityMediaType.video,
+        url,
+        caption: getValue(formData, `media${position}Caption`) || null,
+        position
+      };
+    })
+  );
+
+  return media.filter(
+    (
+      item
+    ): item is {
+      type: ActivityMediaType;
+      url: string;
+      caption: string | null;
+      position: number;
+    } => Boolean(item)
+  );
 }
 
 function fail(message: string): never {
@@ -92,6 +128,7 @@ export async function createActivity(formData: FormData) {
   const priceNote = getValue(formData, "priceNote") || null;
   const privacyConsent = formData.get("privacyConsent") === "on";
   const rightsConfirmation = formData.get("rightsConfirmation") === "on";
+  let media: Awaited<ReturnType<typeof getActivityMediaInput>> = [];
 
   if (
     isLikelySpam(formData, [
@@ -152,6 +189,14 @@ export async function createActivity(formData: FormData) {
     fail("Выбранная категория не найдена.");
   }
 
+  try {
+    media = await getActivityMediaInput(formData);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Не удалось загрузить изображение в галерею.";
+    fail(message);
+  }
+
   const city = await prisma.city.upsert({
     where: { slug: "tula" },
     update: { name: "Тула" },
@@ -208,6 +253,15 @@ export async function createActivity(formData: FormData) {
       status: ActivityStatus.draft
     }
   });
+
+  if (media.length > 0) {
+    await prisma.activityMedia.createMany({
+      data: media.map((item) => ({
+        ...item,
+        activityId: activity.id
+      }))
+    });
+  }
 
   await notifySubmitterActivityReceived({
     activityId: activity.id,

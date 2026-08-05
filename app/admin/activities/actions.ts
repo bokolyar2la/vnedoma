@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { notifySubmitterActivityPublished } from "@/lib/booking-notifications";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
 import { prisma } from "@/lib/prisma";
-import { uploadActivityImage } from "@/lib/s3-upload";
+import { uploadActivityImage, uploadActivityImageField } from "@/lib/s3-upload";
 import { generateUniqueSlug } from "@/lib/slug";
 
 function getString(formData: FormData, key: string) {
@@ -29,10 +29,11 @@ function getNumber(formData: FormData, key: string) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
-function getActivityMediaInput(formData: FormData) {
-  return [1, 2, 3]
-    .map((position) => {
-      const url = getOptionalString(formData, `media${position}Url`);
+async function getActivityMediaInput(formData: FormData) {
+  const media = await Promise.all(
+    [1, 2, 3].map(async (position) => {
+      const uploadedUrl = await uploadActivityImageField(formData, `media${position}File`);
+      const url = uploadedUrl ?? getOptionalString(formData, `media${position}Url`);
       const rawType = getString(formData, `media${position}Type`);
 
       if (!url) {
@@ -49,16 +50,18 @@ function getActivityMediaInput(formData: FormData) {
         position
       };
     })
-    .filter(
-      (
-        media
-      ): media is {
-        type: ActivityMediaType;
-        url: string;
-        caption: string | null;
-        position: number;
-      } => Boolean(media)
-    );
+  );
+
+  return media.filter(
+    (
+      media
+    ): media is {
+      type: ActivityMediaType;
+      url: string;
+      caption: string | null;
+      position: number;
+    } => Boolean(media)
+  );
 }
 
 function getRequiredId(formData: FormData) {
@@ -156,7 +159,7 @@ export async function createAdminActivity(formData: FormData) {
   const isFree = formData.get("isFree") === "on";
   const priceNote = getOptionalString(formData, "priceNote");
   const imageUrl = (await uploadActivityImage(formData)) ?? getOptionalString(formData, "imageUrl");
-  const media = getActivityMediaInput(formData);
+  const media = await getActivityMediaInput(formData);
 
   const activity = await prisma.activity.create({
     data: {
@@ -282,7 +285,7 @@ export async function updateActivity(formData: FormData) {
   const isFree = formData.get("isFree") === "on";
   const priceNote = getOptionalString(formData, "priceNote");
   const imageUrl = (await uploadActivityImage(formData)) ?? getOptionalString(formData, "imageUrl");
-  const media = getActivityMediaInput(formData);
+  const media = await getActivityMediaInput(formData);
 
   await prisma.activity.update({
     where: { id },

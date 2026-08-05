@@ -234,8 +234,13 @@ export default async function NewActivityPage() {
             </p>
             <div className="mt-4 grid gap-4">
               {mediaSlots.map((position) => (
-                <div key={position} className="rounded-2xl bg-white p-4">
-                  <p className="text-sm font-semibold text-city-ink">Материал {position}</p>
+                <div key={position} className="rounded-2xl border border-city-line bg-white p-4">
+                  <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                    <p className="text-sm font-semibold text-city-ink">Материал {position}</p>
+                    <span className="w-fit rounded-full bg-city-soft px-3 py-1 text-xs font-semibold text-city-green">
+                      фото или видео
+                    </span>
+                  </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-[150px_1fr]">
                     <select
                       name={`media${position}Type`}
@@ -248,9 +253,25 @@ export default async function NewActivityPage() {
                     <input
                       name={`media${position}Url`}
                       className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-                      placeholder="https://..."
+                      placeholder="Ссылка на фото или видео"
                     />
                   </div>
+                  <label
+                    htmlFor={`media${position}File`}
+                    className="mt-3 flex min-h-12 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-city-green/50 bg-city-green/5 px-4 text-sm font-semibold text-city-green transition hover:border-city-green hover:bg-white"
+                  >
+                    Загрузить фото
+                  </label>
+                  <input
+                    id={`media${position}File`}
+                    name={`media${position}File`}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                  />
+                  <p className="mt-2 text-xs leading-5 text-city-muted">
+                    Для фото можно выбрать файл или вставить ссылку. Для видео вставьте ссылку на VK, YouTube, Rutube или сайт.
+                  </p>
                   <input
                     name={`media${position}Caption`}
                     className="mt-3 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
