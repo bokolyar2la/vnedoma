@@ -4,6 +4,7 @@ import { ActivityMediaType, OrganizerRequestStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
+import { resolveOrganizerBilling } from "@/lib/billing";
 import { getEventExpiresAt } from "@/lib/events";
 import {
   notifyOrganizerAccessApproved,
@@ -270,6 +271,7 @@ export async function updateOrganizerBookingSettings(formData: FormData) {
   }
 
   const enabled = formData.get("platformBookingEnabled") === "on";
+  const billing = resolveOrganizerBilling(account as any);
   const notificationEmail = getString(formData, "notificationEmail") || account.email;
   const notificationTelegram = getString(formData, "notificationTelegram") || null;
   const discountText =
@@ -278,6 +280,10 @@ export async function updateOrganizerBookingSettings(formData: FormData) {
 
   if (notificationEmail && !notificationEmail.includes("@")) {
     fail(returnPath, "Проверьте email для уведомлений.");
+  }
+
+  if (enabled && !billing.isActive) {
+    fail(returnPath, "Запись через Влюди доступна только при активном размещении.");
   }
 
   if (enabled && !notificationEmail && !notificationTelegram) {

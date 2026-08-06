@@ -10,6 +10,7 @@ import {
   updateOrganizerPassword
 } from "@/app/organizer/actions";
 import { ActivityImage } from "@/components/ActivityImage";
+import { resolveOrganizerBilling } from "@/lib/billing";
 import { getUpcomingEventWhere } from "@/lib/events";
 import { formatPrice } from "@/lib/format";
 import { getOrganizerAccount } from "@/lib/organizer-auth";
@@ -115,14 +116,6 @@ function formatBillingDate(date: Date | null) {
     month: "long",
     year: "numeric"
   }).format(date);
-}
-
-function getBillingUntil(account: {
-  billingStatus: string;
-  paidUntil: Date | null;
-  trialUntil: Date | null;
-}) {
-  return account.billingStatus === "trial" ? account.trialUntil : account.paidUntil;
 }
 
 export default async function OrganizerCabinetPage({ searchParams }: OrganizerPageProps) {
@@ -254,10 +247,15 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
     )
     .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime())[0];
   const billingAccount = account as typeof account & OrganizerBillingFields;
-  const billingUntil = getBillingUntil(billingAccount);
+  const resolvedBilling = resolveOrganizerBilling(billingAccount, now);
+  const billingUntil = resolvedBilling.until;
   const billingUntilText = formatBillingDate(billingUntil);
-  const billingPlanLabel = billingPlanLabels[billingAccount.billingPlan] ?? billingAccount.billingPlan;
-  const billingStatusLabel = billingStatusLabels[billingAccount.billingStatus] ?? billingAccount.billingStatus;
+  const billingPlanLabel =
+    resolvedBilling.status === "expired"
+      ? "Размещение истекло"
+      : billingPlanLabels[resolvedBilling.plan] ?? resolvedBilling.plan;
+  const billingStatusLabel = billingStatusLabels[resolvedBilling.status] ?? resolvedBilling.status;
+  const platformBookingAvailable = account.platformBookingEnabled && resolvedBilling.isActive;
 
   const requestItems = [
     ...claims.map((claim) => ({
@@ -410,7 +408,7 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
 
           <div className="mt-8 rounded-[24px] bg-city-green/10 p-5">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-lg font-bold text-city-green">
-              {billingAccount.billingPlan === "pro" ? "PRO" : billingAccount.billingPlan === "active" ? "A" : "0"}
+              {resolvedBilling.plan === "pro" ? "PRO" : resolvedBilling.plan === "active" ? "A" : "0"}
             </div>
             <p className="mt-4 text-sm font-bold leading-5 text-city-green">
               {billingPlanLabel}
@@ -594,22 +592,24 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                               <div>
                                 <p className="text-sm font-bold text-city-ink">
-                                  Запись через Влюди {account.platformBookingEnabled ? "включена" : "выключена"}
+                                  Запись через Влюди {platformBookingAvailable ? "включена" : "выключена"}
                                 </p>
                                 <p className="mt-1 text-xs leading-5 text-city-muted">
-                                  {account.platformBookingEnabled
+                                  {platformBookingAvailable
                                     ? `Заявки приходят на ${account.notificationEmail ?? account.email}`
-                                    : "Можно принимать заявки прямо со страницы активности."}
+                                    : resolvedBilling.isActive
+                                      ? "Можно принимать заявки прямо со страницы активности."
+                                      : "Будет доступно после продления активного размещения."}
                                 </p>
                               </div>
-                              {account.platformBookingEnabled ? (
+                              {platformBookingAvailable ? (
                                 <Link
                                   href="/organizer?tab=settings"
                                   className="inline-flex min-h-9 items-center justify-center rounded-full bg-white px-3 text-xs font-semibold text-city-green transition hover:text-city-blue"
                                 >
                                   Настроить
                                 </Link>
-                              ) : (
+                              ) : resolvedBilling.isActive ? (
                                 <form action={updateOrganizerBookingSettings}>
                                   <input type="hidden" name="platformBookingEnabled" value="on" />
                                   <input
@@ -631,6 +631,13 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
                                     Включить
                                   </button>
                                 </form>
+                              ) : (
+                                <Link
+                                  href="/organizers"
+                                  className="inline-flex min-h-9 items-center justify-center rounded-full bg-white px-3 text-xs font-semibold text-city-green transition hover:text-city-blue"
+                                >
+                                  Продлить
+                                </Link>
                               )}
                             </div>
                           </div>
@@ -894,7 +901,8 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
                     <input
                       type="checkbox"
                       name="platformBookingEnabled"
-                      defaultChecked={account.platformBookingEnabled}
+                      defaultChecked={platformBookingAvailable}
+                      disabled={!resolvedBilling.isActive}
                       className="mt-1 h-4 w-4 accent-city-green"
                     />
                     <span>

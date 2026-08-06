@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ActivityStatus } from "@prisma/client";
 import { ActivityCard } from "@/components/ActivityCard";
 import { TrackedForm, TrackedLink } from "@/components/MetrikaGoals";
+import { isEffectivelyPromoted } from "@/lib/billing";
 import { getUpcomingEventWhere } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 
@@ -227,7 +228,9 @@ function hashForRotation(value: string) {
   return hash;
 }
 
-function rotateActivities<T extends { id: number; isPromoted?: boolean | null }>(
+function rotateActivities<
+  T extends { id: number; isPromoted?: boolean | null; promotedUntil?: Date | null }
+>(
   activities: T[],
   sectionKey: string,
   take = 6
@@ -236,8 +239,8 @@ function rotateActivities<T extends { id: number; isPromoted?: boolean | null }>
 
   return [...activities]
     .sort((left, right) => {
-      const leftPromoted = Number(Boolean(left.isPromoted));
-      const rightPromoted = Number(Boolean(right.isPromoted));
+      const leftPromoted = Number(isEffectivelyPromoted(left));
+      const rightPromoted = Number(isEffectivelyPromoted(right));
 
       if (leftPromoted !== rightPromoted) {
         return rightPromoted - leftPromoted;

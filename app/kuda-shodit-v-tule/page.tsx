@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ActivityStatus } from "@prisma/client";
 import { ActivityCard } from "@/components/ActivityCard";
 import { TrackedLink } from "@/components/MetrikaGoals";
+import { isEffectivelyPromoted } from "@/lib/billing";
 import { getUpcomingEventWhere } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 
@@ -63,6 +64,22 @@ export default async function WhereToGoTulaPage() {
       take: 12
     })
   ]);
+  const sortedActivities = [...activities].sort((left, right) => {
+    const promotedDiff =
+      Number(isEffectivelyPromoted(right, now)) - Number(isEffectivelyPromoted(left, now));
+
+    if (promotedDiff !== 0) {
+      return promotedDiff;
+    }
+
+    const priorityDiff = right.priority - left.priority;
+
+    if (priorityDiff !== 0) {
+      return priorityDiff;
+    }
+
+    return right.updatedAt.getTime() - left.updatedAt.getTime();
+  });
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -175,7 +192,7 @@ export default async function WhereToGoTulaPage() {
           </TrackedLink>
         </div>
         <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {activities.map((activity) => (
+          {sortedActivities.map((activity) => (
             <ActivityCard key={activity.id} activity={activity} />
           ))}
         </div>

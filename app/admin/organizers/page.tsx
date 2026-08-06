@@ -10,6 +10,7 @@ import {
   revokeOrganizerAccess,
   updateOrganizerBilling
 } from "@/app/admin/organizers/actions";
+import { isEffectivelyPromoted, resolveOrganizerBilling } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -81,7 +82,8 @@ function formatAdminDate(date: Date | null) {
   }).format(date);
 }
 
-function getAccountPromotion(account: {
+function getAccountPromotion(
+  account: {
   accesses: Array<{
     organizer: {
       activities: Array<{
@@ -91,9 +93,11 @@ function getAccountPromotion(account: {
       }>;
     };
   }>;
-}) {
+  },
+  now: Date
+) {
   const activities = account.accesses.flatMap((access) => access.organizer.activities);
-  const promoted = activities.filter((activity) => activity.isPromoted);
+  const promoted = activities.filter((activity) => isEffectivelyPromoted(activity, now));
 
   return {
     enabled: promoted.length > 0,
@@ -103,6 +107,7 @@ function getAccountPromotion(account: {
 }
 
 export default async function AdminOrganizersPage() {
+  const now = new Date();
   const [organizers, accounts] = await Promise.all([
     prisma.organizer.findMany({
       include: {
@@ -175,8 +180,9 @@ export default async function AdminOrganizersPage() {
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           {accounts.length ? (
             accounts.map((account) => {
-              const promotion = getAccountPromotion(account);
+              const promotion = getAccountPromotion(account, now);
               const billingAccount = account as typeof account & OrganizerBillingFields;
+              const resolvedBilling = resolveOrganizerBilling(billingAccount, now);
 
               return (
               <article
@@ -208,7 +214,7 @@ export default async function AdminOrganizersPage() {
                     <div>
                       <p className="text-sm font-semibold text-city-ink">Коммерция</p>
                       <p className="mt-1 text-xs leading-5 text-city-muted">
-                        Сейчас: {billingPlanLabels[billingAccount.billingPlan] ?? billingAccount.billingPlan}, {billingStatusLabels[billingAccount.billingStatus] ?? billingAccount.billingStatus}.
+                        Сейчас: {billingPlanLabels[billingAccount.billingPlan] ?? billingAccount.billingPlan}, {billingStatusLabels[resolvedBilling.status] ?? resolvedBilling.status}.
                         Оплачен до: {formatAdminDate(billingAccount.paidUntil)}.
                       </p>
                     </div>
@@ -235,7 +241,7 @@ export default async function AdminOrganizersPage() {
                       Статус
                       <select
                         name="billingStatus"
-                        defaultValue={billingAccount.billingStatus}
+                        defaultValue={resolvedBilling.status}
                         className="rounded-2xl border border-city-line bg-white px-3 py-2 text-sm font-normal text-city-ink outline-none focus:border-city-green"
                       >
                         <option value="free">Бесплатно</option>
@@ -266,7 +272,7 @@ export default async function AdminOrganizersPage() {
                       <input
                         name="platformBookingEnabled"
                         type="checkbox"
-                        defaultChecked={billingAccount.platformBookingEnabled}
+                        defaultChecked={billingAccount.platformBookingEnabled && resolvedBilling.isActive}
                         className="h-4 w-4 accent-city-green"
                       />
                       Заявки через Влюди

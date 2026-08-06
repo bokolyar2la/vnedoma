@@ -8,6 +8,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ActivityStatOnMount, TrackedExternalLink } from "@/components/MetrikaGoals";
 import { createActivityBookingRequest } from "@/app/activity/actions";
 import { getSocialLevelLabel, isTripActivity } from "@/lib/activity-social";
+import { isEffectivelyPromoted, resolveOrganizerBilling } from "@/lib/billing";
 import { getUpcomingEventWhere } from "@/lib/events";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -17,6 +18,14 @@ type ActivityPageProps = {
     slug: string;
   }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+type BookingAccountForPage = {
+  billingPlan: string;
+  billingStatus: string;
+  paidUntil: Date | null;
+  trialUntil: Date | null;
+  platformBookingDiscountText: string | null;
 };
 
 const baseUrl = "https://vlyudi.ru";
@@ -230,21 +239,43 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
     orderBy: [{ isPromoted: "desc" }, { priority: "desc" }, { createdAt: "desc" }],
     take: 3
   });
+  const sortedSimilarActivities = [...similarActivities].sort((left, right) => {
+    const promotedDiff =
+      Number(isEffectivelyPromoted(right)) - Number(isEffectivelyPromoted(left));
 
-  const bookingAccount = await prisma.organizerAccount.findFirst({
-    where: {
-      platformBookingEnabled: true,
-      isDisabled: false,
-      accesses: {
-        some: {
-          organizerId: activity.organizerId
-        }
-      }
-    },
-    select: {
-      platformBookingDiscountText: true
+    if (promotedDiff !== 0) {
+      return promotedDiff;
     }
+
+    const priorityDiff = right.priority - left.priority;
+
+    if (priorityDiff !== 0) {
+      return priorityDiff;
+    }
+
+    return right.createdAt.getTime() - left.createdAt.getTime();
   });
+
+  const bookingAccounts = (await prisma.organizerAccount.findMany({
+      where: {
+        platformBookingEnabled: true,
+        isDisabled: false,
+        accesses: {
+          some: {
+            organizerId: activity.organizerId
+          }
+        }
+      },
+      select: {
+        billingPlan: true,
+        billingStatus: true,
+        paidUntil: true,
+        trialUntil: true,
+        platformBookingDiscountText: true
+      } as any
+    })) as unknown as BookingAccountForPage[];
+  const bookingAccount =
+    bookingAccounts.find((account) => resolveOrganizerBilling(account).isActive) ?? null;
 
   const price = formatPrice(activity);
   const nextEvent = activity.events[0];
@@ -654,7 +685,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
         ))}
       </section>
 
-      {similarActivities.length > 0 ? (
+      {sortedSimilarActivities.length > 0 ? (
         <section className="mt-12">
           <div>
             <h2 className="text-2xl font-bold text-city-ink sm:text-3xl">
@@ -665,7 +696,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
             </p>
           </div>
           <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {similarActivities.map((similar) => (
+            {sortedSimilarActivities.map((similar) => (
               <ActivityCard key={similar.id} activity={similar} />
             ))}
           </div>

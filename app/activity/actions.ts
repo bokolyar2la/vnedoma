@@ -3,6 +3,7 @@
 import { ActivityStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { resolveOrganizerBilling } from "@/lib/billing";
 import { notifyOrganizerAboutBooking } from "@/lib/booking-notifications";
 import { prisma } from "@/lib/prisma";
 
@@ -14,6 +15,18 @@ function getString(formData: FormData, key: string) {
 function fail(slug: string, message: string): never {
   redirect(`/activity/${slug}?bookingError=${encodeURIComponent(message)}#booking-form`);
 }
+
+type BookingAccountForRequest = {
+  id: number;
+  email: string;
+  billingPlan: string;
+  billingStatus: string;
+  paidUntil: Date | null;
+  trialUntil: Date | null;
+  notificationEmail: string | null;
+  notificationTelegram: string | null;
+  platformBookingDiscountText: string | null;
+};
 
 async function sendNotificationSafely(promise: Promise<void>, label: string) {
   try {
@@ -58,24 +71,30 @@ export async function createActivityBookingRequest(formData: FormData) {
     fail(activity.slug, "Укажите телефон, Telegram или другой контакт.");
   }
 
-  const organizerAccount = await prisma.organizerAccount.findFirst({
-    where: {
-      platformBookingEnabled: true,
-      isDisabled: false,
-      accesses: {
-        some: {
-          organizerId: activity.organizerId
+  const organizerAccounts = (await prisma.organizerAccount.findMany({
+      where: {
+        platformBookingEnabled: true,
+        isDisabled: false,
+        accesses: {
+          some: {
+            organizerId: activity.organizerId
+          }
         }
-      }
-    },
-    select: {
-      id: true,
-      email: true,
-      notificationEmail: true,
-      notificationTelegram: true,
-      platformBookingDiscountText: true
-    }
-  });
+      },
+      select: {
+        id: true,
+        email: true,
+        billingPlan: true,
+        billingStatus: true,
+        paidUntil: true,
+        trialUntil: true,
+        notificationEmail: true,
+        notificationTelegram: true,
+        platformBookingDiscountText: true
+      } as any
+    })) as unknown as BookingAccountForRequest[];
+  const organizerAccount =
+    organizerAccounts.find((account) => resolveOrganizerBilling(account).isActive) ?? null;
 
   if (!organizerAccount) {
     fail(activity.slug, "Запись через Влюди сейчас недоступна для этой активности.");

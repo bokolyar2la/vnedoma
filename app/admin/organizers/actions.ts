@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { resolveOrganizerBilling } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 
 function getId(formData: FormData, key: string) {
@@ -125,16 +126,24 @@ export async function updateOrganizerBilling(formData: FormData) {
   const platformBookingEnabled = formData.get("platformBookingEnabled") === "on";
   const promoteActivities = formData.get("promoteActivities") === "on";
   const priority = getPriority(formData);
+  const resolvedBilling = resolveOrganizerBilling({
+    billingPlan,
+    billingStatus,
+    paidUntil,
+    trialUntil
+  });
+  const canUsePaidFeatures = resolvedBilling.isActive && billingPlan !== "free";
+  const effectivePromoteActivities = promoteActivities && canUsePaidFeatures;
 
   const account = await prisma.organizerAccount.update({
     where: { id },
     data: {
       billingPlan,
-      billingStatus,
+      billingStatus: resolvedBilling.status,
       paidUntil,
       trialUntil,
       billingComment,
-      platformBookingEnabled
+      platformBookingEnabled: platformBookingEnabled && canUsePaidFeatures
     } as any,
     include: {
       accesses: {
@@ -153,9 +162,9 @@ export async function updateOrganizerBilling(formData: FormData) {
         organizerId: { in: organizerIds }
       },
       data: {
-        isPromoted: promoteActivities,
-        promotedUntil: promoteActivities ? paidUntil : null,
-        priority: promoteActivities ? priority : 0
+        isPromoted: effectivePromoteActivities,
+        promotedUntil: effectivePromoteActivities ? paidUntil : null,
+        priority: effectivePromoteActivities ? priority : 0
       }
     });
   }
