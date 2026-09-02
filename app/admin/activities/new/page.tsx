@@ -14,10 +14,32 @@ export const dynamic = "force-dynamic";
 
 const mediaSlots = [1, 2, 3];
 
-export default async function NewActivityPage() {
-  const categories = await prisma.category.findMany({
-    where: { slug: { in: [...currentCategorySlugs] } }
-  });
+type NewActivityPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function getSingleParam(
+  params: Record<string, string | string[] | undefined>,
+  key: string
+) {
+  const value = params[key];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function NewActivityPage({ searchParams }: NewActivityPageProps) {
+  const params = searchParams ? await searchParams : {};
+  const organizerId = Number(getSingleParam(params, "organizerId"));
+  const [categories, existingOrganizer] = await Promise.all([
+    prisma.category.findMany({
+      where: { slug: { in: [...currentCategorySlugs] } }
+    }),
+    Number.isInteger(organizerId) && organizerId > 0
+      ? prisma.organizer.findUnique({
+          where: { id: organizerId },
+          include: { city: true }
+        })
+      : null
+  ]);
   categories.sort(
     (a, b) => currentCategorySlugs.indexOf(a.slug) - currentCategorySlugs.indexOf(b.slug)
   );
@@ -41,7 +63,18 @@ export default async function NewActivityPage() {
         encType="multipart/form-data"
         className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]"
       >
+        {existingOrganizer ? (
+          <input type="hidden" name="organizerId" value={existingOrganizer.id} />
+        ) : null}
         <section className="space-y-5 rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
+          {existingOrganizer ? (
+            <div className="rounded-2xl border border-city-green/20 bg-city-green/10 p-4 text-sm leading-6 text-city-ink">
+              Карточка будет привязана к организатору{" "}
+              <span className="font-bold">{existingOrganizer.name}</span>. Это исправляет ситуацию,
+              когда аккаунт ЛК уже есть, а активностей у организатора пока 0.
+            </div>
+          ) : null}
+
           <div>
             <label htmlFor="title" className="text-sm font-semibold text-city-ink">
               Название
@@ -108,6 +141,7 @@ export default async function NewActivityPage() {
               <input
                 id="organizerName"
                 name="organizerName"
+                defaultValue={existingOrganizer?.name ?? ""}
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
                 placeholder="Название организатора или площадки"
               />
@@ -155,12 +189,13 @@ export default async function NewActivityPage() {
             <label htmlFor="address" className="text-sm font-semibold text-city-ink">
               Адрес
             </label>
-            <input
-              id="address"
-              name="address"
-              className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-              placeholder="Тула, улица и дом"
-            />
+              <input
+                id="address"
+                name="address"
+                defaultValue={existingOrganizer?.address ?? ""}
+                className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                placeholder="Тула, улица и дом"
+              />
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
@@ -171,6 +206,7 @@ export default async function NewActivityPage() {
               <input
                 id="contactPhone"
                 name="contactPhone"
+                defaultValue={existingOrganizer?.phone ?? ""}
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
                 placeholder="+7..."
               />
@@ -182,6 +218,7 @@ export default async function NewActivityPage() {
               <input
                 id="contactUrl"
                 name="contactUrl"
+                defaultValue={existingOrganizer?.websiteUrl ?? existingOrganizer?.telegramUrl ?? ""}
                 className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
                 placeholder="VK, Telegram, сайт, Timepad или страница записи"
               />
@@ -354,7 +391,7 @@ export default async function NewActivityPage() {
               Можно прийти одному
             </label>
             <label className="flex items-center gap-2 text-sm text-city-muted">
-              <input name="isVerified" type="checkbox" className="h-4 w-4 accent-city-green" />
+              <input name="isVerified" type="checkbox" defaultChecked className="h-4 w-4 accent-city-green" />
               Проверено вручную
             </label>
             <label className="flex items-center gap-2 text-sm text-city-muted">

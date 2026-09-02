@@ -169,6 +169,10 @@ export default async function AdminOrganizersPage() {
           <p className="mt-3 max-w-3xl text-city-muted">
             Здесь отдельно видны организации из каталога и аккаунты личного кабинета. Тестовые аккаунты можно удалить, а реальные временно отключить.
           </p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-city-muted">
+            Важно: аккаунт ЛК и карточка активности — разные вещи. Если у организатора
+            указано “активностей: 0”, карточки в каталоге еще нет, ее нужно создать отдельно.
+          </p>
         </div>
         <Link href="/admin" className="text-sm font-semibold text-city-green">
           К сводке
@@ -313,7 +317,7 @@ export default async function AdminOrganizersPage() {
                 </form>
 
                 <div className="mt-4 rounded-2xl bg-city-soft p-4">
-                  <p className="text-sm font-semibold text-city-ink">Доступы к карточкам</p>
+                  <p className="text-sm font-semibold text-city-ink">Доступы к организаторам</p>
                   {account.accesses.length ? (
                     <div className="mt-3 grid gap-3">
                       {account.accesses.map((access) => (
@@ -326,11 +330,26 @@ export default async function AdminOrganizersPage() {
                             <p className="text-city-muted">
                               {access.organizer.city.name} · активностей: {access.organizer._count.activities}
                             </p>
+                            {access.organizer._count.activities === 0 ? (
+                              <p className="mt-1 text-xs font-semibold text-city-coral">
+                                Карточки активности еще нет
+                              </p>
+                            ) : null}
                           </div>
-                          <form action={revokeOrganizerAccess}>
-                            <input type="hidden" name="accessId" value={access.id} />
-                            <AdminButton>Убрать доступ</AdminButton>
-                          </form>
+                          <div className="flex flex-wrap gap-2">
+                            {access.organizer._count.activities === 0 ? (
+                              <Link
+                                href={`/admin/activities/new?organizerId=${access.organizer.id}`}
+                                className="rounded-full bg-city-green px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-city-blue"
+                              >
+                                Создать карточку
+                              </Link>
+                            ) : null}
+                            <form action={revokeOrganizerAccess}>
+                              <input type="hidden" name="accessId" value={access.id} />
+                              <AdminButton>Убрать доступ</AdminButton>
+                            </form>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -416,10 +435,18 @@ export default async function AdminOrganizersPage() {
                 <td className="py-3 pr-4 text-city-muted">{organizer._count.accounts}</td>
                 <td className="py-3 pr-4">
                   {organizer._count.activities === 0 ? (
-                    <form action={deleteEmptyOrganizer}>
-                      <input type="hidden" name="organizerId" value={organizer.id} />
-                      <AdminButton danger>Удалить</AdminButton>
-                    </form>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        href={`/admin/activities/new?organizerId=${organizer.id}`}
+                        className="rounded-full bg-city-green px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-city-blue"
+                      >
+                        Создать карточку
+                      </Link>
+                      <form action={deleteEmptyOrganizer}>
+                        <input type="hidden" name="organizerId" value={organizer.id} />
+                        <AdminButton danger>Удалить</AdminButton>
+                      </form>
+                    </div>
                   ) : (
                     <form action={deleteOrganizerWithActivities} className="grid gap-2">
                       <input type="hidden" name="organizerId" value={organizer.id} />

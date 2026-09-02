@@ -172,9 +172,28 @@ async function getTulaCity() {
 }
 
 async function getOrCreateOrganizer(formData: FormData, cityId: number) {
+  const organizerId = Number(getString(formData, "organizerId"));
   const organizerName = getString(formData, "organizerName") || "Не указан";
   const address = getString(formData, "address") || "Адрес уточняется";
   const contactUrl = normalizeContactUrlInput(getString(formData, "contactUrl"));
+
+  if (Number.isInteger(organizerId) && organizerId > 0) {
+    const existingOrganizer = await prisma.organizer.findUnique({
+      where: { id: organizerId },
+      select: { id: true }
+    });
+
+    if (existingOrganizer) {
+      return prisma.organizer.update({
+        where: { id: organizerId },
+        data: {
+          address,
+          phone: getOptionalString(formData, "contactPhone"),
+          websiteUrl: contactUrl
+        }
+      });
+    }
+  }
 
   return prisma.organizer.upsert({
     where: {
