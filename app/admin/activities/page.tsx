@@ -321,6 +321,18 @@ export default async function AdminActivitiesPage({
                     ) : null}
                   </dl>
 
+                  {activity.editorComment ? (
+                    <p
+                      className={`mt-4 rounded-2xl px-4 py-3 text-sm leading-6 ${
+                        activity.editorComment.startsWith("Автофлаг")
+                          ? "border border-city-coral/20 bg-city-coral/10 text-city-ink"
+                          : "bg-city-soft text-city-muted"
+                      }`}
+                    >
+                      {activity.editorComment}
+                    </p>
+                  ) : null}
+
                   <div className="mt-4 flex flex-wrap gap-2">
                     {indicators.map((indicator) => (
                       <span

@@ -96,20 +96,14 @@ function hasSuspiciousContent(values: string[]) {
   );
 }
 
-function isLikelySpam(formData: FormData, values: string[]) {
-  const honeypot = getValue(formData, "website");
-  const startedAt = Number(getValue(formData, "formStartedAt"));
-  const suspiciousContent = hasSuspiciousContent(values);
+function getSuspiciousContentReasons(values: string[]) {
+  const reasons: string[] = [];
 
-  return Boolean(
-    honeypot ||
-      !Number.isFinite(startedAt) ||
-      suspiciousContent
-  );
-}
+  if (hasSuspiciousContent(values)) {
+    reasons.push("подозрительный текст или ссылки");
+  }
 
-function silentlySkipSpam(): never {
-  redirect("/add?success=1");
+  return reasons;
 }
 
 export async function createActivity(formData: FormData) {
@@ -128,23 +122,23 @@ export async function createActivity(formData: FormData) {
   const rightsConfirmation = formData.get("rightsConfirmation") === "on";
   let media: Awaited<ReturnType<typeof getActivityMediaInput>> = [];
 
-  if (
-    isLikelySpam(formData, [
+  const suspiciousContentReasons = getSuspiciousContentReasons([
+    title,
+    description,
+    address,
+    organizerName,
+    contactPhone,
+    getValue(formData, "contactUrl"),
+    submitterContact,
+    priceNote ?? ""
+  ]);
+
+  if (suspiciousContentReasons.length > 0) {
+    console.warn("Flagged suspicious activity submission", {
       title,
-      description,
-      address,
       organizerName,
-      contactPhone,
-      getValue(formData, "contactUrl"),
-      submitterContact,
-      priceNote ?? ""
-    ])
-  ) {
-    console.warn("Skipped likely spam activity submission", {
-      title,
-      organizerName
+      reasons: suspiciousContentReasons
     });
-    silentlySkipSpam();
   }
 
   if (!title) {
@@ -246,6 +240,10 @@ export async function createActivity(formData: FormData) {
       imageUrl: null,
       isVerified: false,
       needsCheck: true,
+      editorComment:
+        suspiciousContentReasons.length > 0
+          ? `Автофлаг: возможный спам. Причины: ${suspiciousContentReasons.join(", ")}. Заявка сохранена для ручной проверки.`
+          : null,
       submittedByOrganizer,
       submitterContact: submitterContact || null,
       status: ActivityStatus.draft
@@ -261,6 +259,14 @@ export async function createActivity(formData: FormData) {
     });
   }
 
+  console.info("Public activity submission saved", {
+    activityId: activity.id,
+    title: activity.title,
+    organizerName,
+    status: activity.status,
+    needsCheck: activity.needsCheck
+  });
+
   await notifySubmitterActivityReceived({
     activityId: activity.id,
     activityTitle: activity.title,
@@ -273,5 +279,9 @@ export async function createActivity(formData: FormData) {
   });
 
   revalidatePath("/tula");
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/admin/activities");
+  revalidatePath("/admin/organizers");
   redirect("/add?success=1");
 }

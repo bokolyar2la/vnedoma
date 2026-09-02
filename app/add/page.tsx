@@ -36,7 +36,6 @@ export default async function AddPage({ searchParams }: AddPageProps) {
   const params = searchParams ? await searchParams : {};
   const success = getSingleParam(params, "success") === "1";
   const error = getSingleParam(params, "error");
-  const formStartedAt = Date.now();
   const defaults = {
     title: getSingleParam(params, "title") ?? "",
     categoryId: getSingleParam(params, "categoryId") ?? "",
@@ -84,17 +83,6 @@ export default async function AddPage({ searchParams }: AddPageProps) {
         encType="multipart/form-data"
         className="mt-8 space-y-5 rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6"
       >
-        <input type="hidden" name="formStartedAt" value={formStartedAt} />
-        <div className="hidden" aria-hidden="true">
-          <label htmlFor="website">Сайт</label>
-          <input
-            id="website"
-            name="website"
-            tabIndex={-1}
-            autoComplete="off"
-          />
-        </div>
-
         <div>
           <label htmlFor="title" className="text-sm font-semibold text-city-ink">
             Название
