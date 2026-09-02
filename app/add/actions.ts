@@ -99,14 +99,12 @@ function hasSuspiciousContent(values: string[]) {
 function isLikelySpam(formData: FormData, values: string[]) {
   const honeypot = getValue(formData, "website");
   const startedAt = Number(getValue(formData, "formStartedAt"));
-  const filledTooFast =
-    Number.isFinite(startedAt) && Date.now() - startedAt > 0 && Date.now() - startedAt < 3500;
+  const suspiciousContent = hasSuspiciousContent(values);
 
   return Boolean(
     honeypot ||
       !Number.isFinite(startedAt) ||
-      filledTooFast ||
-      hasSuspiciousContent(values)
+      suspiciousContent
   );
 }
 

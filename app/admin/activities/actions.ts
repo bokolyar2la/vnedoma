@@ -279,7 +279,11 @@ export async function publishActivity(formData: FormData) {
 
   const activity = await prisma.activity.update({
     where: { id },
-    data: { status: ActivityStatus.published },
+    data: {
+      status: ActivityStatus.published,
+      isVerified: true,
+      needsCheck: false
+    },
     include: {
       organizer: true
     }

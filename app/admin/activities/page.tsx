@@ -208,6 +208,16 @@ export default async function AdminActivitiesPage({
             activity.isAdultsOnly ? "18+" : null,
             isTripActivity(activity.activityType) ? "выезд" : null
           ].filter((item): item is string => Boolean(item));
+          const isApproved =
+            activity.status === ActivityStatus.published &&
+            activity.isVerified &&
+            !activity.needsCheck;
+          const publishLabel =
+            activity.status === ActivityStatus.published
+              ? isApproved
+                ? "Опубликовано"
+                : "Одобрить"
+              : "Опубликовать";
 
           return (
             <article
@@ -332,8 +342,11 @@ export default async function AdminActivitiesPage({
                   </Link>
                   <form action={publishActivity}>
                     <input type="hidden" name="id" value={activity.id} />
-                    <button className="w-full rounded-full bg-city-green px-3 py-2 text-sm font-semibold text-white transition hover:bg-city-blue">
-                      Опубликовать
+                    <button
+                      disabled={isApproved}
+                      className="w-full rounded-full bg-city-green px-3 py-2 text-sm font-semibold text-white transition hover:bg-city-blue disabled:cursor-default disabled:bg-city-green/60"
+                    >
+                      {publishLabel}
                     </button>
                   </form>
                   <form action={archiveActivity}>
