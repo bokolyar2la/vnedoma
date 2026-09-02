@@ -8,6 +8,7 @@ import {
   updateActivity
 } from "@/app/admin/activities/actions";
 import { ActivityImage } from "@/components/ActivityImage";
+import { OrganizerEventDateTimeFields } from "@/components/OrganizerEventDateTimeFields";
 import { activityTypeOptions, socialLevelOptions } from "@/lib/activity-social";
 import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
@@ -32,7 +33,9 @@ function formatAdminEventDate(date: Date) {
     day: "numeric",
     month: "long",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "Europe/Moscow"
   }).format(date);
 }
 
@@ -529,27 +532,7 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
                 />
               </label>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label htmlFor="startsAt" className="grid gap-2">
-                  <span className="text-sm font-semibold text-city-ink">Дата и время начала</span>
-                  <input
-                    id="startsAt"
-                    name="startsAt"
-                    type="datetime-local"
-                    required
-                    className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-                  />
-                </label>
-                <label htmlFor="endsAt" className="grid gap-2">
-                  <span className="text-sm font-semibold text-city-ink">Окончание</span>
-                  <input
-                    id="endsAt"
-                    name="endsAt"
-                    type="datetime-local"
-                    className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-                  />
-                </label>
-              </div>
+              <OrganizerEventDateTimeFields />
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label htmlFor="eventPrice" className="grid gap-2">

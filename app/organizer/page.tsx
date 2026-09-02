@@ -73,7 +73,8 @@ function statusClass(status: string) {
 function formatShortDate(date: Date) {
   return new Intl.DateTimeFormat("ru-RU", {
     day: "numeric",
-    month: "short"
+    month: "short",
+    timeZone: "Europe/Moscow"
   })
     .format(date)
     .replace(".", "");
@@ -82,7 +83,9 @@ function formatShortDate(date: Date) {
 function formatEventTime(date: Date) {
   return new Intl.DateTimeFormat("ru-RU", {
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "Europe/Moscow"
   }).format(date);
 }
 

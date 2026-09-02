@@ -390,22 +390,26 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
                 </div>
               ) : null}
               {nextEvent ? (
-                <div className="mt-5 rounded-2xl bg-white p-4 shadow-sm">
-                  <p className="text-sm font-semibold text-city-green">Ближайшая дата</p>
-                  <p className="mt-2 text-lg font-extrabold leading-6 text-city-ink">
+                <div className="mt-5 rounded-2xl border border-city-green/20 bg-white p-4 shadow-sm">
+                  <p className="text-sm font-bold uppercase text-city-green">Ближайшая дата</p>
+                  <p className="mt-2 text-2xl font-black leading-7 text-city-ink">
                     {formatDateTime(nextEvent.startsAt)}
                   </p>
                   <p className="mt-2 text-sm leading-5 text-city-muted">{nextEvent.title}</p>
-                  <p className="mt-2 text-sm font-semibold text-city-ink">
+                  <p className="mt-3 text-lg font-black text-city-ink">
                     {nextEvent.price ? `${nextEvent.price.toLocaleString("ru-RU")} ₽` : price}
                     {nextEvent.seatsAvailable ? ` · мест: ${nextEvent.seatsAvailable}` : ""}
                   </p>
                   {nextEventPromo ? (
-                    <div className="mt-3 rounded-2xl bg-city-green/10 p-3">
-                      <p className="text-sm font-bold text-city-green">
+                    <div className="mt-4 rounded-2xl border border-city-green/20 bg-city-green/10 p-4">
+                      <p className="text-xs font-bold uppercase text-city-green">Промокод</p>
+                      <p className="mt-1 text-2xl font-black text-city-ink">
+                        {nextEventPromo.promoCode}
+                      </p>
+                      <p className="mt-2 text-base font-bold leading-6 text-city-ink">
                         {nextEventPromo.discountText}
                       </p>
-                      <p className="mt-1 text-xs leading-5 text-city-muted">
+                      <p className="mt-2 text-sm leading-6 text-city-muted">
                         {nextEventPromo.instruction}
                       </p>
                     </div>
@@ -471,19 +475,21 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
               const promo = getEventPromoText(event as any);
 
               return (
-                <div key={event.id} className="rounded-2xl bg-city-soft p-4">
+                <div key={event.id} className="rounded-2xl border border-city-green/15 bg-city-soft p-4">
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                     <div>
                       <h3 className="font-semibold text-city-ink">{event.title}</h3>
-                      <p className="mt-2 text-sm text-city-muted">
+                      <p className="mt-2 text-base font-bold text-city-ink">
                         {formatDateTime(event.startsAt)}
                         {event.price ? ` · ${event.price.toLocaleString("ru-RU")} ₽` : ""}
                         {event.seatsAvailable ? ` · мест: ${event.seatsAvailable}` : ""}
                       </p>
                       {promo ? (
-                        <div className="mt-3 rounded-2xl bg-white p-3">
-                          <p className="text-sm font-bold text-city-green">{promo.discountText}</p>
-                          <p className="mt-1 text-xs leading-5 text-city-muted">{promo.instruction}</p>
+                        <div className="mt-3 rounded-2xl border border-city-green/20 bg-white p-4">
+                          <p className="text-xs font-bold uppercase text-city-green">Промокод</p>
+                          <p className="mt-1 text-2xl font-black text-city-ink">{promo.promoCode}</p>
+                          <p className="mt-2 text-base font-bold text-city-ink">{promo.discountText}</p>
+                          <p className="mt-1 text-sm leading-6 text-city-muted">{promo.instruction}</p>
                         </div>
                       ) : null}
                     </div>

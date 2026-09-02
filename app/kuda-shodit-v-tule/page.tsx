@@ -23,14 +23,17 @@ function formatEventDate(date: Date) {
   return new Intl.DateTimeFormat("ru-RU", {
     day: "numeric",
     month: "long",
-    weekday: "long"
+    weekday: "long",
+    timeZone: "Europe/Moscow"
   }).format(date);
 }
 
 function formatEventTime(date: Date) {
   return new Intl.DateTimeFormat("ru-RU", {
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "Europe/Moscow"
   }).format(date);
 }
 
@@ -158,30 +161,31 @@ export default async function WhereToGoTulaPage() {
                   key={event.id}
                   href={`/activity/${event.activity.slug}`}
                   goal="view_all_activities_click"
-                  className="rounded-[24px] border border-city-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-city-green hover:shadow-soft"
+                  className="rounded-[24px] border border-city-green/25 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-city-green"
                 >
-                  <p className="text-sm font-semibold text-city-green">
+                  <div className="inline-flex rounded-full bg-city-green px-3 py-1.5 text-sm font-bold text-white">
                     {formatEventDate(event.startsAt)} · {formatEventTime(event.startsAt)}
-                  </p>
+                  </div>
                   <h2 className="mt-3 text-xl font-bold text-city-ink">{event.title}</h2>
                   <p className="mt-2 text-sm leading-6 text-city-muted">
                     {event.activity.title} · {event.activity.category.name}
                   </p>
                   <p className="mt-2 text-sm text-city-muted">{event.activity.address}</p>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="inline-flex rounded-full bg-city-soft px-3 py-1 text-xs font-semibold text-city-green">
+                    <span className="inline-flex rounded-full bg-city-soft px-3 py-1 text-sm font-bold text-city-green">
                       {event.price ? `от ${event.price} ₽` : "цена уточняется"}
                     </span>
-                    {promo ? (
-                      <span className="inline-flex rounded-full bg-city-green px-3 py-1 text-xs font-semibold text-white">
-                        Промокод {promo.promoCode}
-                      </span>
-                    ) : null}
                   </div>
                   {promo ? (
-                    <p className="mt-3 text-sm font-semibold leading-6 text-city-ink">
-                      {promo.discountText}
-                    </p>
+                    <div className="mt-4 rounded-2xl border border-city-green/20 bg-city-green/10 p-4">
+                      <p className="text-xs font-bold uppercase text-city-green">
+                        Промокод
+                      </p>
+                      <p className="mt-1 text-2xl font-black text-city-ink">{promo.promoCode}</p>
+                      <p className="mt-2 text-base font-bold leading-6 text-city-ink">
+                        {promo.discountText}
+                      </p>
+                    </div>
                   ) : null}
                 </TrackedLink>
               );

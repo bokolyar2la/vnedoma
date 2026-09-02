@@ -41,6 +41,23 @@ function normalizeTime(value: string) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
+function fromDateTimeLocal(value?: string | null) {
+  if (!value) {
+    return { date: "", time: "" };
+  }
+
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!match) {
+    return { date: "", time: "" };
+  }
+
+  const [, year, month, day, hours, minutes] = match;
+  return {
+    date: `${day}.${month}.${year}`,
+    time: `${hours}:${minutes}`
+  };
+}
+
 function composeDateTime(dateValue: string, timeValue: string) {
   const date = toIsoDate(dateValue);
   const time = normalizeTime(timeValue);
@@ -48,11 +65,21 @@ function composeDateTime(dateValue: string, timeValue: string) {
   return date && time ? `${date}T${time}:00+03:00` : "";
 }
 
-export function OrganizerEventDateTimeFields() {
-  const [startDate, setStartDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [endTime, setEndTime] = useState("");
+type OrganizerEventDateTimeFieldsProps = {
+  defaultStartsAt?: string | null;
+  defaultEndsAt?: string | null;
+};
+
+export function OrganizerEventDateTimeFields({
+  defaultStartsAt,
+  defaultEndsAt
+}: OrganizerEventDateTimeFieldsProps) {
+  const startDefault = fromDateTimeLocal(defaultStartsAt);
+  const endDefault = fromDateTimeLocal(defaultEndsAt);
+  const [startDate, setStartDate] = useState(startDefault.date);
+  const [startTime, setStartTime] = useState(startDefault.time);
+  const [endDate, setEndDate] = useState(endDefault.date);
+  const [endTime, setEndTime] = useState(endDefault.time);
 
   const startsAt = composeDateTime(startDate, startTime);
   const endsAt = endDate || endTime ? composeDateTime(endDate, endTime) : "";
@@ -70,9 +97,11 @@ export function OrganizerEventDateTimeFields() {
           <label className="grid gap-2">
             <span className="text-sm font-semibold text-city-ink">Дата</span>
             <input
+              type="text"
               value={startDate}
               onChange={(event) => setStartDate(event.target.value)}
               placeholder="15.06.2026"
+              autoComplete="off"
               inputMode="numeric"
               pattern="[0-9]{1,2}[.][0-9]{1,2}[.][0-9]{4}"
               title="Введите дату в формате 15.06.2026"
@@ -83,9 +112,11 @@ export function OrganizerEventDateTimeFields() {
           <label className="grid gap-2">
             <span className="text-sm font-semibold text-city-ink">Время</span>
             <input
+              type="text"
               value={startTime}
               onChange={(event) => setStartTime(event.target.value)}
               placeholder="19:30"
+              autoComplete="off"
               inputMode="numeric"
               pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]"
               title="Введите время в формате 19:30"
@@ -102,9 +133,11 @@ export function OrganizerEventDateTimeFields() {
           <label className="grid gap-2">
             <span className="text-sm font-semibold text-city-ink">Дата</span>
             <input
+              type="text"
               value={endDate}
               onChange={(event) => setEndDate(event.target.value)}
               placeholder="15.06.2026"
+              autoComplete="off"
               inputMode="numeric"
               pattern="[0-9]{1,2}[.][0-9]{1,2}[.][0-9]{4}"
               title="Введите дату в формате 15.06.2026"
@@ -114,9 +147,11 @@ export function OrganizerEventDateTimeFields() {
           <label className="grid gap-2">
             <span className="text-sm font-semibold text-city-ink">Время</span>
             <input
+              type="text"
               value={endTime}
               onChange={(event) => setEndTime(event.target.value)}
               placeholder="21:00"
+              autoComplete="off"
               inputMode="numeric"
               pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]"
               title="Введите время в формате 21:00"

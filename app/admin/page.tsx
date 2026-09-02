@@ -16,7 +16,9 @@ function formatDate(date: Date) {
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "Europe/Moscow"
   }).format(date);
 }
 

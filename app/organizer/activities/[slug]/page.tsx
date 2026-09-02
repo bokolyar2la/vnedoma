@@ -7,6 +7,7 @@ import {
   createOrganizerEventRequest
 } from "@/app/organizer/actions";
 import { ActivityImage } from "@/components/ActivityImage";
+import { OrganizerEventDateTimeFields } from "@/components/OrganizerEventDateTimeFields";
 import { getUpcomingEventWhere } from "@/lib/events";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { getOrganizerAccount } from "@/lib/organizer-auth";
@@ -314,28 +315,10 @@ export default async function OrganizerActivityPage({
                 className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
               />
             </label>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2" htmlFor={fieldId("startsAt")}>
-                <span className="text-sm font-semibold text-city-ink">Дата и время начала</span>
-                <input
-                  id={fieldId("startsAt")}
-                  name="startsAt"
-                  type="datetime-local"
-                  defaultValue={formatDateTimeLocal(eventToCopy?.startsAt ?? null)}
-                  className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
-                />
-              </label>
-              <label className="grid gap-2" htmlFor={fieldId("endsAt")}>
-                <span className="text-sm font-semibold text-city-ink">Окончание</span>
-                <input
-                  id={fieldId("endsAt")}
-                  name="endsAt"
-                  type="datetime-local"
-                  defaultValue={formatDateTimeLocal(eventToCopy?.endsAt ?? null)}
-                  className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
-                />
-              </label>
-            </div>
+            <OrganizerEventDateTimeFields
+              defaultStartsAt={formatDateTimeLocal(eventToCopy?.startsAt ?? null)}
+              defaultEndsAt={formatDateTimeLocal(eventToCopy?.endsAt ?? null)}
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2" htmlFor={fieldId("eventPrice")}>
                 <span className="text-sm font-semibold text-city-ink">Цена события</span>

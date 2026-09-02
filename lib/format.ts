@@ -32,6 +32,8 @@ export function formatDateTime(date: Date) {
     day: "numeric",
     month: "long",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "Europe/Moscow"
   }).format(date);
 }
