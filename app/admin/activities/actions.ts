@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { notifySubmitterActivityPublished } from "@/lib/booking-notifications";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
 import { prisma } from "@/lib/prisma";
+import { normalizeDiscountText, normalizePromoCode } from "@/lib/promo";
 import { uploadActivityImage, uploadActivityImageField } from "@/lib/s3-upload";
 import { generateUniqueSlug } from "@/lib/slug";
 
@@ -27,6 +28,59 @@ function getNumber(formData: FormData, key: string) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function getOptionalDateTime(formData: FormData, key: string) {
+  const value = getString(formData, key);
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Проверьте дату и время события.");
+  }
+
+  return date;
+}
+
+function getRequiredActivityEventInput(formData: FormData) {
+  const activityId = Number(getString(formData, "activityId"));
+  const title = getString(formData, "eventTitle");
+  const startsAt = getOptionalDateTime(formData, "startsAt");
+  const endsAt = getOptionalDateTime(formData, "endsAt");
+
+  if (!Number.isInteger(activityId) || activityId <= 0) {
+    throw new Error("Некорректная активность.");
+  }
+
+  if (!title) {
+    throw new Error("Укажите название события.");
+  }
+
+  if (!startsAt) {
+    throw new Error("Укажите дату начала события.");
+  }
+
+  if (endsAt && endsAt <= startsAt) {
+    throw new Error("Окончание события должно быть позже начала.");
+  }
+
+  return {
+    activityId,
+    title,
+    startsAt,
+    endsAt,
+    price: getNumber(formData, "eventPrice"),
+    seatsAvailable: getNumber(formData, "seatsAvailable"),
+    signupUrl: normalizeContactUrlInput(getString(formData, "signupUrl")),
+    promoCode: normalizePromoCode(getString(formData, "promoCode")),
+    discountText: normalizeDiscountText(getString(formData, "discountText")),
+    isPromoEnabled: formData.getAll("isPromoEnabled").includes("on"),
+    publishedToVk: formData.get("publishedToVk") === "on",
+    publishedToInstagram: formData.get("publishedToInstagram") === "on",
+    adminNote: getOptionalString(formData, "adminNote")
+  };
 }
 
 async function getActivityMediaInput(formData: FormData) {
@@ -150,6 +204,15 @@ async function revalidateAdmin() {
   revalidatePath("/admin/activities");
   revalidatePath("/admin/organizers");
   revalidatePath("/tula");
+  revalidatePath("/kuda-shodit-v-tule");
+  revalidatePath("/");
+}
+
+function revalidateActivityPublicPages(slug: string) {
+  revalidatePath(`/activity/${slug}`);
+  revalidatePath("/tula");
+  revalidatePath("/kuda-shodit-v-tule");
+  revalidatePath("/");
 }
 
 export async function createAdminActivity(formData: FormData) {
@@ -335,4 +398,46 @@ export async function updateActivity(formData: FormData) {
   await revalidateAdmin();
   revalidatePath(`/activity/${slug}`);
   redirect("/admin/activities");
+}
+
+export async function createAdminActivityEvent(formData: FormData) {
+  const data = getRequiredActivityEventInput(formData);
+  const activity = await prisma.activity.findUniqueOrThrow({
+    where: { id: data.activityId },
+    select: { slug: true }
+  });
+
+  await prisma.event.create({
+    data: data as any
+  });
+
+  await revalidateAdmin();
+  revalidateActivityPublicPages(activity.slug);
+  redirect(`/admin/activities/${data.activityId}/edit?event=created`);
+}
+
+export async function deleteAdminActivityEvent(formData: FormData) {
+  const activityId = Number(getString(formData, "activityId"));
+  const eventId = Number(getString(formData, "eventId"));
+
+  if (!Number.isInteger(activityId) || activityId <= 0) {
+    throw new Error("Некорректная активность.");
+  }
+
+  if (!Number.isInteger(eventId) || eventId <= 0) {
+    throw new Error("Некорректное событие.");
+  }
+
+  const activity = await prisma.activity.findUniqueOrThrow({
+    where: { id: activityId },
+    select: { slug: true }
+  });
+
+  await prisma.event.delete({
+    where: { id: eventId }
+  });
+
+  await revalidateAdmin();
+  revalidateActivityPublicPages(activity.slug);
+  redirect(`/admin/activities/${activityId}/edit?event=deleted`);
 }

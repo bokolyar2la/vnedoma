@@ -93,7 +93,7 @@ model OrganizerAccount {
   notificationEmail String?
   notificationTelegram String?
   platformBookingEnabled Boolean       @default(false)
-  platformBookingDiscountText String?  @default("Промокод ВЛЮДИ: 10% скидка")
+  platformBookingDiscountText String?  @default("Скидка 10% по промокоду ВЛЮДИ")
   accesses     OrganizerAccess[]
   claims       OrganizerClaimRequest[]
   editRequests OrganizerEditRequest[]
@@ -237,6 +237,7 @@ model ActivityMedia {
 model ActivityStatEvent {
   id         Int              @id @default(autoincrement())
   activityId Int
+  eventId    Int?
   type       ActivityStatType
   path       String?
   referrer   String?
@@ -244,12 +245,14 @@ model ActivityStatEvent {
   activity   Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@index([activityId, type, createdAt])
+  @@index([eventId, type, createdAt])
   @@index([createdAt])
 }
 
 model ActivityBookingRequest {
   id                 Int                   @id @default(autoincrement())
   activityId          Int
+  eventId             Int?
   organizerAccountId  Int?
   name               String
   contact            String
@@ -264,6 +267,7 @@ model ActivityBookingRequest {
   updatedAt          DateTime              @updatedAt
 
   @@index([activityId, createdAt])
+  @@index([eventId, createdAt])
   @@index([organizerAccountId, status])
   @@index([organizerAccountId, viewedAt])
 }
@@ -279,6 +283,12 @@ model OrganizerEventRequest {
   price        Int?
   seatsAvailable Int?
   signupUrl    String?
+  promoCode    String?                @default("ВЛЮДИ")
+  discountText String?                @default("Скидка 10% по промокоду ВЛЮДИ")
+  isPromoEnabled Boolean              @default(true)
+  publishedToVk Boolean               @default(false)
+  publishedToInstagram Boolean        @default(false)
+  adminNote    String?
   note         String?
   adminComment String?
   account      OrganizerAccount       @relation(fields: [accountId], references: [id], onDelete: Cascade)
@@ -300,6 +310,12 @@ model Event {
   price          Int?
   seatsAvailable Int?
   signupUrl      String?
+  promoCode      String?  @default("ВЛЮДИ")
+  discountText   String?  @default("Скидка 10% по промокоду ВЛЮДИ")
+  isPromoEnabled Boolean  @default(true)
+  publishedToVk  Boolean  @default(false)
+  publishedToInstagram Boolean @default(false)
+  adminNote      String?
   activity       Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

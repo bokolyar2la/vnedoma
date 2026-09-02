@@ -28,7 +28,8 @@ type ActivitySubmissionNotificationInput = {
   description?: string | null;
 };
 
-const DEFAULT_DISCOUNT_TEXT = "Промокод ВЛЮДИ: 10% скидка";
+const DEFAULT_DISCOUNT_TEXT =
+  "Скидка 10% по промокоду ВЛЮДИ. Попросите участника назвать промокод при записи или оплате.";
 const EMAIL_PATTERN = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 
 export function extractEmailAddress(value?: string | null) {

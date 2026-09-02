@@ -6,6 +6,7 @@ import { TrackedForm, TrackedLink } from "@/components/MetrikaGoals";
 import { isEffectivelyPromoted } from "@/lib/billing";
 import { getUpcomingEventWhere } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
+import { getEventPromoText } from "@/lib/promo";
 
 const quickLinks = [
   {
@@ -68,6 +69,9 @@ type UpcomingEventPreview = {
   title: string;
   startsAt: Date;
   price: number | null;
+  promoCode?: string | null;
+  discountText?: string | null;
+  isPromoEnabled?: boolean | null;
   activity: {
     title: string;
     slug: string;
@@ -189,26 +193,42 @@ function UpcomingEventsSection({ events }: { events: UpcomingEventPreview[] }) {
         </TrackedLink>
       </div>
       <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {events.map((event) => (
-          <TrackedLink
-            key={event.id}
-            href={`/activity/${event.activity.slug}`}
-            goal="view_all_activities_click"
-            className="rounded-[24px] border border-city-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-city-green hover:shadow-soft"
-          >
-            <p className="text-sm font-semibold text-city-green">
-              {formatEventDate(event.startsAt)} · {formatEventTime(event.startsAt)}
-            </p>
-            <h3 className="mt-3 text-xl font-bold text-city-ink">{event.title}</h3>
-            <p className="mt-2 text-sm leading-6 text-city-muted">
-              {event.activity.title} · {event.activity.category.name}
-            </p>
-            <p className="mt-2 text-sm text-city-muted">{event.activity.address}</p>
-            <span className="mt-4 inline-flex rounded-full bg-city-soft px-3 py-1 text-xs font-semibold text-city-green">
-              {event.price ? `от ${event.price} ₽` : "цена уточняется"}
-            </span>
-          </TrackedLink>
-        ))}
+        {events.map((event) => {
+          const promo = getEventPromoText(event);
+
+          return (
+            <TrackedLink
+              key={event.id}
+              href={`/activity/${event.activity.slug}`}
+              goal="view_all_activities_click"
+              className="rounded-[24px] border border-city-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-city-green hover:shadow-soft"
+            >
+              <p className="text-sm font-semibold text-city-green">
+                {formatEventDate(event.startsAt)} · {formatEventTime(event.startsAt)}
+              </p>
+              <h3 className="mt-3 text-xl font-bold text-city-ink">{event.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-city-muted">
+                {event.activity.title} · {event.activity.category.name}
+              </p>
+              <p className="mt-2 text-sm text-city-muted">{event.activity.address}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="inline-flex rounded-full bg-city-soft px-3 py-1 text-xs font-semibold text-city-green">
+                  {event.price ? `от ${event.price} ₽` : "цена уточняется"}
+                </span>
+                {promo ? (
+                  <span className="inline-flex rounded-full bg-city-green px-3 py-1 text-xs font-semibold text-white">
+                    Промокод {promo.promoCode}
+                  </span>
+                ) : null}
+              </div>
+              {promo ? (
+                <p className="mt-3 text-sm font-semibold leading-6 text-city-ink">
+                  {promo.discountText}
+                </p>
+              ) : null}
+            </TrackedLink>
+          );
+        })}
       </div>
     </section>
   );

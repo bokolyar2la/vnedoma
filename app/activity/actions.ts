@@ -38,6 +38,7 @@ async function sendNotificationSafely(promise: Promise<void>, label: string) {
 
 export async function createActivityBookingRequest(formData: FormData) {
   const activityId = Number(getString(formData, "activityId"));
+  const rawEventId = Number(getString(formData, "eventId"));
   const name = getString(formData, "name");
   const contact = getString(formData, "contact");
   const message = getString(formData, "message") || null;
@@ -100,27 +101,46 @@ export async function createActivityBookingRequest(formData: FormData) {
     fail(activity.slug, "Запись через Влюди сейчас недоступна для этой активности.");
   }
 
+  const event =
+    Number.isInteger(rawEventId) && rawEventId > 0
+      ? await prisma.event.findFirst({
+          where: {
+            id: rawEventId,
+            activityId: activity.id
+          },
+          select: {
+            id: true,
+            title: true,
+            discountText: true
+          } as any
+        })
+      : null;
+  const discountText =
+    (event as { discountText?: string | null } | null)?.discountText ||
+    organizerAccount.platformBookingDiscountText;
+
   await prisma.activityBookingRequest.create({
     data: {
       activityId: activity.id,
+      ...((event ? { eventId: event.id } : {}) as any),
       organizerAccountId: organizerAccount.id,
       name,
       contact,
       message,
       promoCode: "ВЛЮДИ",
-      discountText: organizerAccount.platformBookingDiscountText
-    }
+      discountText
+    } as any
   });
 
   await sendNotificationSafely(
     notifyOrganizerAboutBooking({
-      activityTitle: activity.title,
+      activityTitle: event ? `${activity.title}: ${event.title}` : activity.title,
       customerName: name,
       customerContact: contact,
       message,
       notificationEmail: organizerAccount.notificationEmail || organizerAccount.email,
       notificationTelegram: organizerAccount.notificationTelegram,
-      discountText: organizerAccount.platformBookingDiscountText
+      discountText
     }),
     "booking request email"
   );

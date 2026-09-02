@@ -18,6 +18,7 @@ import {
   verifyPassword
 } from "@/lib/organizer-auth";
 import { prisma } from "@/lib/prisma";
+import { normalizeDiscountText, normalizePromoCode } from "@/lib/promo";
 import { uploadActivityImage, uploadActivityImageField } from "@/lib/s3-upload";
 
 function getString(formData: FormData, key: string) {
@@ -275,7 +276,7 @@ export async function updateOrganizerBookingSettings(formData: FormData) {
   const notificationEmail = getString(formData, "notificationEmail") || account.email;
   const notificationTelegram = getString(formData, "notificationTelegram") || null;
   const discountText =
-    getString(formData, "platformBookingDiscountText") || "Промокод ВЛЮДИ: 10% скидка";
+    getString(formData, "platformBookingDiscountText") || "Скидка 10% по промокоду ВЛЮДИ";
   const returnPath = "/organizer?tab=settings";
 
   if (notificationEmail && !notificationEmail.includes("@")) {
@@ -467,12 +468,15 @@ export async function createOrganizerEventRequest(formData: FormData) {
     endsAt,
     price: getNumber(formData, "eventPrice"),
     seatsAvailable: getNumber(formData, "seatsAvailable"),
-    signupUrl: normalizeContactUrlInput(getString(formData, "signupUrl"))
+    signupUrl: normalizeContactUrlInput(getString(formData, "signupUrl")),
+    promoCode: normalizePromoCode(getString(formData, "promoCode")),
+    discountText: normalizeDiscountText(getString(formData, "discountText")),
+    isPromoEnabled: formData.getAll("isPromoEnabled").includes("on")
   };
 
   await prisma.$transaction([
     prisma.event.create({
-      data: eventData
+      data: eventData as any
     }),
     prisma.organizerEventRequest.create({
       data: {
@@ -481,7 +485,7 @@ export async function createOrganizerEventRequest(formData: FormData) {
         ...eventData,
         note: getString(formData, "eventNote") || null,
         adminComment: "Событие опубликовано организатором без модерации."
-      }
+      } as any
     })
   ]);
 
@@ -660,6 +664,15 @@ async function markEventRequestWithStatus(formData: FormData, status: OrganizerR
       throw new Error("Нельзя опубликовать уже прошедшее событие.");
     }
 
+    const promoRequest = request as typeof request & {
+      promoCode?: string | null;
+      discountText?: string | null;
+      isPromoEnabled?: boolean | null;
+      publishedToVk?: boolean | null;
+      publishedToInstagram?: boolean | null;
+      adminNote?: string | null;
+    };
+
     await prisma.event.create({
       data: {
         activityId: request.activityId,
@@ -668,8 +681,14 @@ async function markEventRequestWithStatus(formData: FormData, status: OrganizerR
         endsAt: request.endsAt,
         price: request.price,
         seatsAvailable: request.seatsAvailable,
-        signupUrl: request.signupUrl
-      }
+        signupUrl: request.signupUrl,
+        promoCode: promoRequest.promoCode,
+        discountText: promoRequest.discountText,
+        isPromoEnabled: promoRequest.isPromoEnabled ?? true,
+        publishedToVk: promoRequest.publishedToVk ?? false,
+        publishedToInstagram: promoRequest.publishedToInstagram ?? false,
+        adminNote: promoRequest.adminNote
+      } as any
     });
   }
 

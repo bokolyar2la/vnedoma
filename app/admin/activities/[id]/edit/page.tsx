@@ -2,11 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ActivityStatus } from "@prisma/client";
 import { notFound } from "next/navigation";
-import { updateActivity } from "@/app/admin/activities/actions";
+import {
+  createAdminActivityEvent,
+  deleteAdminActivityEvent,
+  updateActivity
+} from "@/app/admin/activities/actions";
 import { ActivityImage } from "@/components/ActivityImage";
 import { activityTypeOptions, socialLevelOptions } from "@/lib/activity-social";
 import { currentCategorySlugs } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_EVENT_DISCOUNT_TEXT, DEFAULT_PROMO_CODE, getEventPromoText } from "@/lib/promo";
 
 export const metadata: Metadata = {
   title: "Редактировать активность"
@@ -21,6 +26,15 @@ type EditActivityPageProps = {
 };
 
 const mediaSlots = [1, 2, 3];
+
+function formatAdminEventDate(date: Date) {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+}
 
 export default async function EditActivityPage({ params }: EditActivityPageProps) {
   const { id } = await params;
@@ -39,6 +53,9 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
         city: true,
         media: {
           orderBy: { position: "asc" }
+        },
+        events: {
+          orderBy: { startsAt: "asc" }
         }
       }
     }),
@@ -473,6 +490,233 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
           </button>
         </aside>
       </form>
+
+      <section className="mt-8 rounded-3xl border border-city-line bg-white p-5 shadow-soft sm:p-6">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-city-green">
+              Анонсы · промокод ВЛЮДИ
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-city-ink">
+              Ближайшие события
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-city-muted">
+              Добавляйте конкретные даты, которые будете публиковать на сайте, во ВКонтакте
+              или Instagram. Пользователь увидит скидку и инструкцию назвать промокод ВЛЮДИ
+              при записи у организатора.
+            </p>
+          </div>
+          <Link
+            href={`/activity/${activity.slug}`}
+            className="text-sm font-semibold text-city-green transition hover:text-city-blue"
+          >
+            Открыть карточку
+          </Link>
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(320px,0.7fr)]">
+          <form action={createAdminActivityEvent} className="rounded-3xl bg-city-soft p-4 sm:p-5">
+            <input type="hidden" name="activityId" value={activity.id} />
+            <div className="grid gap-4">
+              <label htmlFor="eventTitle" className="grid gap-2">
+                <span className="text-sm font-semibold text-city-ink">Название события</span>
+                <input
+                  id="eventTitle"
+                  name="eventTitle"
+                  required
+                  defaultValue={activity.title}
+                  className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                />
+              </label>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label htmlFor="startsAt" className="grid gap-2">
+                  <span className="text-sm font-semibold text-city-ink">Дата и время начала</span>
+                  <input
+                    id="startsAt"
+                    name="startsAt"
+                    type="datetime-local"
+                    required
+                    className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                  />
+                </label>
+                <label htmlFor="endsAt" className="grid gap-2">
+                  <span className="text-sm font-semibold text-city-ink">Окончание</span>
+                  <input
+                    id="endsAt"
+                    name="endsAt"
+                    type="datetime-local"
+                    className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label htmlFor="eventPrice" className="grid gap-2">
+                  <span className="text-sm font-semibold text-city-ink">Цена</span>
+                  <input
+                    id="eventPrice"
+                    name="eventPrice"
+                    type="number"
+                    min="0"
+                    placeholder="Например: 600"
+                    className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                  />
+                </label>
+                <label htmlFor="seatsAvailable" className="grid gap-2">
+                  <span className="text-sm font-semibold text-city-ink">Свободные места</span>
+                  <input
+                    id="seatsAvailable"
+                    name="seatsAvailable"
+                    type="number"
+                    min="0"
+                    placeholder="Если есть лимит"
+                    className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                  />
+                </label>
+              </div>
+
+              <label htmlFor="signupUrl" className="grid gap-2">
+                <span className="text-sm font-semibold text-city-ink">Ссылка на запись у организатора</span>
+                <input
+                  id="signupUrl"
+                  name="signupUrl"
+                  defaultValue={activity.contactUrl ?? ""}
+                  placeholder="VK, Telegram, Timepad, сайт или форма записи"
+                  className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                />
+              </label>
+
+              <div className="rounded-2xl border border-city-green/20 bg-white p-4">
+                <label className="flex items-start gap-3 text-sm font-semibold text-city-ink">
+                  <input
+                    name="isPromoEnabled"
+                    type="checkbox"
+                    value="on"
+                    defaultChecked
+                    className="mt-1 h-4 w-4 accent-city-green"
+                  />
+                  <span>
+                    Показывать промокод ВЛЮДИ
+                    <span className="mt-1 block font-normal leading-6 text-city-muted">
+                      Это основной смысл анонса: человек переходит к организатору и называет промокод.
+                    </span>
+                  </span>
+                </label>
+                <div className="mt-4 grid gap-4 sm:grid-cols-[180px_1fr]">
+                  <label htmlFor="promoCode" className="grid gap-2">
+                    <span className="text-sm font-semibold text-city-ink">Промокод</span>
+                    <input
+                      id="promoCode"
+                      name="promoCode"
+                      defaultValue={DEFAULT_PROMO_CODE}
+                      className="min-h-12 rounded-2xl border border-city-line px-4 font-bold uppercase outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                    />
+                  </label>
+                  <label htmlFor="discountText" className="grid gap-2">
+                    <span className="text-sm font-semibold text-city-ink">Текст скидки</span>
+                    <input
+                      id="discountText"
+                      name="discountText"
+                      defaultValue={DEFAULT_EVENT_DISCOUNT_TEXT}
+                      className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-city-ink">
+                  <input name="publishedToVk" type="checkbox" className="h-4 w-4 accent-city-green" />
+                  Опубликовано VK
+                </label>
+                <label className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-city-ink">
+                  <input name="publishedToInstagram" type="checkbox" className="h-4 w-4 accent-city-green" />
+                  Опубликовано Instagram
+                </label>
+              </div>
+
+              <label htmlFor="adminNote" className="grid gap-2">
+                <span className="text-sm font-semibold text-city-ink">Внутренняя заметка</span>
+                <textarea
+                  id="adminNote"
+                  name="adminNote"
+                  rows={3}
+                  placeholder="Например: договорились на 15% с билета, публикация в сторис 06.08"
+                  className="rounded-2xl border border-city-line bg-white px-4 py-3 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
+                />
+              </label>
+
+              <button className="min-h-12 rounded-full bg-city-green px-6 font-semibold text-white transition hover:bg-city-blue sm:w-fit">
+                Добавить событие
+              </button>
+            </div>
+          </form>
+
+          <div className="rounded-3xl border border-city-line bg-white p-4">
+            <h3 className="text-lg font-bold text-city-ink">Сейчас на сайте</h3>
+            <div className="mt-4 grid gap-3">
+              {activity.events.length ? (
+                activity.events.map((event) => {
+                  const promo = getEventPromoText(event as any);
+
+                  return (
+                    <div key={event.id} className="rounded-2xl bg-city-soft p-4 text-sm">
+                      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                        <div>
+                          <p className="font-bold text-city-ink">{event.title}</p>
+                          <p className="mt-1 text-city-muted">{formatAdminEventDate(event.startsAt)}</p>
+                          {event.price ? (
+                            <p className="mt-1 font-semibold text-city-ink">
+                              от {event.price.toLocaleString("ru-RU")} ₽
+                            </p>
+                          ) : null}
+                        </div>
+                        <form action={deleteAdminActivityEvent}>
+                          <input type="hidden" name="activityId" value={activity.id} />
+                          <input type="hidden" name="eventId" value={event.id} />
+                          <button className="rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50">
+                            Удалить
+                          </button>
+                        </form>
+                      </div>
+                      {promo ? (
+                        <div className="mt-3 rounded-2xl bg-white p-3">
+                          <p className="font-bold text-city-green">{promo.discountText}</p>
+                          <p className="mt-1 text-city-muted">{promo.instruction}</p>
+                        </div>
+                      ) : null}
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                        {(event as any).publishedToVk ? (
+                          <span className="rounded-full bg-city-green/10 px-3 py-1 text-city-green">VK</span>
+                        ) : null}
+                        {(event as any).publishedToInstagram ? (
+                          <span className="rounded-full bg-city-green/10 px-3 py-1 text-city-green">Instagram</span>
+                        ) : null}
+                        {event.signupUrl ? (
+                          <a href={event.signupUrl} target="_blank" rel="noopener noreferrer" className="rounded-full bg-white px-3 py-1 text-city-green">
+                            Запись
+                          </a>
+                        ) : null}
+                      </div>
+                      {(event as any).adminNote ? (
+                        <p className="mt-3 text-xs leading-5 text-city-muted">
+                          Заметка: {(event as any).adminNote}
+                        </p>
+                      ) : null}
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-sm leading-6 text-city-muted">
+                  Событий пока нет. Добавьте ближайшую дату, и она появится на карточке,
+                  главной и странице “Куда сходить в Туле”.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

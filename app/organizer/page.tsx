@@ -625,7 +625,7 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
                                   <input
                                     type="hidden"
                                     name="platformBookingDiscountText"
-                                    value={account.platformBookingDiscountText ?? "Промокод ВЛЮДИ: 10% скидка"}
+                                    value={account.platformBookingDiscountText ?? "Скидка 10% по промокоду ВЛЮДИ"}
                                   />
                                   <button className="inline-flex min-h-9 items-center justify-center rounded-full bg-city-green px-3 text-xs font-semibold text-white transition hover:bg-city-blue">
                                     Включить
@@ -938,7 +938,7 @@ export default async function OrganizerCabinetPage({ searchParams }: OrganizerPa
                     <span className="text-sm font-semibold text-city-ink">Бонус для участников</span>
                     <input
                       name="platformBookingDiscountText"
-                      defaultValue={account.platformBookingDiscountText ?? "Промокод ВЛЮДИ: 10% скидка"}
+                      defaultValue={account.platformBookingDiscountText ?? "Скидка 10% по промокоду ВЛЮДИ"}
                       className="mt-2 w-full rounded-2xl border border-city-line bg-white px-4 py-3 outline-none transition focus:border-city-green"
                     />
                   </label>

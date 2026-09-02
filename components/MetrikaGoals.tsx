@@ -34,13 +34,14 @@ export function reachMetrikaGoal(goalName: GoalName) {
   (window as YmWindow).ym?.(metrikaId, "reachGoal", goalName);
 }
 
-function sendActivityStat(activityId: number, type: ActivityStatType) {
+function sendActivityStat(activityId: number, type: ActivityStatType, eventId?: number) {
   if (typeof window === "undefined" || !activityId) {
     return;
   }
 
   const payload = JSON.stringify({
     activityId,
+    eventId,
     type,
     path: window.location.pathname,
     referrer: document.referrer || null
@@ -92,6 +93,7 @@ type TrackedExternalLinkProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & 
   goal: GoalName;
   activityStat?: {
     activityId: number;
+    eventId?: number;
     type: ActivityStatType;
   };
 };
@@ -109,7 +111,7 @@ export function TrackedExternalLink({
       onClick={(event) => {
         reachMetrikaGoal(goal);
         if (activityStat) {
-          sendActivityStat(activityStat.activityId, activityStat.type);
+          sendActivityStat(activityStat.activityId, activityStat.type, activityStat.eventId);
         }
         onClick?.(event);
       }}

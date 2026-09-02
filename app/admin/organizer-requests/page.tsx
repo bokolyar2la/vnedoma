@@ -343,6 +343,17 @@ export default async function OrganizerRequestsPage({ searchParams }: PageProps)
                   <p>Окончание: {value(event.endsAt)}</p>
                   <p>Цена: {value(event.price)}</p>
                   <p>Места: {value(event.seatsAvailable)}</p>
+                  <p>
+                    Промокод:{" "}
+                    {(event as any).isPromoEnabled === false
+                      ? "выключен"
+                      : (event as any).promoCode || "ВЛЮДИ"}
+                  </p>
+                  {(event as any).isPromoEnabled === false ? null : (
+                    <p>
+                      Скидка: {(event as any).discountText || "Скидка 10% по промокоду ВЛЮДИ"}
+                    </p>
+                  )}
                   {event.signupUrl ? (
                     <p>
                       Запись:{" "}

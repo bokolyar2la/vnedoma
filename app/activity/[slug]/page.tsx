@@ -12,6 +12,7 @@ import { isEffectivelyPromoted, resolveOrganizerBilling } from "@/lib/billing";
 import { getUpcomingEventWhere } from "@/lib/events";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { getEventPromoText } from "@/lib/promo";
 
 type ActivityPageProps = {
   params: Promise<{
@@ -279,6 +280,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
 
   const price = formatPrice(activity);
   const nextEvent = activity.events[0];
+  const nextEventPromo = nextEvent ? getEventPromoText(nextEvent as any) : null;
   const contactHref = activity.contactUrl ?? `tel:${activity.contactPhone ?? ""}`;
   const platformBookingEnabled = Boolean(bookingAccount);
   const hasContact = Boolean(platformBookingEnabled || activity.contactUrl || activity.contactPhone || nextEvent?.signupUrl);
@@ -398,6 +400,16 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
                     {nextEvent.price ? `${nextEvent.price.toLocaleString("ru-RU")} ₽` : price}
                     {nextEvent.seatsAvailable ? ` · мест: ${nextEvent.seatsAvailable}` : ""}
                   </p>
+                  {nextEventPromo ? (
+                    <div className="mt-3 rounded-2xl bg-city-green/10 p-3">
+                      <p className="text-sm font-bold text-city-green">
+                        {nextEventPromo.discountText}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-city-muted">
+                        {nextEventPromo.instruction}
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
               {platformBookingEnabled ? (
@@ -405,6 +417,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
                   goal="organizer_contact_click"
                   activityStat={{
                     activityId: activity.id,
+                    eventId: nextEvent?.id,
                     type: nextEvent ? "nearest_event_click" : "signup_click"
                   }}
                   href="#booking-form"
@@ -417,6 +430,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
                   goal="organizer_contact_click"
                   activityStat={{
                     activityId: activity.id,
+                    eventId: nextEvent?.id,
                     type: nextEvent ? "nearest_event_click" : "signup_click"
                   }}
                   href={nextEvent?.signupUrl ?? contactHref}
@@ -424,7 +438,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
                   rel={nextEvent?.signupUrl || activity.contactUrl ? "noopener noreferrer" : undefined}
                   className="mt-6 flex min-h-12 items-center justify-center rounded-full bg-city-green px-5 font-semibold text-white transition hover:bg-city-blue"
                 >
-                  {nextEvent ? "Записаться на ближайшее событие" : "Записаться у организатора"}
+                  {nextEventPromo ? "Записаться со скидкой" : nextEvent ? "Записаться на ближайшее событие" : "Записаться у организатора"}
                 </TrackedExternalLink>
               ) : (
                 <button
@@ -453,35 +467,46 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
         </div>
         {activity.events.length > 0 ? (
           <div className="mt-5 grid gap-3">
-            {activity.events.map((event) => (
-              <div key={event.id} className="rounded-2xl bg-city-soft p-4">
-                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                  <div>
-                    <h3 className="font-semibold text-city-ink">{event.title}</h3>
-                    <p className="mt-2 text-sm text-city-muted">
-                      {formatDateTime(event.startsAt)}
-                      {event.price ? ` · ${event.price.toLocaleString("ru-RU")} ₽` : ""}
-                      {event.seatsAvailable ? ` · мест: ${event.seatsAvailable}` : ""}
-                    </p>
+            {activity.events.map((event) => {
+              const promo = getEventPromoText(event as any);
+
+              return (
+                <div key={event.id} className="rounded-2xl bg-city-soft p-4">
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                    <div>
+                      <h3 className="font-semibold text-city-ink">{event.title}</h3>
+                      <p className="mt-2 text-sm text-city-muted">
+                        {formatDateTime(event.startsAt)}
+                        {event.price ? ` · ${event.price.toLocaleString("ru-RU")} ₽` : ""}
+                        {event.seatsAvailable ? ` · мест: ${event.seatsAvailable}` : ""}
+                      </p>
+                      {promo ? (
+                        <div className="mt-3 rounded-2xl bg-white p-3">
+                          <p className="text-sm font-bold text-city-green">{promo.discountText}</p>
+                          <p className="mt-1 text-xs leading-5 text-city-muted">{promo.instruction}</p>
+                        </div>
+                      ) : null}
+                    </div>
+                    {(platformBookingEnabled || event.signupUrl || hasContact) ? (
+                      <TrackedExternalLink
+                        goal="organizer_contact_click"
+                        activityStat={{
+                          activityId: activity.id,
+                          eventId: event.id,
+                          type: event.id === nextEvent?.id ? "nearest_event_click" : "signup_click"
+                        }}
+                        href={platformBookingEnabled ? "#booking-form" : event.signupUrl ?? contactHref}
+                        target={!platformBookingEnabled && (event.signupUrl || activity.contactUrl) ? "_blank" : undefined}
+                        rel={!platformBookingEnabled && (event.signupUrl || activity.contactUrl) ? "noopener noreferrer" : undefined}
+                        className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-city-green transition hover:bg-city-green hover:text-white"
+                      >
+                        {promo ? "Записаться со скидкой" : "Записаться"}
+                      </TrackedExternalLink>
+                    ) : null}
                   </div>
-                  {(platformBookingEnabled || event.signupUrl || hasContact) ? (
-                    <TrackedExternalLink
-                      goal="organizer_contact_click"
-                      activityStat={{
-                        activityId: activity.id,
-                        type: event.id === nextEvent?.id ? "nearest_event_click" : "signup_click"
-                      }}
-                      href={platformBookingEnabled ? "#booking-form" : event.signupUrl ?? contactHref}
-                      target={!platformBookingEnabled && (event.signupUrl || activity.contactUrl) ? "_blank" : undefined}
-                      rel={!platformBookingEnabled && (event.signupUrl || activity.contactUrl) ? "noopener noreferrer" : undefined}
-                      className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-city-green transition hover:bg-city-green hover:text-white"
-                    >
-                      Записаться
-                    </TrackedExternalLink>
-                  ) : null}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <p className="mt-4 text-city-muted">
@@ -502,9 +527,11 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
                 Мы передадим заявку организатору. Укажите удобный контакт для связи и, если нужно,
                 короткий комментарий.
               </p>
-              {bookingAccount?.platformBookingDiscountText ? (
+              {nextEventPromo || bookingAccount?.platformBookingDiscountText ? (
                 <p className="mt-4 rounded-2xl bg-city-green/10 p-4 text-sm font-semibold leading-6 text-city-green">
-                  {bookingAccount.platformBookingDiscountText}
+                  {nextEventPromo
+                    ? `${nextEventPromo.discountText}. ${nextEventPromo.instruction}`
+                    : bookingAccount?.platformBookingDiscountText}
                 </p>
               ) : null}
               {query.booking === "sent" ? (
@@ -520,6 +547,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
             </div>
             <form action={createActivityBookingRequest} className="rounded-[24px] bg-city-soft p-5">
               <input type="hidden" name="activityId" value={activity.id} />
+              {nextEvent ? <input type="hidden" name="eventId" value={nextEvent.id} /> : null}
               <label className="block">
                 <span className="text-sm font-semibold text-city-ink">Имя</span>
                 <input

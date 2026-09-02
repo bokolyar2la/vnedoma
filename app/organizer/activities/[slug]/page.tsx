@@ -11,6 +11,7 @@ import { getUpcomingEventWhere } from "@/lib/events";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { getOrganizerAccount } from "@/lib/organizer-auth";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_EVENT_DISCOUNT_TEXT, DEFAULT_PROMO_CODE, getEventPromoText } from "@/lib/promo";
 
 type OrganizerActivityPageProps = {
   params: Promise<{
@@ -371,6 +372,43 @@ export default async function OrganizerActivityPage({
                 className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green"
               />
             </label>
+            <div className="rounded-2xl border border-city-green/20 bg-city-soft p-4">
+              <label className="flex items-start gap-3 text-sm font-semibold text-city-ink">
+                <input
+                  name="isPromoEnabled"
+                  type="checkbox"
+                  value="on"
+                  defaultChecked={(eventToCopy as any)?.isPromoEnabled !== false}
+                  className="mt-1 h-4 w-4 accent-city-green"
+                />
+                <span>
+                  Показывать промокод ВЛЮДИ
+                  <span className="mt-1 block font-normal leading-6 text-city-muted">
+                    Участник увидит, что при записи или оплате у вас нужно назвать промокод.
+                  </span>
+                </span>
+              </label>
+              <div className="mt-4 grid gap-4 sm:grid-cols-[160px_1fr]">
+                <label className="grid gap-2" htmlFor={fieldId("promoCode")}>
+                  <span className="text-sm font-semibold text-city-ink">Промокод</span>
+                  <input
+                    id={fieldId("promoCode")}
+                    name="promoCode"
+                    defaultValue={(eventToCopy as any)?.promoCode ?? DEFAULT_PROMO_CODE}
+                    className="min-h-12 rounded-2xl border border-city-line bg-white px-4 font-bold uppercase outline-none transition focus:border-city-green"
+                  />
+                </label>
+                <label className="grid gap-2" htmlFor={fieldId("discountText")}>
+                  <span className="text-sm font-semibold text-city-ink">Что получит участник</span>
+                  <input
+                    id={fieldId("discountText")}
+                    name="discountText"
+                    defaultValue={(eventToCopy as any)?.discountText ?? DEFAULT_EVENT_DISCOUNT_TEXT}
+                    className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green"
+                  />
+                </label>
+              </div>
+            </div>
             <label className="grid gap-2" htmlFor={fieldId("eventNote")}>
               <span className="text-sm font-semibold text-city-ink">Комментарий для Влюди</span>
               <textarea
@@ -392,30 +430,40 @@ export default async function OrganizerActivityPage({
             <h2 className="text-xl font-bold text-city-ink">Опубликованные даты</h2>
             <div className="mt-4 space-y-3">
               {activity.events.length ? (
-                activity.events.map((event) => (
-                  <div key={event.id} className="rounded-2xl bg-city-soft p-4 text-sm">
-                    <p className="font-semibold text-city-ink">{event.title}</p>
-                    <p className="mt-1 text-city-muted">{formatDateTime(event.startsAt)}</p>
-                    <div className="mt-3 flex flex-wrap gap-3">
-                      <Link
-                        href={`/organizer/activities/${activity.slug}?copyEventId=${event.id}#event-form`}
-                        className="font-semibold text-city-green transition hover:text-city-blue"
-                      >
-                        Повторить
-                      </Link>
-                      {event.signupUrl ? (
-                        <a
-                          href={event.signupUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                activity.events.map((event) => {
+                  const promo = getEventPromoText(event as any);
+
+                  return (
+                    <div key={event.id} className="rounded-2xl bg-city-soft p-4 text-sm">
+                      <p className="font-semibold text-city-ink">{event.title}</p>
+                      <p className="mt-1 text-city-muted">{formatDateTime(event.startsAt)}</p>
+                      {promo ? (
+                        <div className="mt-3 rounded-2xl bg-white p-3">
+                          <p className="font-bold text-city-green">{promo.discountText}</p>
+                          <p className="mt-1 text-city-muted">{promo.instruction}</p>
+                        </div>
+                      ) : null}
+                      <div className="mt-3 flex flex-wrap gap-3">
+                        <Link
+                          href={`/organizer/activities/${activity.slug}?copyEventId=${event.id}#event-form`}
                           className="font-semibold text-city-green transition hover:text-city-blue"
                         >
-                          Ссылка на запись
-                        </a>
-                      ) : null}
+                          Повторить
+                        </Link>
+                        {event.signupUrl ? (
+                          <a
+                            href={event.signupUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-city-green transition hover:text-city-blue"
+                          >
+                            Ссылка на запись
+                          </a>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <p className="text-city-muted">Дат пока нет. Добавьте ближайшую встречу слева.</p>
               )}
