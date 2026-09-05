@@ -28,8 +28,6 @@ type ActivitySubmissionNotificationInput = {
   description?: string | null;
 };
 
-const DEFAULT_DISCOUNT_TEXT =
-  "Скидка 10% по промокоду ВЛЮДИ. Попросите участника назвать промокод при записи или оплате.";
 const EMAIL_PATTERN = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 
 export function extractEmailAddress(value?: string | null) {
@@ -47,7 +45,7 @@ function cleanOptional(value?: string | null) {
 }
 
 function buildBookingText(input: BookingNotificationInput) {
-  const discountText = cleanOptional(input.discountText) || DEFAULT_DISCOUNT_TEXT;
+  const discountText = cleanOptional(input.discountText);
 
   return [
     `У вас новая заявка на активность «${input.activityTitle}» через Влюди.`,
@@ -57,7 +55,7 @@ function buildBookingText(input: BookingNotificationInput) {
     `Имя: ${input.customerName}`,
     `Контакт: ${input.customerContact}`,
     input.message ? `Комментарий: ${input.message}` : null,
-    `Бонус для участника: ${discountText}`,
+    discountText ? `Бонус для участника: ${discountText}` : null,
     "",
     `Посмотреть заявку: ${getAppBaseUrl()}/organizer?tab=requests`
   ]

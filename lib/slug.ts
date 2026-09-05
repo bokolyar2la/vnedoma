@@ -48,12 +48,12 @@ export function slugifyTitle(title: string) {
   return slug || `activity-${Date.now()}`;
 }
 
-export async function generateUniqueSlug(title: string) {
+export async function generateUniqueSlug(title: string, db: Pick<typeof prisma, "activity"> = prisma) {
   const base = slugifyTitle(title);
   let slug = base;
   let counter = 2;
 
-  while (await prisma.activity.findUnique({ where: { slug } })) {
+  while (await db.activity.findUnique({ where: { slug } })) {
     slug = `${base}-${counter}`;
     counter += 1;
   }

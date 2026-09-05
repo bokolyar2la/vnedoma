@@ -66,6 +66,10 @@ function getRequiredActivityEventInput(formData: FormData) {
     throw new Error("Окончание события должно быть позже начала.");
   }
 
+  if (formData.getAll("isPromoEnabled").includes("on") && !getString(formData, "discountText")) {
+    throw new Error("Укажите согласованные условия скидки или отключите показ промокода.");
+  }
+
   return {
     activityId,
     title,

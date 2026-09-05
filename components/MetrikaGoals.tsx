@@ -48,11 +48,11 @@ function sendActivityStat(activityId: number, type: ActivityStatType, eventId?: 
   });
 
   if (navigator.sendBeacon) {
-    navigator.sendBeacon(
+    const queued = navigator.sendBeacon(
       "/api/activity-stats",
       new Blob([payload], { type: "application/json" })
     );
-    return;
+    if (queued) return;
   }
 
   fetch("/api/activity-stats", {

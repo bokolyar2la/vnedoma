@@ -461,6 +461,10 @@ export async function createOrganizerEventRequest(formData: FormData) {
     );
   }
 
+  if (formData.getAll("isPromoEnabled").includes("on") && !getString(formData, "discountText")) {
+    fail(`/organizer/activities/${activity.slug}`, "Укажите согласованные условия скидки или отключите показ промокода.");
+  }
+
   const eventData = {
     activityId,
     title,

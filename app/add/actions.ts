@@ -189,75 +189,76 @@ export async function createActivity(formData: FormData) {
     fail(message);
   }
 
-  const city = await prisma.city.upsert({
-    where: { slug: "tula" },
-    update: { name: "Тула" },
-    create: { name: "Тула", slug: "tula" }
-  });
-
-  const organizer = await prisma.organizer.upsert({
-    where: {
-      name_cityId: {
-        name: organizerName,
-        cityId: city.id
-      }
-    },
-    update: {
-      address: address || "Адрес уточняется",
-      phone: contactPhone || null,
-      websiteUrl: contactUrl || null
-    },
-    create: {
-      name: organizerName,
-      description: "Организатор добавлен через публичную форму.",
-      address: address || "Адрес уточняется",
-      cityId: city.id,
-      phone: contactPhone || null,
-      websiteUrl: contactUrl || null
-    }
-  });
-
-  const activity = await prisma.activity.create({
-    data: {
-      title,
-      slug: await generateUniqueSlug(title),
-      description,
-      cityId: city.id,
-      categoryId: category.id,
-      organizerId: organizer.id,
-      address: address || "Адрес уточняется",
-      priceFrom: isFree || priceNote ? null : getNumberValue(formData, "priceFrom"),
-      priceTo: isFree || priceNote ? null : getNumberValue(formData, "priceTo"),
-      priceNote,
-      isFree,
-      isForAdults: true,
-      isAdultsOnly: formData.get("isAdultsOnly") === "on",
-      beginnerFriendly: formData.get("beginnerFriendly") === "on",
-      canComeAlone: formData.get("canComeAlone") === "on",
-      contactPhone: contactPhone || null,
-      contactUrl: contactUrl || null,
-      sourceUrl: null,
-      imageUrl: null,
-      isVerified: false,
-      needsCheck: true,
-      editorComment:
-        suspiciousContentReasons.length > 0
-          ? `Автофлаг: возможный спам. Причины: ${suspiciousContentReasons.join(", ")}. Заявка сохранена для ручной проверки.`
-          : null,
-      submittedByOrganizer,
-      submitterContact: submitterContact || null,
-      status: ActivityStatus.draft
-    }
-  });
-
-  if (media.length > 0) {
-    await prisma.activityMedia.createMany({
-      data: media.map((item) => ({
-        ...item,
-        activityId: activity.id
-      }))
+  const activity = await prisma.$transaction(async (tx) => {
+    const city = await tx.city.upsert({
+      where: { slug: "tula" },
+      update: { name: "Тула" },
+      create: { name: "Тула", slug: "tula" }
     });
-  }
+
+    const organizer = await tx.organizer.upsert({
+      where: {
+        name_cityId: {
+          name: organizerName,
+          cityId: city.id
+        }
+      },
+      // An unverified submission must never change an existing organizer.
+      update: {},
+      create: {
+        name: organizerName,
+        description: "Организатор добавлен через публичную форму.",
+        address: address || "Адрес уточняется",
+        cityId: city.id,
+        phone: contactPhone || null,
+        websiteUrl: contactUrl || null
+      }
+    });
+
+    const activity = await tx.activity.create({
+      data: {
+        title,
+        slug: await generateUniqueSlug(title, tx),
+        description,
+        cityId: city.id,
+        categoryId: category.id,
+        organizerId: organizer.id,
+        address: address || "Адрес уточняется",
+        priceFrom: isFree || priceNote ? null : getNumberValue(formData, "priceFrom"),
+        priceTo: isFree || priceNote ? null : getNumberValue(formData, "priceTo"),
+        priceNote,
+        isFree,
+        isForAdults: true,
+        isAdultsOnly: formData.get("isAdultsOnly") === "on",
+        beginnerFriendly: formData.get("beginnerFriendly") === "on",
+        canComeAlone: formData.get("canComeAlone") === "on",
+        contactPhone: contactPhone || null,
+        contactUrl: contactUrl || null,
+        sourceUrl: null,
+        imageUrl: null,
+        isVerified: false,
+        needsCheck: true,
+        editorComment:
+          suspiciousContentReasons.length > 0
+            ? `Автофлаг: возможный спам. Причины: ${suspiciousContentReasons.join(", ")}. Заявка сохранена для ручной проверки.`
+            : null,
+        submittedByOrganizer,
+        submitterContact: submitterContact || null,
+        status: ActivityStatus.draft
+      }
+    });
+
+    if (media.length > 0) {
+      await tx.activityMedia.createMany({
+        data: media.map((item) => ({
+          ...item,
+          activityId: activity.id
+        }))
+      });
+    }
+
+    return activity;
+  });
 
   console.info("Public activity submission saved", {
     activityId: activity.id,

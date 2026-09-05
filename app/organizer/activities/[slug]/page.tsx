@@ -361,11 +361,11 @@ export default async function OrganizerActivityPage({
                   name="isPromoEnabled"
                   type="checkbox"
                   value="on"
-                  defaultChecked={(eventToCopy as any)?.isPromoEnabled !== false}
+                  defaultChecked={false}
                   className="mt-1 h-4 w-4 accent-city-green"
                 />
                 <span>
-                  Показывать промокод ВЛЮДИ
+                  Скидка согласована — показывать промокод
                   <span className="mt-1 block font-normal leading-6 text-city-muted">
                     Участник увидит, что при записи или оплате у вас нужно назвать промокод.
                   </span>
@@ -386,7 +386,8 @@ export default async function OrganizerActivityPage({
                   <input
                     id={fieldId("discountText")}
                     name="discountText"
-                    defaultValue={(eventToCopy as any)?.discountText ?? DEFAULT_EVENT_DISCOUNT_TEXT}
+                    defaultValue={(eventToCopy as any)?.discountText ?? ""}
+                    placeholder={DEFAULT_EVENT_DISCOUNT_TEXT}
                     className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green"
                   />
                 </label>

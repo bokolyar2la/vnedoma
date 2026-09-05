@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { resolveOrganizerBilling } from "@/lib/billing";
 import { notifyOrganizerAboutBooking } from "@/lib/booking-notifications";
 import { prisma } from "@/lib/prisma";
+import { getUpcomingEventWhere } from "@/lib/events";
+import { getEventPromoText } from "@/lib/promo";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -106,18 +108,23 @@ export async function createActivityBookingRequest(formData: FormData) {
       ? await prisma.event.findFirst({
           where: {
             id: rawEventId,
-            activityId: activity.id
+            activityId: activity.id,
+            ...getUpcomingEventWhere(new Date())
           },
           select: {
             id: true,
             title: true,
-            discountText: true
+            discountText: true,
+            promoCode: true,
+            isPromoEnabled: true
           } as any
         })
       : null;
-  const discountText =
-    (event as { discountText?: string | null } | null)?.discountText ||
-    organizerAccount.platformBookingDiscountText;
+  if (getString(formData, "eventId") && !event) {
+    fail(activity.slug, "Событие недоступно для записи. Обновите страницу и выберите актуальную дату.");
+  }
+  const promo = event ? getEventPromoText(event as any) : null;
+  const discountText = event ? promo?.discountText ?? null : organizerAccount.platformBookingDiscountText;
 
   await prisma.activityBookingRequest.create({
     data: {
@@ -127,7 +134,7 @@ export async function createActivityBookingRequest(formData: FormData) {
       name,
       contact,
       message,
-      promoCode: "ВЛЮДИ",
+      promoCode: event ? promo?.promoCode ?? null : discountText ? "ВЛЮДИ" : null,
       discountText
     } as any
   });

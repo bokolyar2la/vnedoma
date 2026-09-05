@@ -8,7 +8,11 @@ const cookieName = "vlyudi_organizer_session";
 const maxAge = 60 * 60 * 24 * 30;
 
 function getSecret() {
-  return process.env.ORGANIZER_AUTH_SECRET ?? process.env.ADMIN_PASSWORD ?? "dev-organizer-secret";
+  const secret = process.env.ORGANIZER_AUTH_SECRET?.trim();
+  if (process.env.NODE_ENV === "production" && (!secret || secret.length < 32 || secret.startsWith("change-me"))) {
+    throw new Error("ORGANIZER_AUTH_SECRET must be a unique secret of at least 32 characters in production.");
+  }
+  return secret || "dev-organizer-secret";
 }
 
 function sign(value: string) {
@@ -67,6 +71,12 @@ export async function getOrganizerAccount() {
   const parts = token.split(".");
 
   if (parts.length !== 3) {
+    return null;
+  }
+
+  const issuedAt = Number(parts[1]);
+  const now = Date.now();
+  if (!Number.isSafeInteger(issuedAt) || issuedAt <= 0 || issuedAt > now || now - issuedAt >= maxAge * 1000) {
     return null;
   }
 

@@ -10,7 +10,7 @@ export function normalizePromoCode(value: string | null | undefined) {
 }
 
 export function normalizeDiscountText(value: string | null | undefined) {
-  return clean(value) || DEFAULT_EVENT_DISCOUNT_TEXT;
+  return clean(value);
 }
 
 export function getEventPromoText(input: {
@@ -18,7 +18,7 @@ export function getEventPromoText(input: {
   promoCode?: string | null;
   discountText?: string | null;
 }) {
-  if (input.isPromoEnabled === false) {
+  if (input.isPromoEnabled !== true || !clean(input.discountText)) {
     return null;
   }
 

@@ -576,11 +576,11 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
                     name="isPromoEnabled"
                     type="checkbox"
                     value="on"
-                    defaultChecked
+                    defaultChecked={false}
                     className="mt-1 h-4 w-4 accent-city-green"
                   />
                   <span>
-                    Показывать промокод ВЛЮДИ
+                    Скидка согласована — показывать промокод
                     <span className="mt-1 block font-normal leading-6 text-city-muted">
                       Это основной смысл анонса: человек переходит к организатору и называет промокод.
                     </span>
@@ -601,7 +601,7 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
                     <input
                       id="discountText"
                       name="discountText"
-                      defaultValue={DEFAULT_EVENT_DISCOUNT_TEXT}
+                      placeholder={DEFAULT_EVENT_DISCOUNT_TEXT}
                       className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
                     />
                   </label>
