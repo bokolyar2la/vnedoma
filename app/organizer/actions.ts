@@ -443,6 +443,10 @@ export async function createOrganizerEventRequest(formData: FormData) {
   const endsAtValue = getString(formData, "endsAt");
   const endsAt = endsAtValue ? new Date(endsAtValue) : null;
 
+  if ((getString(formData, "endDate") || getString(formData, "endTime")) && !endsAt) {
+    fail(`/organizer/activities/${activity.slug}`, "Заполните дату и время окончания или оставьте оба поля пустыми.");
+  }
+
   if (Number.isNaN(startsAt.getTime()) || (endsAt && Number.isNaN(endsAt.getTime()))) {
     fail(`/organizer/activities/${activity.slug}`, "Проверьте дату и время события.");
   }

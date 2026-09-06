@@ -6,26 +6,9 @@ const inputClass =
   "min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green";
 
 function toIsoDate(value: string) {
-  const match = value.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-  if (!match) return "";
-
-  const [, dayRaw, monthRaw, yearRaw] = match;
-  const day = Number(dayRaw);
-  const month = Number(monthRaw);
-  const year = Number(yearRaw);
-
-  if (day < 1 || day > 31 || month < 1 || month > 12) return "";
-
-  const date = new Date(year, month - 1, day);
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
-    return "";
-  }
-
-  return `${yearRaw}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value ? value : "";
 }
 
 function normalizeTime(value: string) {
@@ -53,7 +36,7 @@ function fromDateTimeLocal(value?: string | null) {
 
   const [, year, month, day, hours, minutes] = match;
   return {
-    date: `${day}.${month}.${year}`,
+    date: `${year}-${month}-${day}`,
     time: `${hours}:${minutes}`
   };
 }
@@ -97,14 +80,13 @@ export function OrganizerEventDateTimeFields({
           <label className="grid gap-2">
             <span className="text-sm font-semibold text-city-ink">Дата</span>
             <input
-              type="text"
+              type="date"
+              name="startDate"
               value={startDate}
               onChange={(event) => setStartDate(event.target.value)}
-              placeholder="15.06.2026"
               autoComplete="off"
               inputMode="numeric"
-              pattern="[0-9]{1,2}[.][0-9]{1,2}[.][0-9]{4}"
-              title="Введите дату в формате 15.06.2026"
+              title="Выберите дату в календаре"
               required
               className={inputClass}
             />
@@ -133,14 +115,15 @@ export function OrganizerEventDateTimeFields({
           <label className="grid gap-2">
             <span className="text-sm font-semibold text-city-ink">Дата</span>
             <input
-              type="text"
+              type="date"
+              name="endDate"
+              min={startDate || undefined}
+              required={Boolean(endTime)}
               value={endDate}
               onChange={(event) => setEndDate(event.target.value)}
-              placeholder="15.06.2026"
               autoComplete="off"
               inputMode="numeric"
-              pattern="[0-9]{1,2}[.][0-9]{1,2}[.][0-9]{4}"
-              title="Введите дату в формате 15.06.2026"
+              title="Выберите дату в календаре"
               className={inputClass}
             />
           </label>
@@ -148,6 +131,8 @@ export function OrganizerEventDateTimeFields({
             <span className="text-sm font-semibold text-city-ink">Время</span>
             <input
               type="text"
+              name="endTime"
+              required={Boolean(endDate)}
               value={endTime}
               onChange={(event) => setEndTime(event.target.value)}
               placeholder="21:00"
@@ -162,8 +147,8 @@ export function OrganizerEventDateTimeFields({
       </div>
 
       <p className="text-sm leading-6 text-city-muted">
-        Формат даты и времени: 15.06.2026 и 19:30. Окончание можно оставить
-        пустым.
+        Выберите дату в календаре. Время — по Москве, в формате 19:30.
+        Окончание необязательно; если указали его, заполните и дату, и время.
       </p>
     </div>
   );

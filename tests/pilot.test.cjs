@@ -160,7 +160,7 @@ test('admin cannot publish enabled promo without agreed terms', async () => {
   });
   const form = new FormData();
   for (const [k, v] of Object.entries({ activityId: '1', eventTitle: 'Test', startsAt: '2026-10-01T19:00:00+03:00', isPromoEnabled: 'on' })) form.set(k, v);
-  await assert.rejects(admin.createAdminActivityEvent(form), /согласованные условия/);
+  assert.match((await admin.createAdminActivityEvent(form)).error, /согласованные условия/);
 });
 
 test('event expiry uses end time when provided and start time otherwise', () => {
@@ -174,6 +174,61 @@ test('event expiry uses end time when provided and start time otherwise', () => 
   const endsAt = new Date('2026-10-01T19:00:00Z');
   assert.ok(getEventExpiresAt({ startsAt, endsAt }) > now);
   assert.ok(getEventExpiresAt({ startsAt, endsAt: null }) < now);
+});
+
+test('admin event saves without promo and returns validation errors without database writes', async () => {
+  let saved;
+  const admin = load('app/admin/activities/actions.ts', {
+    '@/lib/prisma': { prisma: {
+      activity: { findUniqueOrThrow: async () => ({ slug: 'test' }) },
+      event: { create: async ({ data }) => { saved = data; } }
+    } },
+    'next/navigation': navigation, 'next/cache': { revalidatePath() {} },
+    '@/lib/booking-notifications': {}, '@/lib/s3-upload': {}
+  });
+  const form = new FormData();
+  for (const [k, v] of Object.entries({ activityId: '1', eventTitle: 'Test', startsAt: '2026-10-01T19:00:00+03:00' })) form.set(k, v);
+  assert.ok((await admin.createAdminActivityEvent(form)).success);
+  assert.equal(saved.isPromoEnabled, false);
+  assert.equal(saved.discountText, '');
+  assert.equal(saved.startsAt.toISOString(), '2026-10-01T16:00:00.000Z');
+  saved = undefined;
+  form.set('endDate', '2026-10-02');
+  assert.match((await admin.createAdminActivityEvent(form)).error, /дату и время окончания/);
+  assert.equal(saved, undefined);
+  form.delete('endDate');
+  form.set('endsAt', '2026-10-01T18:00:00+03:00');
+  assert.match((await admin.createAdminActivityEvent(form)).error, /позже начала/);
+  assert.equal(saved, undefined);
+});
+
+test('date fields render native calendars and preserve Moscow hidden timestamp', () => {
+  const { OrganizerEventDateTimeFields } = load('components/OrganizerEventDateTimeFields.tsx');
+  const html = renderToStaticMarkup(React.createElement(OrganizerEventDateTimeFields, {
+    defaultStartsAt: '2026-10-01T19:30', defaultEndsAt: '2026-10-01T21:00'
+  }));
+  assert.equal((html.match(/type="date"/g) || []).length, 2);
+  assert.ok(html.includes('value="2026-10-01T19:30:00+03:00"'));
+  assert.ok(html.includes('value="2026-10-01T21:00:00+03:00"'));
+});
+
+test('admin form keeps fields mounted on validation error and resets only after success', async () => {
+  for (const success of [false, true]) {
+    const changes = [];
+    let stateIndex = 0;
+    let refreshed = false;
+    const component = load('components/AdminEventForm.tsx', {
+      react: { ...React, useRef: () => ({ current: false }),
+        useState: (initial) => { const index = stateIndex++; return [initial, (value) => changes.push({ index, value })]; } },
+      'next/navigation': { useRouter: () => ({ refresh: () => { refreshed = true; } }) },
+      __globals: { FormData: class { constructor(form) { assert.equal(form, 'existing form'); } } }
+    });
+    const element = component.AdminEventForm({ action: async () => success ? { success: 'Saved' } : { error: 'Missing discount' }, children: null });
+    await element.props.onSubmit({ preventDefault() {}, currentTarget: 'existing form' });
+    assert.equal(changes.some(({ index }) => index === 2), success, 'form key must not change on error');
+    assert.equal(refreshed, success);
+    assert.ok(changes.some(({ index, value }) => index === 1 && (success ? value.success : value.error)));
+  }
 });
 
 function fixture() {

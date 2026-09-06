@@ -50,6 +50,10 @@ function getRequiredActivityEventInput(formData: FormData) {
   const startsAt = getOptionalDateTime(formData, "startsAt");
   const endsAt = getOptionalDateTime(formData, "endsAt");
 
+  if ((getString(formData, "endDate") || getString(formData, "endTime")) && !endsAt) {
+    throw new Error("Заполните дату и время окончания или оставьте оба поля пустыми.");
+  }
+
   if (!Number.isInteger(activityId) || activityId <= 0) {
     throw new Error("Некорректная активность.");
   }
@@ -428,7 +432,12 @@ export async function updateActivity(formData: FormData) {
 }
 
 export async function createAdminActivityEvent(formData: FormData) {
-  const data = getRequiredActivityEventInput(formData);
+  let data: ReturnType<typeof getRequiredActivityEventInput>;
+  try {
+    data = getRequiredActivityEventInput(formData);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Проверьте данные события." };
+  }
   const activity = await prisma.activity.findUniqueOrThrow({
     where: { id: data.activityId },
     select: { slug: true }
@@ -440,7 +449,7 @@ export async function createAdminActivityEvent(formData: FormData) {
 
   await revalidateAdmin();
   revalidateActivityPublicPages(activity.slug);
-  redirect(`/admin/activities/${data.activityId}/edit?event=created`);
+  return { success: "Событие добавлено. Оно появилось в списке справа и на публичной карточке." };
 }
 
 export async function deleteAdminActivityEvent(formData: FormData) {

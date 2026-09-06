@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AdminEventForm } from "@/components/AdminEventForm";
 import Link from "next/link";
 import { ActivityStatus } from "@prisma/client";
 import { notFound } from "next/navigation";
@@ -518,7 +519,7 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(320px,0.7fr)]">
-          <form action={createAdminActivityEvent} className="rounded-3xl bg-city-soft p-4 sm:p-5">
+          <AdminEventForm action={createAdminActivityEvent} className="rounded-3xl bg-city-soft p-4 sm:p-5">
             <input type="hidden" name="activityId" value={activity.id} />
             <div className="grid gap-4">
               <label htmlFor="eventTitle" className="grid gap-2">
@@ -634,7 +635,7 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
                 Добавить событие
               </button>
             </div>
-          </form>
+          </AdminEventForm>
 
           <div className="rounded-3xl border border-city-line bg-white p-4">
             <h3 className="text-lg font-bold text-city-ink">Сейчас на сайте</h3>
