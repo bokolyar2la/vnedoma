@@ -5,6 +5,53 @@ import { useState } from "react";
 const inputClass =
   "min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green";
 
+function TimeSelect({ value, onChange, required, name }: {
+  value: string;
+  onChange: (value: string) => void;
+  required: boolean;
+  name: string;
+}) {
+  const [hours = "", minutes = ""] = value.split(":");
+  function update(nextHours: string, nextMinutes: string) {
+    onChange(nextHours || nextMinutes ? `${nextHours}:${nextMinutes}` : "");
+  }
+  return (
+    <fieldset className="min-w-0">
+      <legend className="mb-2 text-sm font-semibold text-city-ink">Время</legend>
+      <input type="hidden" name={name} value={value} />
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+        <select
+          aria-label="Часы"
+          value={hours}
+          required={required || Boolean(minutes)}
+          onChange={(event) => update(event.target.value, minutes)}
+          className={`${inputClass} min-w-0 w-full bg-white`}
+        >
+          <option value="">Час</option>
+          {Array.from({ length: 24 }, (_, index) => {
+            const option = String(index).padStart(2, "0");
+            return <option key={option} value={option}>{option}</option>;
+          })}
+        </select>
+        <span aria-hidden="true">:</span>
+        <select
+          aria-label="Минуты"
+          value={minutes}
+          required={required || Boolean(hours)}
+          onChange={(event) => update(hours, event.target.value)}
+          className={`${inputClass} min-w-0 w-full bg-white`}
+        >
+          <option value="">Мин.</option>
+          {Array.from({ length: 60 }, (_, index) => {
+            const option = String(index).padStart(2, "0");
+            return <option key={option} value={option}>{option}</option>;
+          })}
+        </select>
+      </div>
+    </fieldset>
+  );
+}
+
 function toIsoDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
   const date = new Date(`${value}T00:00:00Z`);
@@ -91,21 +138,12 @@ export function OrganizerEventDateTimeFields({
               className={inputClass}
             />
           </label>
-          <label className="grid gap-2">
-            <span className="text-sm font-semibold text-city-ink">Время</span>
-            <input
-              type="text"
-              value={startTime}
-              onChange={(event) => setStartTime(event.target.value)}
-              placeholder="19:30"
-              autoComplete="off"
-              inputMode="numeric"
-              pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]"
-              title="Введите время в формате 19:30"
-              required
-              className={inputClass}
-            />
-          </label>
+          <TimeSelect
+            name="startTime"
+            value={startTime}
+            onChange={setStartTime}
+            required={true}
+          />
         </fieldset>
 
         <fieldset className="grid gap-3 rounded-2xl border border-city-line p-4">
@@ -127,27 +165,17 @@ export function OrganizerEventDateTimeFields({
               className={inputClass}
             />
           </label>
-          <label className="grid gap-2">
-            <span className="text-sm font-semibold text-city-ink">Время</span>
-            <input
-              type="text"
-              name="endTime"
-              required={Boolean(endDate)}
-              value={endTime}
-              onChange={(event) => setEndTime(event.target.value)}
-              placeholder="21:00"
-              autoComplete="off"
-              inputMode="numeric"
-              pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]"
-              title="Введите время в формате 21:00"
-              className={inputClass}
-            />
-          </label>
+          <TimeSelect
+            name="endTime"
+            value={endTime}
+            onChange={setEndTime}
+            required={Boolean(endDate)}
+          />
         </fieldset>
       </div>
 
       <p className="text-sm leading-6 text-city-muted">
-        Выберите дату в календаре. Время — по Москве, в формате 19:30.
+        Выберите дату в календаре. Часы и минуты выберите из списков. Время — по Москве, от 00:00 до 23:59.
         Окончание необязательно; если указали его, заполните и дату, и время.
       </p>
     </div>
