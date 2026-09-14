@@ -4,8 +4,8 @@ import path from "node:path";
 const nextConfig = {
   experimental: {
     serverActions: {
-      // Cover + three gallery images, up to 5 MiB each, plus multipart fields.
-      bodySizeLimit: "22mb"
+      // Cover (5 MiB) + three gallery videos (20 MiB each) + multipart fields.
+      bodySizeLimit: "67mb"
     }
   },
   async redirects() {

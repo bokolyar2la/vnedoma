@@ -5,9 +5,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { notifySubmitterActivityPublished } from "@/lib/booking-notifications";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
+import { getActivityMediaInput } from "@/lib/activity-media-input";
 import { prisma } from "@/lib/prisma";
 import { normalizeDiscountText, normalizePromoCode } from "@/lib/promo";
-import { uploadActivityImage, uploadActivityImageField } from "@/lib/s3-upload";
+import { uploadActivityImage } from "@/lib/s3-upload";
 import { generateUniqueSlug } from "@/lib/slug";
 
 function getString(formData: FormData, key: string) {
@@ -91,40 +92,6 @@ function getRequiredActivityEventInput(formData: FormData) {
   };
 }
 
-async function getActivityMediaInput(formData: FormData) {
-  const media = await Promise.all(
-    [1, 2, 3].map(async (position) => {
-      const uploadedUrl = await uploadActivityImageField(formData, `media${position}File`);
-      const url = uploadedUrl ?? getOptionalString(formData, `media${position}Url`);
-      const rawType = getString(formData, `media${position}Type`);
-
-      if (!url) {
-        return null;
-      }
-
-      return {
-        type:
-          rawType === ActivityMediaType.video
-            ? ActivityMediaType.video
-            : ActivityMediaType.image,
-        url,
-        caption: getOptionalString(formData, `media${position}Caption`),
-        position
-      };
-    })
-  );
-
-  return media.filter(
-    (
-      media
-    ): media is {
-      type: ActivityMediaType;
-      url: string;
-      caption: string | null;
-      position: number;
-    } => Boolean(media)
-  );
-}
 
 function getRequiredId(formData: FormData) {
   const id = Number(getString(formData, "id"));
@@ -248,7 +215,7 @@ export async function createAdminActivity(formData: FormData) {
   const organizer = await getOrCreateOrganizer(formData, city.id);
   const isFree = formData.get("isFree") === "on";
   const priceNote = getOptionalString(formData, "priceNote");
-  const imageUrl = (await uploadActivityImage(formData)) ?? getOptionalString(formData, "imageUrl");
+  const imageUrl = (await uploadActivityImage(formData)) ?? null;
   const media = await getActivityMediaInput(formData);
 
   const activity = await prisma.activity.create({
@@ -372,14 +339,14 @@ export async function updateActivity(formData: FormData) {
 
   const activity = await prisma.activity.findUniqueOrThrow({
     where: { id },
-    select: { cityId: true }
+    select: { cityId: true, imageUrl: true, media: true }
   });
 
   const organizer = await getOrCreateOrganizer(formData, activity.cityId);
   const isFree = formData.get("isFree") === "on";
   const priceNote = getOptionalString(formData, "priceNote");
-  const imageUrl = (await uploadActivityImage(formData)) ?? getOptionalString(formData, "imageUrl");
-  const media = await getActivityMediaInput(formData);
+  const imageUrl = (await uploadActivityImage(formData)) ?? activity.imageUrl;
+  const media = await getActivityMediaInput(formData, activity.media);
 
   await prisma.activity.update({
     where: { id },

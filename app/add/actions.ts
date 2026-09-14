@@ -8,8 +8,9 @@ import {
   notifySubmitterActivityReceived
 } from "@/lib/booking-notifications";
 import { normalizeContactUrlInput } from "@/lib/contact-url";
+import { getActivityMediaInput } from "@/lib/activity-media-input";
 import { prisma } from "@/lib/prisma";
-import { uploadActivityImageField } from "@/lib/s3-upload";
+
 import { generateUniqueSlug } from "@/lib/slug";
 
 function getValue(formData: FormData, key: string) {
@@ -27,40 +28,6 @@ function getNumberValue(formData: FormData, key: string) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
-async function getActivityMediaInput(formData: FormData) {
-  const media = await Promise.all(
-    [1, 2, 3].map(async (position) => {
-      const uploadedUrl = await uploadActivityImageField(formData, `media${position}File`);
-      const url = uploadedUrl ?? getValue(formData, `media${position}Url`);
-      const rawType = getValue(formData, `media${position}Type`);
-
-      if (!url) {
-        return null;
-      }
-
-      return {
-        type:
-          uploadedUrl || rawType !== ActivityMediaType.video
-            ? ActivityMediaType.image
-            : ActivityMediaType.video,
-        url,
-        caption: getValue(formData, `media${position}Caption`) || null,
-        position
-      };
-    })
-  );
-
-  return media.filter(
-    (
-      item
-    ): item is {
-      type: ActivityMediaType;
-      url: string;
-      caption: string | null;
-      position: number;
-    } => Boolean(item)
-  );
-}
 
 function fail(message: string): never {
   redirect(`/add?error=${encodeURIComponent(message)}`);

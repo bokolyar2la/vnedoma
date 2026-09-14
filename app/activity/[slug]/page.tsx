@@ -1,3 +1,4 @@
+import { ActivityGalleryMedia } from "@/components/ActivityGalleryMedia";
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { ActivityStatus } from "@prisma/client";
@@ -664,28 +665,8 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
           <h2 className="text-2xl font-bold text-city-ink">Как проходит активность</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-3">
             {activity.media.map((media) => (
-              <div key={media.id} className="overflow-hidden rounded-[24px] bg-city-soft">
-                {media.type === "image" ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={media.url}
-                    alt={media.caption ?? activity.title}
-                    className="aspect-[4/3] w-full object-cover"
-                  />
-                ) : (
-                  <a
-                    href={media.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex aspect-[4/3] items-center justify-center p-5 text-center font-semibold text-city-green transition hover:text-city-blue"
-                  >
-                    Открыть видео
-                  </a>
-                )}
-                {media.caption ? (
-                  <p className="p-4 text-sm leading-6 text-city-muted">{media.caption}</p>
-                ) : null}
-              </div>
+              <ActivityGalleryMedia key={media.id} url={media.url} type={media.type}
+                caption={media.caption} title={activity.title} />
             ))}
           </div>
         </section>

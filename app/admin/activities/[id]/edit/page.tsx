@@ -1,3 +1,4 @@
+import { MediaUploadSlot } from "@/components/MediaUploadSlot";
 import type { Metadata } from "next";
 import { AdminEventForm } from "@/components/AdminEventForm";
 import Link from "next/link";
@@ -264,16 +265,6 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
               />
             </div>
             <div>
-              <label htmlFor="imageUrl" className="text-sm font-semibold text-city-ink">
-                Ссылка на обложку
-              </label>
-              <input
-                id="imageUrl"
-                name="imageUrl"
-                type="url"
-                defaultValue={activity.imageUrl ?? ""}
-                className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-              />
               <label htmlFor="imageFile" className="mt-4 block text-sm font-semibold text-city-ink">
                 Загрузить новую обложку
               </label>
@@ -285,7 +276,7 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
                 className="mt-2 w-full rounded-2xl border border-city-line px-4 py-3 text-sm text-city-muted outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-city-green file:px-4 file:py-2 file:font-semibold file:text-white focus:border-city-green focus:ring-4 focus:ring-city-green/10"
               />
               <p className="mt-2 text-xs leading-5 text-city-muted">
-                JPG, PNG или WEBP до 5 МБ. Если файл не выбран, сохранится ссылка выше.
+                JPG, PNG или WEBP до 5 МБ. Если файл не выбран, текущая обложка сохранится.
               </p>
             </div>
           </div>
@@ -293,61 +284,12 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
           <div className="rounded-3xl border border-city-line bg-city-soft p-4">
             <h2 className="text-lg font-bold text-city-ink">Галерея и видео</h2>
             <p className="mt-1 text-sm leading-6 text-city-muted">
-              Можно добавить до 3 материалов: фото процесса, результат или ссылку на видео.
+              Можно добавить до 3 материалов: фото процесса, результата или видео.
             </p>
             <div className="mt-4 grid gap-4">
-              {mediaSlots.map((position) => {
-                const media = activity.media[position - 1];
-
-                return (
-                  <div key={position} className="rounded-2xl border border-city-line bg-white p-4">
-                    <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-                      <p className="text-sm font-semibold text-city-ink">Материал {position}</p>
-                      <span className="w-fit rounded-full bg-city-soft px-3 py-1 text-xs font-semibold text-city-green">
-                        фото или видео
-                      </span>
-                    </div>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-[150px_1fr]">
-                      <select
-                        name={`media${position}Type`}
-                        defaultValue={media?.type ?? "image"}
-                        className="min-h-12 rounded-2xl border border-city-line bg-white px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-                      >
-                        <option value="image">Фото</option>
-                        <option value="video">Видео</option>
-                      </select>
-                      <input
-                        name={`media${position}Url`}
-                        defaultValue={media?.url ?? ""}
-                        className="min-h-12 rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-                        placeholder="Ссылка на фото или видео"
-                      />
-                    </div>
-                    <label
-                      htmlFor={`media${position}File`}
-                      className="mt-3 flex min-h-12 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-city-green/50 bg-city-green/5 px-4 text-sm font-semibold text-city-green transition hover:border-city-green hover:bg-white"
-                    >
-                      Загрузить новое фото
-                    </label>
-                    <input
-                      id={`media${position}File`}
-                      name={`media${position}File`}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="sr-only"
-                    />
-                    <p className="mt-2 text-xs leading-5 text-city-muted">
-                      Если выбрать файл, он заменит ссылку в этом слоте. Видео пока добавляется ссылкой.
-                    </p>
-                    <input
-                      name={`media${position}Caption`}
-                      defaultValue={media?.caption ?? ""}
-                      className="mt-3 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-                      placeholder="Подпись к фото или видео"
-                    />
-                  </div>
-                );
-              })}
+              {mediaSlots.map((position) => (
+                <MediaUploadSlot key={position} position={position} media={activity.media.find((item) => item.position === position)} />
+              ))}
             </div>
           </div>
 

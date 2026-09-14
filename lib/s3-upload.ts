@@ -71,19 +71,20 @@ function buildObjectKey(file: File, extension: string) {
   return `activities/${new Date().toISOString().slice(0, 10)}/${Date.now()}-${randomUUID()}-${name}.${extension}`;
 }
 
-async function uploadImageFile(value: FormDataEntryValue | null) {
+async function uploadImageFile(value: FormDataEntryValue | null, allowVideo = false) {
   if (!(value instanceof File) || value.size === 0) {
     return null;
   }
 
-  const extension = ALLOWED_IMAGE_TYPES.get(value.type);
+  const videoExtension = allowVideo ? new Map([["video/mp4", "mp4"], ["video/webm", "webm"]]).get(value.type) : undefined;
+  const extension = ALLOWED_IMAGE_TYPES.get(value.type) ?? videoExtension;
 
   if (!extension) {
-    throw new Error("Можно загрузить только JPG, PNG или WEBP.");
+    throw new Error(allowVideo ? "Загрузите JPG, PNG, WebP, MP4 или WebM." : "Можно загрузить только JPG, PNG или WEBP.");
   }
 
-  if (value.size > MAX_IMAGE_SIZE) {
-    throw new Error("Изображение должно быть не больше 5 МБ.");
+  if (value.size > (videoExtension ? 20 * 1024 * 1024 : MAX_IMAGE_SIZE)) {
+    throw new Error(videoExtension ? "Видео должно быть не больше 20 МБ." : "Изображение должно быть не больше 5 МБ.");
   }
 
   const config = getConfig();
@@ -146,7 +147,7 @@ async function uploadImageFile(value: FormDataEntryValue | null) {
   });
 
   if (!response.ok) {
-    throw new Error("Не удалось загрузить изображение в S3.");
+    throw new Error("Не удалось загрузить файл в хранилище.");
   }
 
   return `${config.publicBaseUrl}/${objectKey
@@ -161,4 +162,11 @@ export async function uploadActivityImage(formData: FormData) {
 
 export async function uploadActivityImageField(formData: FormData, fieldName: string) {
   return uploadImageFile(formData.get(fieldName));
+}
+
+export async function uploadActivityMediaField(formData: FormData, fieldName: string) {
+  const file = formData.get(fieldName);
+  const url = await uploadImageFile(file, true);
+  if (!url || !(file instanceof File)) return null;
+  return { url, type: file.type.startsWith("video/") ? "video" as const : "image" as const };
 }

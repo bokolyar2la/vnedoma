@@ -29,7 +29,7 @@ function load(file, mocks = {}, env = {}) {
   };
   vm.runInNewContext(source, { module, exports: module.exports, require: localRequire,
     process: { env }, console: { info() {}, warn() {}, error() {} }, Buffer,
-    FormData, URL, Date, setTimeout, clearTimeout, Blob,
+    FormData, File, URL, Date, setTimeout, clearTimeout, Blob,
     ...mocks.__globals }, { filename });
   return module.exports;
 }
@@ -44,6 +44,91 @@ test('promo requires explicit enablement and nonempty agreed terms', () => {
   }
   assert.equal(promo.normalizeDiscountText('  '), '');
   assert.equal(promo.getEventPromoText({ isPromoEnabled: true, promoCode: 'test', discountText: '5%' }).promoCode, 'TEST');
+});
+
+test('media uses files only, preserves existing slots, replaces type and supports removal', async () => {
+  let uploaded = null;
+  const { getActivityMediaInput } = load('lib/activity-media-input.ts', {
+    '@/lib/s3-upload': { uploadActivityMediaField: async (_form, field) => field === 'media1File' ? uploaded : null }
+  });
+  const form = new FormData();
+  form.set('media1Url', 'https://untrusted.test/new.jpg');
+  form.set('media1Type', 'image');
+  assert.equal((await getActivityMediaInput(form)).length, 0);
+  const existing = [{ position: 1, type: 'image', url: 'https://storage.test/old.jpg', caption: 'Old' }];
+  assert.equal((await getActivityMediaInput(form, existing))[0].url, existing[0].url);
+  uploaded = { url: 'https://storage.test/new.mp4', type: 'video' };
+  const replaced = await getActivityMediaInput(form, existing);
+  assert.equal(replaced[0].type, 'video');
+  assert.equal(replaced[0].url, uploaded.url);
+  form.set('media1Remove', 'on');
+  assert.equal((await getActivityMediaInput(form, existing)).length, 0);
+});
+
+test('media upload accepts MP4 and WebM and keeps cover image-only', async () => {
+  const requests = [];
+  const upload = load('lib/s3-upload.ts', { __globals: {
+    fetch: async (url, options) => { requests.push({ url, options }); return { ok: true }; }
+  } }, { S3_ENDPOINT: 'https://storage.test', S3_BUCKET: 'test', S3_ACCESS_KEY_ID: 'test', S3_SECRET_ACCESS_KEY: 'test' });
+  for (const [mime, extension] of [['video/mp4', 'mp4'], ['video/webm', 'webm'], ['image/png', 'png']]) {
+    const form = new FormData();
+    form.set('file', new File(['test-content'], `test.${extension}`, { type: mime }));
+    const result = await upload.uploadActivityMediaField(form, 'file');
+    assert.equal(result.type, mime.startsWith('video/') ? 'video' : 'image');
+    assert.ok(result.url.endsWith('.' + extension));
+    assert.equal(requests.at(-1).options.headers['Content-Type'], mime);
+  }
+  const form = new FormData();
+  form.set('imageFile', new File(['test'], 'test.mp4', { type: 'video/mp4' }));
+  await assert.rejects(upload.uploadActivityImage(form), /JPG/);
+  form.set('file', new File(['test'], 'test.html', { type: 'text/html' }));
+  await assert.rejects(upload.uploadActivityMediaField(form, 'file'), /MP4/);
+  form.set('file', new File([new Uint8Array(20 * 1024 * 1024 + 1)], 'large.mp4', { type: 'video/mp4' }));
+  await assert.rejects(upload.uploadActivityMediaField(form, 'file'), /20 МБ/);
+  assert.equal(requests.length, 3);
+});
+
+test('uploaded video is playable inline and upload slot offers no URL entry', () => {
+  const { ActivityGalleryMedia } = load('components/ActivityGalleryMedia.tsx');
+  const html = renderToStaticMarkup(React.createElement(ActivityGalleryMedia, { url: 'https://storage.test/test.mp4', type: 'video', title: 'Test', caption: null }));
+  assert.ok(html.includes('<video'));
+  assert.ok(html.includes('controls=""'));
+  const { MediaUploadSlot } = load('components/MediaUploadSlot.tsx');
+  const slot = renderToStaticMarkup(React.createElement(MediaUploadSlot, { position: 1 }));
+  assert.ok(slot.includes('Загрузить новое фото или видео'));
+  assert.ok(slot.includes('video/mp4,video/webm'));
+  assert.ok(!slot.includes('media1Url'));
+  assert.ok(!slot.includes('media1Type'));
+});
+
+test('gallery renders VK photo pages as links and direct image files as images', () => {
+  const { ActivityGalleryMedia } = load('components/ActivityGalleryMedia.tsx');
+  const render = (url, type = 'image') => renderToStaticMarkup(React.createElement(ActivityGalleryMedia, {
+    url, type, caption: null, title: 'Test'
+  }));
+  for (const url of ['https://vk.ru/velolifetula?z=photo-123_456', 'https://m.vk.com/photo-123_456']) {
+    const html = render(url);
+    assert.ok(!html.includes('<img'));
+    assert.ok(html.includes('Посмотреть фото в VK'));
+    assert.ok(html.includes('href='));
+  }
+  assert.ok(render('https://example.test/photo.jpg').includes('<img'));
+  assert.ok(render('https://sun9.userapi.com/photo.jpg').includes('<img'));
+  assert.ok(render('https://vk.com/video-123_456', 'video').includes('Открыть видео'));
+  assert.ok(!render('javascript:alert(1)').includes('href='));
+});
+
+test('failed gallery images are replaced with a source link', () => {
+  let failed = null;
+  const { ActivityGalleryMedia } = load('components/ActivityGalleryMedia.tsx', {
+    react: { ...React, useState: () => [failed, (value) => { failed = value; }] }
+  });
+  const props = { url: 'https://example.test/missing.jpg', type: 'image', caption: null, title: 'Test' };
+  const first = ActivityGalleryMedia(props);
+  first.props.children[0].props.onError();
+  const html = renderToStaticMarkup(ActivityGalleryMedia(props));
+  assert.ok(!html.includes('<img'));
+  assert.ok(html.includes('Открыть источник фото'));
 });
 
 test('sessions reject expired, future, malformed and tampered signed tokens', async () => {
@@ -96,7 +181,7 @@ test('public submission preserves existing organizer and rolls back on media fai
     };
     const handler = load('app/add/actions.ts', {
       '@/lib/prisma': { prisma }, 'next/navigation': navigation, 'next/cache': { revalidatePath() {} },
-      '@/lib/s3-upload': { uploadActivityImageField: async () => null },
+      '@/lib/s3-upload': { uploadActivityMediaField: async (_form, field) => field === 'media1File' ? { url: 'https://example.test/upload.png', type: 'image' } : null },
       '@/lib/booking-notifications': { extractEmailAddress: () => null, notifySubmitterActivityReceived: async () => { notified = true; } }
     });
     const form = new FormData();

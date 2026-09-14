@@ -17,9 +17,10 @@ import {
   setOrganizerSession,
   verifyPassword
 } from "@/lib/organizer-auth";
+import { getActivityMediaInput } from "@/lib/activity-media-input";
 import { prisma } from "@/lib/prisma";
 import { normalizeDiscountText, normalizePromoCode } from "@/lib/promo";
-import { uploadActivityImage, uploadActivityImageField } from "@/lib/s3-upload";
+import { uploadActivityImage } from "@/lib/s3-upload";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -36,40 +37,6 @@ function getNumber(formData: FormData, key: string) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
-async function getActivityMediaInput(formData: FormData) {
-  const media = await Promise.all(
-    [1, 2, 3].map(async (position) => {
-      const uploadedUrl = await uploadActivityImageField(formData, `media${position}File`);
-      const url = uploadedUrl ?? getString(formData, `media${position}Url`);
-      const rawType = getString(formData, `media${position}Type`);
-
-      if (!url) {
-        return null;
-      }
-
-      return {
-        type:
-          uploadedUrl || rawType !== ActivityMediaType.video
-            ? ActivityMediaType.image
-            : ActivityMediaType.video,
-        url,
-        caption: getString(formData, `media${position}Caption`) || null,
-        position
-      };
-    })
-  );
-
-  return media.filter(
-    (
-      item
-    ): item is {
-      type: ActivityMediaType;
-      url: string;
-      caption: string | null;
-      position: number;
-    } => Boolean(item)
-  );
-}
 
 function fail(path: string, message: string): never {
   const separator = path.includes("?") ? "&" : "?";
@@ -103,7 +70,7 @@ async function ensureAccess(activityId: number) {
 
   const activity = await prisma.activity.findUniqueOrThrow({
     where: { id: activityId },
-    select: { id: true, slug: true, title: true, organizerId: true }
+    select: { id: true, slug: true, title: true, organizerId: true, imageUrl: true, media: true }
   });
 
   const access = await prisma.organizerAccess.findUnique({
@@ -352,7 +319,7 @@ export async function createOrganizerEditRequest(formData: FormData) {
   try {
     imageUrl =
       (await uploadActivityImage(formData)) ??
-      normalizeContactUrlInput(getString(formData, "imageUrl"));
+      activity.imageUrl;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Не удалось загрузить изображение.";
@@ -362,7 +329,7 @@ export async function createOrganizerEditRequest(formData: FormData) {
   let media: Awaited<ReturnType<typeof getActivityMediaInput>> = [];
 
   try {
-    media = await getActivityMediaInput(formData);
+    media = await getActivityMediaInput(formData, activity.media);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Не удалось загрузить изображение в галерею.";
