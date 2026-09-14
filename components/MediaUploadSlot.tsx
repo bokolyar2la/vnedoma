@@ -13,14 +13,20 @@ export function MediaUploadSlot({ position, media }: {
   return (
     <div className="min-w-0 rounded-2xl border border-city-line bg-white p-4">
       <p className="mb-3 text-sm font-semibold text-city-ink">Материал {position}</p>
-      {media && !remove ? <ActivityGalleryMedia {...media} title={`Материал ${position}`} /> : null}
-      <label htmlFor={id} className="mt-3 flex min-h-12 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-city-green/50 bg-city-green/5 px-4 text-center text-sm font-semibold text-city-green">
-        Загрузить новое фото или видео
+      {media && !remove ? <ActivityGalleryMedia {...media} previewOnly title={`Материал ${position}`} /> : null}
+      <div className="group relative mt-3 rounded-2xl border border-dashed border-city-green/40 bg-city-green/5 transition hover:border-city-green hover:bg-city-green/10 focus-within:ring-2 focus-within:ring-city-green">
+      <label htmlFor={id} className="flex min-h-32 flex-col items-center justify-center gap-2 px-5 py-6 text-center text-sm font-semibold text-city-green">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-7 w-7">
+          <path d="M12 16V4m-4 4 4-4 4 4M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span>Загрузить новое фото или видео</span>
+        <span className="text-xs font-normal text-city-muted">Выберите файл на устройстве</span>
       </label>
       <input id={id} name={`media${position}File`} type="file"
         accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
         disabled={remove}
-        className="mt-2 block w-full min-w-0 text-sm text-city-muted file:mr-3 file:rounded-full file:border-0 file:bg-city-soft file:px-3 file:py-2"
+        aria-label="Загрузить новое фото или видео"
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
         onChange={(event) => {
           const file = event.target.files?.[0];
           const limit = file?.type.startsWith("video/") ? 20 : 5;
@@ -28,6 +34,7 @@ export function MediaUploadSlot({ position, media }: {
           event.target.reportValidity();
           setFilename(file?.name ?? "");
         }} />
+      </div>
       {filename ? <p className="mt-2 break-all text-sm text-city-ink">Выбран файл: {filename}</p> : null}
       <p className="mt-2 text-xs leading-5 text-city-muted">Фото: JPG, PNG, WebP до 5 МБ. Видео: MP4, WebM до 20 МБ. Выбранный файл заменит текущий материал после сохранения.</p>
       <input name={`media${position}Caption`} defaultValue={media?.caption ?? ""} aria-label={`Подпись к материалу ${position}`}

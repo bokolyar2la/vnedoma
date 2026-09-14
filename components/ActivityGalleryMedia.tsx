@@ -3,17 +3,20 @@
 import { useState } from "react";
 import { isVkPageUrl, safeMediaUrl } from "@/lib/media-url";
 
-export function ActivityGalleryMedia({ url, type, caption, title }: {
+export function ActivityGalleryMedia({ url, type, caption, title, previewOnly = false }: {
   url: string;
   type: string;
   caption: string | null;
   title: string;
+  previewOnly?: boolean;
 }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const href = safeMediaUrl(url);
   const vkPage = Boolean(href && isVkPageUrl(href));
   const showImage = type === "image" && href && !vkPage && failedUrl !== href;
   const showVideo = type === "video" && href && /\.(mp4|webm)(?:[?#]|$)/i.test(href) && failedUrl !== href;
+
+  if (previewOnly && !showImage && !showVideo) return null;
 
   return (
     <div className="overflow-hidden rounded-[24px] bg-city-soft">
