@@ -1,3 +1,4 @@
+import { CoverUploadField } from "@/components/CoverUploadField";
 import { MediaUploadSlot } from "@/components/MediaUploadSlot";
 import type { Metadata } from "next";
 import { AdminEventForm } from "@/components/AdminEventForm";
@@ -252,34 +253,7 @@ export default async function EditActivityPage({ params }: EditActivityPageProps
             </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div>
-              <label htmlFor="sourceUrl" className="text-sm font-semibold text-city-ink">
-                Ссылка на источник
-              </label>
-              <input
-                id="sourceUrl"
-                name="sourceUrl"
-                defaultValue={activity.sourceUrl ?? ""}
-                className="mt-2 min-h-12 w-full rounded-2xl border border-city-line px-4 outline-none transition focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-              />
-            </div>
-            <div>
-              <label htmlFor="imageFile" className="mt-4 block text-sm font-semibold text-city-ink">
-                Загрузить новую обложку
-              </label>
-              <input
-                id="imageFile"
-                name="imageFile"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="mt-2 w-full rounded-2xl border border-city-line px-4 py-3 text-sm text-city-muted outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-city-green file:px-4 file:py-2 file:font-semibold file:text-white focus:border-city-green focus:ring-4 focus:ring-city-green/10"
-              />
-              <p className="mt-2 text-xs leading-5 text-city-muted">
-                JPG, PNG или WEBP до 5 МБ. Если файл не выбран, текущая обложка сохранится.
-              </p>
-            </div>
-          </div>
+          <CoverUploadField />
 
           <div className="rounded-3xl border border-city-line bg-city-soft p-4">
             <h2 className="text-lg font-bold text-city-ink">Галерея и видео</h2>
